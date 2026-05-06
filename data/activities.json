@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-05-06T19:42:29.167037+00:00",
-  "analysis_version": 5,
+  "updated_at": "2026-05-06T19:54:57.433333+00:00",
+  "analysis_version": 7,
   "athlete": {
     "id": 13589996,
     "name": "Wolf Harmening",
@@ -1388,7 +1388,8 @@
           4.8,
           0.4
         ]
-      }
+      },
+      "power_duration_sec": 1322
     },
     {
       "id": 18395123785,
@@ -3073,6 +3074,7 @@
           15.5
         ]
       },
+      "power_duration_sec": 1300,
       "decoupling_pct": 19.9
     }
   ]
