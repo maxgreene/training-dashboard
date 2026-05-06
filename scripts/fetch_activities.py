@@ -9,7 +9,7 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_FILE = "data/activities.json"
 
 # Bump this when analysis logic changes — forces reprocessing of all activities
-ANALYSIS_VERSION = 2
+ANALYSIS_VERSION = 3
 
 # Only import activities from this date onwards (plan start date)
 PLAN_START_DATE = "2026-05-06"
