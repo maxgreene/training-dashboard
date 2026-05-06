@@ -154,6 +154,7 @@ function fmtDur(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return h > 0 ? `${h}h ${m}min` : `${m}min`;
 }
+function actDur(a) { return a.power_duration_sec || a.duration_sec; }
 function fmtDist(m) { return (m/1000).toFixed(1) + ' km'; }
 function fmtDate(d) {
   const dt = new Date(d);
@@ -183,7 +184,7 @@ async function loadData() {
 // ── SUMMARY ──
 function renderSummary(data) {
   const recent = allActivities.filter(a => a.date >= '2026-05-05');
-  const hours = recent.reduce((s,a) => s + a.duration_sec, 0) / 3600;
+  const hours = recent.reduce((s,a) => s + actDur(a), 0) / 3600;
   const avgPower = recent.filter(a=>a.avg_power).reduce((s,a,_,arr)=>s+a.avg_power/arr.length,0);
   const maxNP = Math.max(0, ...recent.filter(a=>a.np).map(a=>a.np));
 
@@ -219,7 +220,7 @@ function renderActivityList(acts) {
       </div>
       <div class="ac-stats">
         ${a.distance_m ? `<span class="ac-stat"><strong>${fmtDist(a.distance_m)}</strong>${!a.gps_ok ? ` <span title="GPS unvollständig (${a.gps_coverage_pct}% erfasst)" style="color:var(--z3);cursor:help">⚠️</span>` : ''}</span>` : ''}
-        <span class="ac-stat"><strong>${fmtDur(a.duration_sec)}</strong></span>
+        <span class="ac-stat"><strong>${fmtDur(actDur(a))}</strong></span>
         ${a.avg_speed_kmh && a.gps_ok ? `<span class="ac-stat"><strong>${a.avg_speed_kmh}</strong> km/h</span>` : ''}
         ${a.avg_power ? `<span class="ac-stat">Ø <strong>${a.avg_power}W</strong>${a.np ? ` · NP <strong>${a.np}W</strong>` : ''}</span>` : ''}
         ${a.avg_hr ? `<span class="ac-stat">Ø <strong>${a.avg_hr}</strong> bpm</span>` : ''}
@@ -257,7 +258,7 @@ function renderDetail(act, panel) {
     <div class="stat" style="${!act.gps_ok ? 'border-color:rgba(251,191,36,0.3)' : ''}">
       <div class="stat-label">Distanz ${!act.gps_ok ? `<span title="GPS nur ${act.gps_coverage_pct}% der Fahrt erfasst" style="color:var(--z3);cursor:help">⚠️ GPS unvollst.</span>` : ''}</div>
       <div class="stat-val">${act.distance_m ? fmtDist(act.distance_m) : '—'}</div>
-      <div class="stat-sub">${fmtDur(act.duration_sec)}${act.kilojoules ? ' · '+act.kilojoules+'kJ' : ''}</div>
+      <div class="stat-sub">${fmtDur(actDur(act))}${act.kilojoules ? ' · '+act.kilojoules+'kJ' : ''}</div>
     </div>
     ${act.elevation_m ? `<div class="stat"><div class="stat-label">Höhenmeter</div><div class="stat-val">${act.elevation_m}<span>m</span></div></div>` : ''}
     ${act.decoupling_pct !== undefined ? `<div class="stat"><div class="stat-label">HR/W Drift</div><div class="stat-val" style="color:${act.decoupling_pct < 5 ? 'var(--z1)' : 'var(--z3)'}">${act.decoupling_pct}<span>%</span></div><div class="stat-sub">${act.decoupling_pct < 5 ? 'gut ✓' : 'etwas hoch'}</div></div>` : ''}
