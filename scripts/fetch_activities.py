@@ -9,7 +9,7 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_FILE = "data/activities.json"
 
 # Bump this when analysis logic changes — forces reprocessing of all activities
-ANALYSIS_VERSION = 3
+ANALYSIS_VERSION = 4
 
 # Only import activities from this date onwards (plan start date)
 PLAN_START_DATE = "2026-05-06"
@@ -91,27 +91,23 @@ def process_activity(act):
     gps_ok = True
     gps_coverage_pct = None
     try:
-        latlng = fetch_streams(aid, ["latlng", "time"])
-        print(f"  GPS stream keys: {list(latlng.keys())}")
-        if "latlng" in latlng and "time" in latlng:
-            positions = latlng["latlng"]
-            times = latlng["time"]
-            total_pts = len(positions)
-            valid = [(t, p) for t, p in zip(times, positions) if p and p[0] and p[1]]
-            print(f"  GPS points: {total_pts} total, {len(valid)} valid, elapsed={elapsed_time}s")
-            if valid and elapsed_time:
-                gps_duration = valid[-1][0] - valid[0][0]
-                gps_coverage_pct = round(gps_duration / elapsed_time * 100)
-                print(f"  GPS coverage: {gps_coverage_pct}% ({gps_duration}s tracked of {elapsed_time}s elapsed)")
-                if gps_coverage_pct < 80:
+        streams = fetch_streams(aid, ["latlng", "time"])
+        if "latlng" in streams and "time" in streams:
+            positions = streams["latlng"]
+            times = streams["time"]
+            # Find first valid GPS point — its timestamp tells us when GPS locked
+            # Strava stream timestamps are relative to ride start (t=0)
+            # If first valid GPS point is late → GPS lock delay → incomplete distance
+            first_valid_t = next((t for t, p in zip(times, positions) if p and p[0] and p[1]), None)
+            last_t = times[-1] if times else 0
+            if first_valid_t is not None and elapsed_time:
+                gps_missing_start = first_valid_t  # seconds without GPS at start
+                gps_coverage_pct = round((elapsed_time - gps_missing_start) / elapsed_time * 100)
+                if gps_coverage_pct < 90:
                     gps_ok = False
-                    print(f"  → FLAGGED as GPS incomplete")
-                else:
-                    print(f"  → GPS ok")
-        else:
-            print(f"  No latlng stream available")
+                    print(f"  GPS incomplete: locked after {gps_missing_start}s, coverage {gps_coverage_pct}%")
     except Exception as e:
-        print(f"  Could not check GPS coverage: {e}")
+        print(f"  GPS check error: {e}")
 
     result = {
         "id": aid,
