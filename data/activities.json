@@ -1,5 +1,6 @@
 {
-  "updated_at": "2026-05-06T18:56:07.873671+00:00",
+  "updated_at": "2026-05-06T19:11:43.380352+00:00",
+  "analysis_version": 2,
   "athlete": {
     "id": 13589996,
     "name": "Wolf Harmening",
@@ -30,6 +31,8 @@
       "max_hr": null,
       "avg_cadence": 83.4,
       "kilojoules": 203.2,
+      "gps_ok": true,
+      "gps_coverage_pct": 100,
       "has_power": true,
       "has_hr": false,
       "np": 179,
@@ -1404,6 +1407,8 @@
       "max_hr": 161.0,
       "avg_cadence": 86.5,
       "kilojoules": 252.9,
+      "gps_ok": true,
+      "gps_coverage_pct": 100,
       "has_power": true,
       "has_hr": true,
       "np": 238,
