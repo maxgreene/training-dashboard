@@ -8,6 +8,9 @@ TOKEN = os.environ["STRAVA_ACCESS_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_FILE = "data/activities.json"
 
+# Bump this when analysis logic changes — forces reprocessing of all activities
+ANALYSIS_VERSION = 2
+
 # Only import activities from this date onwards (plan start date)
 PLAN_START_DATE = "2026-05-06"
 PLAN_START_EPOCH = int(datetime(2026, 5, 6, 0, 0, 0, tzinfo=timezone.utc).timestamp())
@@ -191,14 +194,18 @@ def main():
 
     print(f"Found {len(cycling)} cycling activities")
 
+    # Reprocess if analysis version changed
+    existing_version = data.get("analysis_version", 0) if os.path.exists(DATA_FILE) else 0
+    force_reprocess = existing_version < ANALYSIS_VERSION
+    if force_reprocess:
+        print(f"Analysis version changed ({existing_version} → {ANALYSIS_VERSION}), reprocessing all activities")
+
     activities = []
     for act in cycling:
         aid = act["id"]
-        if aid in existing:
-            # Already processed — reuse
+        if aid in existing and not force_reprocess:
             activities.append(existing[aid])
         else:
-            # New activity — fetch streams
             processed = process_activity(act)
             activities.append(processed)
 
@@ -209,6 +216,7 @@ def main():
     recent = [a for a in activities if a["date"] >= "2026-05-05"]
     output = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
+        "analysis_version": ANALYSIS_VERSION,
         "athlete": {
             "id": 13589996,
             "name": "Wolf Harmening",
