@@ -1,40 +1,4 @@
-{
-  "updated_at": "2026-05-06T19:29:45.996960+00:00",
-  "analysis_version": 4,
-  "athlete": {
-    "id": 13589996,
-    "name": "Wolf Harmening",
-    "ftp_estimate": 240,
-    "hrmax_estimate": 175,
-    "weight_kg": 81
-  },
-  "summary": {
-    "total_activities": 2,
-    "recent_count": 2,
-    "recent_hours": 0.6
-  },
-  "activities": [
-    {
-      "id": 18400636404,
-      "name": "Afternoon Ride",
-      "date": "2026-05-06",
-      "start_time": "17:25",
-      "type": "Ride",
-      "duration_sec": 859,
-      "elapsed_sec": 1486,
-      "distance_m": 6654,
-      "elevation_m": 25,
-      "avg_speed_kmh": 27.9,
-      "avg_power": 138.4,
-      "max_power": 666,
-      "avg_hr": null,
-      "max_hr": null,
-      "avg_cadence": 83.4,
-      "kilojoules": 203.2,
-      "gps_ok": true,
-      "gps_coverage_pct": 100,
-      "has_power": true,
-      "has_hr": false,
+{"updated_at": "2026-05-06T00:00:00Z", "analysis_version": 0, "athlete": {"id": 13589996, "name": "Wolf Harmening", "ftp_estimate": 240, "hrmax_estimate": 175, "weight_kg": 81}, "summary": {"total_activities": 0, "recent_count": 0, "recent_hours": 0}, "activities": []}      "has_hr": false,
       "np": 179,
       "power_curve": {
         "5": 643,
