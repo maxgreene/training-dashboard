@@ -9,7 +9,7 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_FILE = "data/activities.json"
 
 # Bump this when analysis logic changes — forces reprocessing of all activities
-ANALYSIS_VERSION = 5
+ANALYSIS_VERSION = 7
 
 # Only import activities from this date onwards (plan start date)
 PLAN_START_DATE = "2026-05-06"
@@ -94,17 +94,16 @@ def process_activity(act):
     # Before GPS lock: distance stays at 0. After lock: distance increases.
     # GPS lock delay = timestamp of first non-zero distance increment
     try:
-        dist_stream = fetch_streams(aid, ["distance", "time"])
-        if "distance" in dist_stream and "time" in dist_stream:
-            dists = dist_stream["distance"]
-            times_s = dist_stream["time"]
-            # Find first timestamp where distance starts moving (>1m accumulated)
-            gps_lock_t = next((t for t, d in zip(times_s, dists) if d and d > 1), None)
-            if gps_lock_t is not None and elapsed_time:
-                gps_coverage_pct = round((elapsed_time - gps_lock_t) / elapsed_time * 100)
-                if gps_coverage_pct < 85:
-                    gps_ok = False
-                    print(f"  GPS incomplete: lock at {gps_lock_t}s, coverage {gps_coverage_pct}%")
+        # Compare stream lengths: watts run for full elapsed_time, distance only when GPS active
+        # If GPS locked late, distance stream is shorter than watts stream
+        check_streams = fetch_streams(aid, ["watts", "distance"])
+        watts_len = len(check_streams.get("watts", []))
+        dist_len = len(check_streams.get("distance", []))
+        if watts_len > 0 and dist_len > 0:
+            gps_coverage_pct = round(dist_len / watts_len * 100)
+            if gps_coverage_pct < 85:
+                gps_ok = False
+                print(f"  GPS incomplete: watts={watts_len}pts, distance={dist_len}pts, coverage={gps_coverage_pct}%")
     except Exception as e:
         print(f"  GPS check error: {e}")
 
@@ -114,8 +113,9 @@ def process_activity(act):
         "date": act["start_date_local"][:10],
         "start_time": act["start_date_local"][11:16],
         "type": act.get("sport_type", act.get("type", "Ride")),
-        "duration_sec": moving_time,
-        "elapsed_sec": act.get("elapsed_time", 0),
+        # If GPS incomplete, use elapsed_time as duration (powermeter covers full ride)
+        "duration_sec": moving_time,  # will be updated to power_duration_sec if power available
+        "elapsed_sec": elapsed_time,
         "distance_m": round(gps_distance) if gps_ok else None,
         "elevation_m": round(act.get("total_elevation_gain", 0)) if gps_ok else None,
         "avg_speed_kmh": round(gps_distance / max(moving_time, 1) * 3.6, 1) if gps_ok else None,
@@ -161,6 +161,8 @@ def process_activity(act):
             result["np"] = normalized_power(pw)
             result["power_curve"] = power_curve(pw)
             result["power_zones"] = power_zones(pw)
+            # Power duration = actual seconds with power data = true training time
+            result["power_duration_sec"] = len(pw)
 
         if hr:
             result["hr_zones"] = hr_zones(hr)
