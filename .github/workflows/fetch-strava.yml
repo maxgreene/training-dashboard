@@ -1,0 +1,47 @@
+name: Fetch Strava Activities
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # stündlich
+  workflow_dispatch:        # manuell auslösbar
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh Strava Token
+        id: token
+        run: |
+          RESPONSE=$(curl -s -X POST https://www.strava.com/oauth/token \
+            -d client_id=${{ secrets.STRAVA_CLIENT_ID }} \
+            -d client_secret=${{ secrets.STRAVA_CLIENT_SECRET }} \
+            -d refresh_token=${{ secrets.STRAVA_REFRESH_TOKEN }} \
+            -d grant_type=refresh_token)
+          echo "access_token=$(echo $RESPONSE | python3 -c \"import sys,json; print(json.load(sys.stdin)['access_token'])\")" >> $GITHUB_OUTPUT
+          NEW_REFRESH=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
+          echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
+
+      - name: Update Refresh Token Secret
+        run: |
+          gh secret set STRAVA_REFRESH_TOKEN --body "$NEW_REFRESH"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Fetch Activities
+        run: |
+          python3 scripts/fetch_activities.py
+        env:
+          STRAVA_ACCESS_TOKEN: ${{ steps.token.outputs.access_token }}
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "update strava data $(date -u +%Y-%m-%dT%H:%M)"
+          git push
