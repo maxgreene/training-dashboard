@@ -92,17 +92,24 @@ def process_activity(act):
     gps_coverage_pct = None
     try:
         latlng = fetch_streams(aid, ["latlng", "time"])
+        print(f"  GPS stream keys: {list(latlng.keys())}")
         if "latlng" in latlng and "time" in latlng:
             positions = latlng["latlng"]
             times = latlng["time"]
-            # Find first and last valid GPS point (non-null position)
+            total_pts = len(positions)
             valid = [(t, p) for t, p in zip(times, positions) if p and p[0] and p[1]]
+            print(f"  GPS points: {total_pts} total, {len(valid)} valid, elapsed={elapsed_time}s")
             if valid and elapsed_time:
                 gps_duration = valid[-1][0] - valid[0][0]
                 gps_coverage_pct = round(gps_duration / elapsed_time * 100)
+                print(f"  GPS coverage: {gps_coverage_pct}% ({gps_duration}s tracked of {elapsed_time}s elapsed)")
                 if gps_coverage_pct < 80:
                     gps_ok = False
-                    print(f"  GPS incomplete: {gps_coverage_pct}% coverage ({gps_duration}s of {elapsed_time}s elapsed)")
+                    print(f"  → FLAGGED as GPS incomplete")
+                else:
+                    print(f"  → GPS ok")
+        else:
+            print(f"  No latlng stream available")
     except Exception as e:
         print(f"  Could not check GPS coverage: {e}")
 
