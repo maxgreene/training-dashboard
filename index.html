@@ -9,26 +9,18 @@
 :root {
   --bg:#0d0e12;--surface:#13151c;--surface2:#1a1d27;--border:#22263a;
   --text:#dde1f0;--muted:#6b7194;--accent:#4f9fff;
-  --z1:#34d399;--z2:#60a5fa;--z3:#fbbf24;--z4:#f97316;--z5:#ef4444;
-  --roller:#a78bfa;
+  --z1:#34d399;--z2:#60a5fa;--z3:#fbbf24;--z4:#f97316;--z5:#ef4444;--roller:#a78bfa;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;min-height:100vh;}
-
-/* NAV */
 nav{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;flex-wrap:wrap;}
 .nav-title{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#fff;}
 .nav-tabs{display:flex;gap:4px;margin-left:auto;}
 .tab{font-family:'DM Mono',monospace;font-size:10px;padding:5px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.15s;text-transform:uppercase;letter-spacing:0.5px;}
 .tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
 .updated{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
-
-/* MAIN */
 main{padding:16px 20px;max-width:1000px;margin:0 auto;}
-
-/* PAGES */
-.page{display:none;}
-.page.active{display:block;}
+.page{display:none;}.page.active{display:block;}
 
 /* STATS ROW */
 .stats-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
@@ -38,31 +30,47 @@ main{padding:16px 20px;max-width:1000px;margin:0 auto;}
 .stat-val span{font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;}
 .stat-sub{font-size:10px;color:var(--muted);margin-top:2px;}
 
-/* SECTION */
+/* SECTION TITLE */
 .section-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;margin-top:18px;}
 
-/* ACTIVITY LIST */
-.activity-list{display:flex;flex-direction:column;gap:8px;}
-.activity-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s;}
-.activity-card:hover{border-color:#333d60;}
-.activity-card.selected{border-color:var(--accent);}
-.ac-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.ac-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;}
-.ac-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
-.ac-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
-.ac-stat{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
-.ac-stat strong{color:var(--text);}
-.ac-badge{font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;font-weight:500;}
-.badge-power{background:rgba(249,115,22,0.15);color:var(--z4);}
-.badge-hr{background:rgba(239,68,68,0.15);color:var(--z5);}
-.badge-commute{background:rgba(96,165,250,0.15);color:var(--z2);}
+/* CALENDAR (shared by Plan + History) */
+.cal-week{margin-bottom:16px;}
+.cal-week-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+.cal-week-label{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;}
+.cal-week-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.cal-week-line{flex:1;height:1px;background:var(--border);min-width:20px;}
+.cal-week-vol{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);}
+.dow-header{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px;}
+.dow-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-align:center;padding:2px 0;}
+.dow-label.we{color:#3a3f5c;}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;min-height:110px;position:relative;transition:border-color 0.15s;cursor:pointer;}
+.day-card:hover{border-color:#4f9fff55;}
+.day-card.past{background:#090a0d;opacity:0.35;cursor:default;}
+.day-card.done{background:rgba(52,211,153,0.06);border-color:rgba(52,211,153,0.2);}
+.day-card.today-card{border-color:var(--accent);}
+.day-card.dimmed{background:#0f1016;opacity:0.6;}
+.day-card.selected-card{border-color:var(--accent);border-width:2px;}
+.dd{font-family:'DM Mono',monospace;font-size:9px;color:#3a3f5c;margin-bottom:5px;}
+.session-type{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;border-radius:3px;padding:2px 5px;margin-bottom:5px;font-weight:500;}
+.tc{background:rgba(96,165,250,0.15);color:var(--z2);}
+.tr{background:rgba(167,139,250,0.15);color:var(--roller);}
+.ta{background:rgba(251,191,36,0.15);color:var(--z3);}
+.tx{background:rgba(55,65,81,0.3);color:#6b7280;}
+.tt{background:rgba(239,68,68,0.15);color:#ef4444;}
+.tk{background:rgba(79,159,255,0.15);color:var(--accent);}
+.badge{position:absolute;top:6px;right:6px;font-family:'DM Mono',monospace;font-size:8px;border-radius:3px;padding:1px 4px;font-weight:700;}
+.b-done{background:rgba(52,211,153,0.2);color:var(--z1);}
+.b-today{background:var(--accent);color:#000;}
+.dsc{font-size:11px;color:var(--text);line-height:1.4;margin-bottom:3px;}
+.det{font-size:10px;color:var(--muted);line-height:1.4;}
 .zstrip{display:flex;height:3px;border-radius:2px;overflow:hidden;margin-top:8px;gap:1px;}
 .zs{border-radius:2px;}
 
-/* DETAIL PANEL */
-#detail-panel{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;display:none;}
-#detail-panel.open{display:block;}
-.detail-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;}
+/* DETAIL PANEL (below week) */
+.week-detail{background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:16px;margin-top:8px;margin-bottom:8px;display:none;}
+.week-detail.open{display:block;}
+.detail-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;}
 .chart-wrap{position:relative;margin-bottom:14px;}
 canvas.chart{width:100%;display:block;}
 
@@ -83,143 +91,398 @@ canvas.chart{width:100%;display:block;}
 
 /* INSIGHTS */
 .insight{background:var(--surface);border-left:3px solid var(--border);border-radius:6px;padding:9px 11px;font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px;}
-.insight.good{border-color:var(--z1);}
-.insight.info{border-color:var(--accent);}
-.insight.warn{border-color:var(--z3);}
+.insight.good{border-color:var(--z1);}.insight.info{border-color:var(--accent);}.insight.warn{border-color:var(--z3);}
 .insight strong{color:var(--text);}
 
-/* PLAN TAB */
-#plan-content{font-size:12px;color:var(--muted);line-height:1.6;}
-.plan-iframe{width:100%;border:none;border-radius:10px;min-height:600px;background:var(--bg);}
+/* RIDES TAB */
+.activity-list{display:flex;flex-direction:column;gap:8px;}
+.activity-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s;}
+.activity-card:hover{border-color:#333d60;}
+.activity-card.selected{border-color:var(--accent);}
+.ac-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ac-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;}
+.ac-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
+.ac-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
+.ac-stat{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.ac-stat strong{color:var(--text);}
+.ac-badge{font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;font-weight:500;}
+.badge-power{background:rgba(249,115,22,0.15);color:var(--z4);}
+.badge-hr{background:rgba(239,68,68,0.15);color:var(--z5);}
+#rides-detail{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;display:none;}
+#rides-detail.open{display:block;}
 
-/* LOADING */
+/* FTP BLOCK */
+.ftp-block{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;}
+.ftp-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.ftp-zones{display:flex;gap:6px;flex-wrap:wrap;}
+.ftp-zone{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 8px;}
+.ftp-zone-name{font-size:9px;color:var(--muted);}
+.ftp-zone-val{font-size:10px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace;}
+
 #loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;}
-
-/* TOOLTIP */
-.tooltip{position:fixed;background:#1a1d27;border:1px solid #333;border-radius:6px;padding:5px 9px;font-size:10px;color:var(--text);pointer-events:none;display:none;white-space:nowrap;z-index:999;}
-
-@media(max-width:600px){
-  nav{padding:10px 14px;}
-  main{padding:12px 14px;}
-  .stats-row{gap:8px;}
-  .stat{min-width:80px;}
-}
+@media(max-width:680px){.dow-header{display:none;}.days-grid{grid-template-columns:1fr 1fr;}.day-card{min-height:80px;}h1{font-size:20px;}}
+@media(max-width:380px){.days-grid{grid-template-columns:1fr;}body{padding:0;}}
 </style>
 </head>
 <body>
-
 <nav>
   <div class="nav-title">🚴 Wolf · Training</div>
   <div class="nav-tabs">
-    <button class="tab active" onclick="showPage('rides')">Rides</button>
-    <button class="tab" onclick="showPage('plan')">Plan</button>
+    <button class="tab active" onclick="showPage('plan',this)">Plan</button>
+    <button class="tab" onclick="showPage('history',this)">History</button>
+    <button class="tab" onclick="showPage('rides',this)">Rides</button>
   </div>
   <div class="updated" id="updated-at"></div>
 </nav>
-
 <main>
-  <div id="loading">Lade Strava-Daten…</div>
+  <div id="loading">Lade Daten…</div>
 
-  <!-- RIDES PAGE -->
+  <!-- PLAN TAB -->
+  <div class="page active" id="page-plan"></div>
+
+  <!-- HISTORY TAB -->
+  <div class="page" id="page-history"></div>
+
+  <!-- RIDES TAB -->
   <div class="page" id="page-rides">
     <div class="stats-row" id="summary-stats"></div>
-    <div class="section-title">Letzte Aktivitäten</div>
+    <div class="section-title">Aktivitäten</div>
     <div class="activity-list" id="activity-list"></div>
-    <div id="detail-panel"></div>
-  </div>
-
-  <!-- PLAN PAGE -->
-  <div class="page" id="page-plan">
-    <div class="section-title">Trainingsplan Phase 1</div>
-    <iframe class="plan-iframe" src="plan.html" title="Trainingsplan"></iframe>
+    <div id="rides-detail"></div>
   </div>
 </main>
 
-<div class="tooltip" id="tooltip"></div>
-
 <script>
-let allActivities = [];
-let selectedId = null;
-
-// ── NAVIGATION ──
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// ── FORMAT HELPERS ──
-function fmtDur(sec) {
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
-  return h > 0 ? `${h}h ${m}min` : `${m}min`;
-}
-function actDur(a) { return a.power_duration_sec || a.duration_sec; }
-function fmtDist(m) { return (m/1000).toFixed(1) + ' km'; }
-function fmtDate(d) {
-  const dt = new Date(d);
-  return dt.toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'});
-}
-
-// ── ZONE COLORS ──
+// ── CONSTANTS ──
+const FTP = 240, HRMAX = 175;
 const ZC = ['var(--z1)','var(--z2)','var(--z3)','var(--z4)','var(--z5)'];
 const ZN = ['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 
-// ── LOAD DATA ──
-async function loadData() {
-  try {
-    const r = await fetch('data/activities.json?_=' + Date.now());
-    const data = await r.json();
-    document.getElementById('loading').style.display = 'none';
-    allActivities = data.activities || [];
-    renderSummary(data);
-    renderActivityList(allActivities.slice(0, 30));
-    const upd = new Date(data.updated_at);
-    document.getElementById('updated-at').textContent = 'Stand: ' + upd.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
-  } catch(e) {
-    document.getElementById('loading').textContent = 'Keine Daten — GitHub Action noch nicht gelaufen.';
+// ── PLAN DATA ──
+const PLAN_WEEKS = [
+  {
+    label:'WOCHE 1', dates:'04.–10. Mai', vol:'~4.5h · Start',
+    days:[
+      {date:'04.05',dow:'Mo',type:'tx',icon:'—',title:'Vergangen',desc:'',det:'',past:true},
+      {date:'05.05',dow:'Di',type:'tc',icon:'🚴',title:'Commute ✓',desc:'Morgencommute ✓',det:'9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
+      {date:'06.05',dow:'Mi',type:'tc',icon:'🚴',title:'Commute ⚡ × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollständig',done:true},
+      {date:'07.05',dow:'Do',type:'tr',icon:'🎯',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen · HR 130–140 bpm'},
+      {date:'08.05',dow:'Fr',type:'tx',icon:'💤',title:'Ruhe',desc:'Komplette Pause',det:'Kein Rad. Beine regenerieren.',dimmed:true},
+      {date:'09.05',dow:'Sa',type:'ta',icon:'🌄',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · reines Z2 · 144–180W · HR unter 145'},
+      {date:'10.05',dow:'So',type:'tx',icon:'💤',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren — kein Rad.',dimmed:true},
+    ]
+  },
+  {
+    label:'WOCHE 2', dates:'11.–17. Mai', vol:'~5.5h · Basis festigen',
+    days:[
+      {date:'11.05',dow:'Mo',type:'tc',icon:'🚴',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138 · locker nach Wochenende'},
+      {date:'12.05',dow:'Di',type:'tr',icon:'🎯',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten · 10\' auslaufen'},
+      {date:'13.05',dow:'Mi',type:'tc',icon:'🚴',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
+      {date:'14.05',dow:'Do',type:'tx',icon:'💤',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching. Kein Rad.',dimmed:true},
+      {date:'15.05',dow:'Fr',type:'tc',icon:'🚴',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · leicht, frisch für Samstag'},
+      {date:'16.05',dow:'Sa',type:'ta',icon:'🌄',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
+      {date:'17.05',dow:'So',type:'tx',icon:'💤',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
+    ]
+  },
+  {
+    label:'WOCHE 3', dates:'18.–24. Mai', vol:'~5.5h · Rampentest + Abschluss',
+    days:[
+      {date:'18.05',dow:'Mo',type:'tc',icon:'🚴',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2 · Woche ruhig beginnen'},
+      {date:'19.05',dow:'Di',type:'tc',icon:'🚴',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen komplett frei vor dem Rampentest'},
+      {date:'20.05',dow:'Mi',type:'tx',icon:'💤',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad. Ausgeruht in den Test.',dimmed:true},
+      {date:'21.05',dow:'Do',type:'tt',icon:'🔬',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 Einfahren · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
+      {date:'22.05',dow:'Fr',type:'tc',icon:'🚴',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern nach Test',dimmed:true},
+      {date:'23.05',dow:'Sa',type:'ta',icon:'🌄',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · ruhig · mit neuen Testzonen · Genuss'},
+      {date:'24.05',dow:'So',type:'tx',icon:'💤',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
+    ]
+  },
+  {
+    label:'CHECKPOINT #1', dates:'25. Mai', vol:'→ Phase 2',
+    days:[
+      {date:'25.05',dow:'Mo',type:'tk',icon:'📊',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Phase 2 wird gebaut'},
+      {date:'',dow:'Di',type:'',icon:'',title:'',desc:'',det:'',empty:true},
+      {date:'',dow:'Mi',type:'',icon:'',title:'',desc:'',det:'',empty:true},
+      {date:'',dow:'Do',type:'',icon:'',title:'',desc:'',det:'',empty:true},
+      {date:'',dow:'Fr',type:'',icon:'',title:'',desc:'',det:'',empty:true},
+      {date:'',dow:'Sa',type:'',icon:'',title:'',desc:'',det:'',empty:true,we:true},
+      {date:'',dow:'So',type:'',icon:'',title:'',desc:'',det:'',empty:true,we:true},
+    ]
   }
+];
+
+// ── ACTIVITIES DATA ──
+let allActivities = [];
+let selectedRideId = null;
+
+// ── NAV ──
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
 }
 
-// ── SUMMARY ──
-function renderSummary(data) {
-  const recent = allActivities.filter(a => a.date >= '2026-05-05');
-  const hours = recent.reduce((s,a) => s + actDur(a), 0) / 3600;
-  const avgPower = recent.filter(a=>a.avg_power).reduce((s,a,_,arr)=>s+a.avg_power/arr.length,0);
-  const maxNP = Math.max(0, ...recent.filter(a=>a.np).map(a=>a.np));
+// ── HELPERS ──
+function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
+function fmtDist(m){return(m/1000).toFixed(1)+' km';}
+function fmtDate(d){return new Date(d).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function actDur(a){return a.power_duration_sec||a.duration_sec;}
 
-  const el = document.getElementById('summary-stats');
-  el.innerHTML = `
-    <div class="stat"><div class="stat-label">Rides (Phase 1)</div><div class="stat-val">${recent.length}<span> fahrten</span></div><div class="stat-sub">seit 05.05</div></div>
+// ── RENDER PLAN TAB ──
+function renderPlan() {
+  const el = document.getElementById('page-plan');
+  let html = `<div class="ftp-block">
+    <div class="ftp-title">Trainingszonen (FTP = 240W geschätzt · Rampentest Do 21.05)</div>
+    <div class="ftp-zones">
+      <div class="ftp-zone"><div class="ftp-zone-name">Z1 Erholung</div><div class="ftp-zone-val">&lt;144W · &lt;119 bpm</div></div>
+      <div class="ftp-zone"><div class="ftp-zone-name">Z2 Aerob</div><div class="ftp-zone-val">144–180W · 119–145 bpm</div></div>
+      <div class="ftp-zone"><div class="ftp-zone-name">Z3 Sweetspot</div><div class="ftp-zone-val">180–216W · 145–154 bpm</div></div>
+      <div class="ftp-zone"><div class="ftp-zone-name">Z4 Schwelle</div><div class="ftp-zone-val">216–252W · 154–166 bpm</div></div>
+    </div>
+  </div>`;
+
+  PLAN_WEEKS.forEach((week, wi) => {
+    html += `<div class="cal-week">
+      <div class="cal-week-header">
+        <span class="cal-week-label">${week.label}</span>
+        <span class="cal-week-date">${week.dates}</span>
+        <div class="cal-week-line"></div>
+        <span class="cal-week-vol">${week.vol}</span>
+      </div>
+      <div class="dow-header">
+        <div class="dow-label">Mo</div><div class="dow-label">Di</div><div class="dow-label">Mi</div>
+        <div class="dow-label">Do</div><div class="dow-label">Fr</div>
+        <div class="dow-label we">Sa</div><div class="dow-label we">So</div>
+      </div>
+      <div class="days-grid">`;
+
+    week.days.forEach((d, di) => {
+      if (d.empty) { html += `<div class="day-card dimmed" style="opacity:0.15"></div>`; return; }
+      const cls = [
+        'day-card',
+        d.past ? 'past' : '',
+        d.done ? 'done' : '',
+        d.dimmed && !d.done ? 'dimmed' : '',
+      ].filter(Boolean).join(' ');
+      html += `<div class="${cls}" onclick="togglePlanDetail(${wi},${di},this)">
+        <div class="dd">${d.date}</div>
+        <div class="session-type ${d.type}">${d.icon} ${d.title}</div>
+        <div class="dsc">${d.desc}</div>
+        <div class="det">${d.det}</div>
+        ${d.done ? '<div class="badge b-done">✓</div>' : ''}
+      </div>`;
+    });
+
+    html += `</div><div class="week-detail" id="plan-detail-${wi}"></div></div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ── PLAN DETAIL TOGGLE ──
+function togglePlanDetail(wi, di, cardEl) {
+  const panel = document.getElementById(`plan-detail-${wi}`);
+  const d = PLAN_WEEKS[wi].days[di];
+  if (!d || d.past || d.empty) return;
+
+  // Check if same card already selected
+  const allCards = cardEl.parentElement.querySelectorAll('.day-card');
+  const wasSelected = cardEl.classList.contains('selected-card');
+  allCards.forEach(c => c.classList.remove('selected-card'));
+
+  if (wasSelected) {
+    panel.classList.remove('open');
+    panel.innerHTML = '';
+    return;
+  }
+
+  cardEl.classList.add('selected-card');
+
+  // Find matching real activity for this date
+  const matchedAct = allActivities.find(a => {
+    const d2 = d.date; // "07.05"
+    const [day, mon] = d2.split('.');
+    return a.date === `2026-${mon}-${day}`;
+  });
+
+  let html = `<div class="detail-title">${d.icon} ${d.title} · ${d.date}</div>`;
+  html += `<div class="insight info"><strong>Geplant:</strong> ${d.det}</div>`;
+
+  if (matchedAct) {
+    html += `<div class="insight good"><strong>Gefahren:</strong> ${matchedAct.avg_power ? `Ø ${matchedAct.avg_power}W · NP ${matchedAct.np||'—'}W · ` : ''}${fmtDur(actDur(matchedAct))}${matchedAct.distance_m ? ' · '+fmtDist(matchedAct.distance_m) : ''}</div>`;
+  } else {
+    html += `<div class="insight"><strong>Noch nicht gefahren.</strong></div>`;
+  }
+
+  panel.innerHTML = html;
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ── RENDER HISTORY TAB ──
+function renderHistory() {
+  const el = document.getElementById('page-history');
+  if (!allActivities.length) {
+    el.innerHTML = '<div id="loading">Noch keine Aktivitäten geladen.</div>';
+    return;
+  }
+
+  let html = '';
+  PLAN_WEEKS.forEach((week, wi) => {
+    // Find activities in this week's date range
+    const weekDates = week.days.filter(d => d.date).map(d => {
+      const [day, mon] = d.date.split('.');
+      return `2026-${mon}-${day}`;
+    });
+
+    const weekActs = allActivities.filter(a => weekDates.includes(a.date));
+
+    html += `<div class="cal-week">
+      <div class="cal-week-header">
+        <span class="cal-week-label">${week.label}</span>
+        <span class="cal-week-date">${week.dates}</span>
+        <div class="cal-week-line"></div>
+        <span class="cal-week-vol">${weekActs.length > 0 ? weekActs.length+' Rides · '+fmtDur(weekActs.reduce((s,a)=>s+actDur(a),0)) : 'keine Rides'}</span>
+      </div>
+      <div class="dow-header">
+        <div class="dow-label">Mo</div><div class="dow-label">Di</div><div class="dow-label">Mi</div>
+        <div class="dow-label">Do</div><div class="dow-label">Fr</div>
+        <div class="dow-label we">Sa</div><div class="dow-label we">So</div>
+      </div>
+      <div class="days-grid">`;
+
+    week.days.forEach((d, di) => {
+      if (d.empty) { html += `<div class="day-card dimmed" style="opacity:0.15"></div>`; return; }
+      const [day, mon] = d.date.split('.');
+      const isoDate = `2026-${mon}-${day}`;
+      const dayActs = allActivities.filter(a => a.date === isoDate);
+      const today = new Date().toISOString().slice(0,10);
+      const isPast = isoDate < today;
+
+      if (dayActs.length === 0) {
+        const cls = isPast ? 'day-card past' : 'day-card dimmed';
+        html += `<div class="${cls}"><div class="dd">${d.date}</div><div class="det" style="margin-top:4px">${isPast ? 'kein Ride' : '—'}</div></div>`;
+        return;
+      }
+
+      // Show all activities for this day
+      dayActs.forEach((act, ai) => {
+        const zstrip = act.power_zones && act.power_zones.length ?
+          `<div class="zstrip">${act.power_zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>` : '';
+        html += `<div class="day-card done" onclick="toggleHistoryDetail(${wi},'${act.id}',this)">
+          <div class="dd">${d.date} ${act.start_time}</div>
+          <div class="session-type tc">🚴 ${act.name}</div>
+          <div class="dsc">${fmtDur(actDur(act))}${act.distance_m ? ' · '+fmtDist(act.distance_m) : ''}${!act.gps_ok ? ' ⚠️' : ''}</div>
+          <div class="det">${act.avg_power ? `Ø ${act.avg_power}W · NP ${act.np||'—'}W` : ''}${act.avg_hr ? ` · ${act.avg_hr}bpm` : ''}</div>
+          ${zstrip}
+        </div>`;
+      });
+
+      // Fill remaining slots if only 1 of 2 acts shown (for multi-ride days, grid stays 7 cols)
+    });
+
+    html += `</div><div class="week-detail" id="hist-detail-${wi}"></div></div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ── HISTORY DETAIL TOGGLE ──
+function toggleHistoryDetail(wi, actId, cardEl) {
+  const panel = document.getElementById(`hist-detail-${wi}`);
+  const act = allActivities.find(a => a.id == actId);
+  if (!act) return;
+
+  const allCards = cardEl.closest('.days-grid').querySelectorAll('.day-card');
+  const wasSelected = cardEl.classList.contains('selected-card');
+  allCards.forEach(c => c.classList.remove('selected-card'));
+
+  if (wasSelected) {
+    panel.classList.remove('open');
+    panel.innerHTML = '';
+    return;
+  }
+
+  cardEl.classList.add('selected-card');
+  panel.innerHTML = buildActDetail(act);
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  setTimeout(() => drawChart(act), 50);
+}
+
+// ── BUILD ACTIVITY DETAIL HTML ──
+function buildActDetail(act) {
+  const hasStreams = act.streams && (act.streams.watts?.length || act.streams.hr?.length);
+  let html = `<div class="detail-title">${act.name} · ${fmtDate(act.date)}</div>`;
+  html += `<div class="stats-row">
+    ${act.avg_power ? `<div class="stat"><div class="stat-label">Ø Power</div><div class="stat-val">${act.avg_power}<span>W</span></div>${act.np ? `<div class="stat-sub">NP: ${act.np}W</div>` : ''}</div>` : ''}
+    ${act.avg_hr ? `<div class="stat"><div class="stat-label">Ø HR</div><div class="stat-val">${act.avg_hr}<span>bpm</span></div><div class="stat-sub">Max: ${act.max_hr}</div></div>` : ''}
+    <div class="stat" style="${!act.gps_ok?'border-color:rgba(251,191,36,0.3)':''}">
+      <div class="stat-label">Distanz${!act.gps_ok?' <span style="color:var(--z3)">⚠️ GPS</span>':''}</div>
+      <div class="stat-val">${act.distance_m ? fmtDist(act.distance_m) : '—'}</div>
+      <div class="stat-sub">${fmtDur(actDur(act))}${act.kilojoules?' · '+act.kilojoules+'kJ':''}</div>
+    </div>
+    ${act.elevation_m ? `<div class="stat"><div class="stat-label">Höhenmeter</div><div class="stat-val">${act.elevation_m}<span>m</span></div></div>` : ''}
+    ${act.decoupling_pct !== undefined ? `<div class="stat"><div class="stat-label">HR/W Drift</div><div class="stat-val" style="color:${act.decoupling_pct<5?'var(--z1)':'var(--z3)'}">${act.decoupling_pct}<span>%</span></div><div class="stat-sub">${act.decoupling_pct<5?'gut ✓':'etwas hoch'}</div></div>` : ''}
+  </div>`;
+
+  if (act.power_curve && Object.keys(act.power_curve).length) {
+    const dur=[5,10,30,60,120,300,600,1200], lbl=['5s','10s','30s','1m','2m','5m','10m','20m'];
+    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#6b7194','#6b7194'];
+    const vals=dur.map(d=>act.power_curve[String(d)]||null).filter(v=>v);
+    const maxV=Math.max(...vals);
+    html += `<div class="section-title" style="margin-top:10px">Power Curve</div><div class="pcurve">`;
+    dur.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;html+=`<div class="pcb-wrap"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbl[i]}</div></div>`;});
+    html += `</div>`;
+  }
+
+  if (act.power_zones && act.power_zones.length) {
+    html += `<div class="section-title" style="margin-top:10px">Power-Zonen</div><div class="zone-dist">`;
+    act.power_zones.forEach((p,i)=>{html+=`<div class="zd-row"><div class="zd-label">${ZN[i]}</div><div class="zd-bar-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div><div class="zd-pct">${p}%</div></div>`;});
+    html += `</div>`;
+  }
+
+  if (hasStreams) {
+    html += `<div class="section-title" style="margin-top:10px">Verlauf</div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
+  }
+
+  // Insights
+  html += `<div class="section-title" style="margin-top:10px">Einschätzung</div>`;
+  if (act.np && act.np > FTP*1.05) html += `<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für hügelige Strecken.</div>`;
+  if (act.decoupling_pct !== undefined && act.decoupling_pct < 5) html += `<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
+  if (act.avg_power && act.avg_power < FTP*0.75) html += `<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — genau richtig für Phase 1.</div>`;
+  if (!act.gps_ok) html += `<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% der Fahrt getrackt. Distanz nicht zuverlässig.</div>`;
+
+  return html;
+}
+
+// ── RIDES TAB ──
+function renderSummary() {
+  const recent = allActivities.filter(a => a.date >= '2026-05-05');
+  const hours = recent.reduce((s,a) => s+actDur(a), 0) / 3600;
+  const pwActs = recent.filter(a=>a.avg_power);
+  const avgPower = pwActs.length ? pwActs.reduce((s,a)=>s+a.avg_power,0)/pwActs.length : 0;
+  const maxNP = Math.max(0, ...recent.filter(a=>a.np).map(a=>a.np));
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Rides (Phase 1)</div><div class="stat-val">${recent.length}<span> Rides</span></div><div class="stat-sub">seit 05.05</div></div>
     <div class="stat"><div class="stat-label">Stunden</div><div class="stat-val">${hours.toFixed(1)}<span> h</span></div><div class="stat-sub">Gesamtvolumen</div></div>
     <div class="stat"><div class="stat-label">Ø Watt</div><div class="stat-val">${avgPower ? Math.round(avgPower) : '—'}<span> W</span></div><div class="stat-sub">mit Powermeter</div></div>
-    <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP || '—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
-    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val" style="color:var(--accent)">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>
-  `;
+    <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP||'—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
+    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val" style="color:var(--accent)">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>`;
 }
 
-// ── ACTIVITY LIST ──
-function renderActivityList(acts) {
-  const el = document.getElementById('activity-list');
-  el.innerHTML = acts.map(a => {
-    const badges = [
-      a.has_power ? '<span class="ac-badge badge-power">⚡ Watt</span>' : '',
-      a.has_hr ? '<span class="ac-badge badge-hr">♥ HR</span>' : '',
-    ].filter(Boolean).join(' ');
-
-    const zstrip = a.power_zones && a.power_zones.length ?
-      `<div class="zstrip">${a.power_zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>` :
-      a.hr_zones && a.hr_zones.length ?
-      `<div class="zstrip">${a.hr_zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>` : '';
-
-    return `<div class="activity-card${selectedId===a.id?' selected':''}" onclick="selectActivity(${a.id})">
+function renderActivityList() {
+  document.getElementById('activity-list').innerHTML = allActivities.slice(0,30).map(a => {
+    const badges = [a.has_power?'<span class="ac-badge badge-power">⚡ Watt</span>':'', a.has_hr?'<span class="ac-badge badge-hr">♥ HR</span>':''].filter(Boolean).join(' ');
+    const zstrip = a.power_zones?.length ? `<div class="zstrip">${a.power_zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>` : '';
+    return `<div class="activity-card${selectedRideId===a.id?' selected':''}" onclick="selectRide(${a.id})">
       <div class="ac-header">
         <span class="ac-date">${fmtDate(a.date)} ${a.start_time}</span>
         <span class="ac-name">${a.name}</span>
         ${badges}
       </div>
       <div class="ac-stats">
-        ${a.distance_m ? `<span class="ac-stat"><strong>${fmtDist(a.distance_m)}</strong>${!a.gps_ok ? ` <span title="GPS unvollständig (${a.gps_coverage_pct}% erfasst)" style="color:var(--z3);cursor:help">⚠️</span>` : ''}</span>` : ''}
+        ${a.distance_m ? `<span class="ac-stat"><strong>${fmtDist(a.distance_m)}</strong>${!a.gps_ok?' ⚠️':''}</span>` : ''}
         <span class="ac-stat"><strong>${fmtDur(actDur(a))}</strong></span>
         ${a.avg_speed_kmh && a.gps_ok ? `<span class="ac-stat"><strong>${a.avg_speed_kmh}</strong> km/h</span>` : ''}
         ${a.avg_power ? `<span class="ac-stat">Ø <strong>${a.avg_power}W</strong>${a.np ? ` · NP <strong>${a.np}W</strong>` : ''}</span>` : ''}
@@ -231,171 +494,65 @@ function renderActivityList(acts) {
   }).join('');
 }
 
-// ── SELECT ACTIVITY ──
-function selectActivity(id) {
-  selectedId = (selectedId === id) ? null : id;
-  renderActivityList(allActivities.slice(0, 30));
-  const panel = document.getElementById('detail-panel');
-  if (!selectedId) { panel.classList.remove('open'); return; }
+function selectRide(id) {
+  const panel = document.getElementById('rides-detail');
+  selectedRideId = (selectedRideId === id) ? null : id;
+  renderActivityList();
+  if (!selectedRideId) { panel.classList.remove('open'); return; }
   const act = allActivities.find(a => a.id === id);
   if (!act) return;
+  panel.innerHTML = buildActDetail(act);
   panel.classList.add('open');
-  renderDetail(act, panel);
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-// ── DETAIL PANEL ──
-function renderDetail(act, panel) {
-  const ftp = 240, hrmax = 175;
-  const hasStreams = act.streams && (act.streams.watts?.length || act.streams.hr?.length);
-
-  let html = `<div class="detail-title">${act.name} · ${fmtDate(act.date)}</div>`;
-
-  // Key stats
-  html += `<div class="stats-row">
-    ${act.avg_power ? `<div class="stat"><div class="stat-label">Ø Power</div><div class="stat-val">${act.avg_power}<span>W</span></div>${act.np ? `<div class="stat-sub">NP: ${act.np}W</div>` : ''}</div>` : ''}
-    ${act.avg_hr ? `<div class="stat"><div class="stat-label">Ø HR</div><div class="stat-val">${act.avg_hr}<span>bpm</span></div><div class="stat-sub">Max: ${act.max_hr}</div></div>` : ''}
-    <div class="stat" style="${!act.gps_ok ? 'border-color:rgba(251,191,36,0.3)' : ''}">
-      <div class="stat-label">Distanz ${!act.gps_ok ? `<span title="GPS nur ${act.gps_coverage_pct}% der Fahrt erfasst" style="color:var(--z3);cursor:help">⚠️ GPS unvollst.</span>` : ''}</div>
-      <div class="stat-val">${act.distance_m ? fmtDist(act.distance_m) : '—'}</div>
-      <div class="stat-sub">${fmtDur(actDur(act))}${act.kilojoules ? ' · '+act.kilojoules+'kJ' : ''}</div>
-    </div>
-    ${act.elevation_m ? `<div class="stat"><div class="stat-label">Höhenmeter</div><div class="stat-val">${act.elevation_m}<span>m</span></div></div>` : ''}
-    ${act.decoupling_pct !== undefined ? `<div class="stat"><div class="stat-label">HR/W Drift</div><div class="stat-val" style="color:${act.decoupling_pct < 5 ? 'var(--z1)' : 'var(--z3)'}">${act.decoupling_pct}<span>%</span></div><div class="stat-sub">${act.decoupling_pct < 5 ? 'gut ✓' : 'etwas hoch'}</div></div>` : ''}
-  </div>`;
-
-  // Power curve
-  if (act.power_curve && Object.keys(act.power_curve).length) {
-    const durations = [5,10,30,60,120,300,600,1200];
-    const labels = ['5s','10s','30s','1m','2m','5m','10m','20m'];
-    const colors = ['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#6b7194','#6b7194'];
-    const vals = durations.map(d => act.power_curve[String(d)] || null).filter(v=>v);
-    const maxV = Math.max(...vals);
-    html += `<div class="section-title" style="margin-top:12px">Power Curve</div><div class="pcurve" id="pc-${act.id}">`;
-    durations.forEach((d,i) => {
-      const v = act.power_curve[String(d)];
-      if (!v) return;
-      html += `<div class="pcb-wrap"><div class="pcb" style="height:${v/maxV*100}%;background:${colors[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${labels[i]}</div></div>`;
-    });
-    html += `</div>`;
-  }
-
-  // Zone distribution
-  if (act.power_zones && act.power_zones.length) {
-    html += `<div class="section-title" style="margin-top:12px">Power-Zonen (FTP ${ftp}W)</div><div class="zone-dist">`;
-    act.power_zones.forEach((p,i) => {
-      html += `<div class="zd-row"><div class="zd-label">${ZN[i]}</div><div class="zd-bar-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div><div class="zd-pct">${p}%</div></div>`;
-    });
-    html += `</div>`;
-  } else if (act.hr_zones && act.hr_zones.length) {
-    html += `<div class="section-title" style="margin-top:12px">HR-Zonen (HRmax ${hrmax})</div><div class="zone-dist">`;
-    act.hr_zones.forEach((p,i) => {
-      html += `<div class="zd-row"><div class="zd-label">${ZN[i]}</div><div class="zd-bar-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div><div class="zd-pct">${p}%</div></div>`;
-    });
-    html += `</div>`;
-  }
-
-  // Chart
-  if (hasStreams) {
-    html += `<div class="section-title" style="margin-top:12px">Verlauf</div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
-  }
-
-  // Insights
-  html += `<div class="section-title" style="margin-top:12px">Einschätzung</div>`;
-  if (act.np && act.np > ftp * 1.05) {
-    html += `<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als eine reine Z2-Fahrt. Passiert auf hügeligen Strecken ohne Pausen.</div>`;
-  }
-  if (act.decoupling_pct !== undefined && act.decoupling_pct < 5) {
-    html += `<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift von ${act.decoupling_pct}% — unter 5% gilt als sehr gut.</div>`;
-  }
-  if (act.avg_power && act.avg_power < ftp * 0.75) {
-    html += `<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W liegt im aeroben Basisbereich — genau richtig für Phase 1.</div>`;
-  }
-
-  panel.innerHTML = html;
-
-  // Draw chart after render
-  if (hasStreams) {
-    setTimeout(() => drawChart(act), 50);
-  }
+  setTimeout(() => drawChart(act), 50);
 }
 
 // ── CHART ──
 function drawChart(act) {
   const canvas = document.getElementById(`chart-${act.id}`);
-  if (!canvas) return;
-  const streams = act.streams;
-  const ts = streams.time || [];
-  const pw = streams.watts || [];
-  const hr = streams.hr || [];
+  if (!canvas || !act.streams) return;
+  const ts=act.streams.time||[], pw=act.streams.watts||[], hr=act.streams.hr||[];
   if (!ts.length) return;
+  const dpr=window.devicePixelRatio||1, W=canvas.parentElement.offsetWidth, H=90;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const pL=36,pR=8,pT=10,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+  const maxT=ts[ts.length-1]||1, maxP=pw.length?Math.max(600,...pw):600, minH=80, maxH=175;
+  function xOf(t){return pL+(t/maxT)*cW;}
+  function yP(p){return pT+cH-(p/maxP)*cH;}
+  function yH(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
+  if(pw.length){ctx.strokeStyle='rgba(79,159,255,0.3)';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(79,159,255,0.5)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);}
+  ctx.strokeStyle='#1a1d27';ctx.lineWidth=1;
+  [100,200,300,400,500].forEach(p=>{if(!pw.length)return;ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#3a3f5c';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p,pL-3,yP(p)+3);});
+  if(pw.length){ctx.fillStyle='rgba(249,115,22,0.12)';ctx.strokeStyle='rgba(249,115,22,0.75)';ctx.lineWidth=1.5;ctx.beginPath();ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();ctx.fill();}
+  if(hr.length){ctx.strokeStyle='rgba(96,165,250,0.8)';ctx.lineWidth=1.5;ctx.beginPath();ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();}
+  ctx.fillStyle='#3a3f5c';ctx.font='8px monospace';ctx.textAlign='center';
+  const ticks=Math.min(6,Math.floor(maxT/60));
+  for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
+}
 
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.parentElement.offsetWidth;
-  const H = 90;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const pL=36, pR=8, pT=10, pB=22;
-  const cW=W-pL-pR, cH=H-pT-pB;
-  const maxT = ts[ts.length-1] || 1;
-  const maxP = pw.length ? Math.max(600, ...pw) : 600;
-  const minH=80, maxH=175;
-
-  function xOf(t){ return pL + (t/maxT)*cW; }
-  function yP(p){ return pT + cH - (p/maxP)*cH; }
-  function yH(h){ return pT + cH - ((h-minH)/(maxH-minH))*cH; }
-
-  // FTP line
-  if (pw.length) {
-    ctx.strokeStyle='rgba(79,159,255,0.3)'; ctx.lineWidth=1; ctx.setLineDash([5,4]);
-    ctx.beginPath(); ctx.moveTo(pL,yP(240)); ctx.lineTo(pL+cW,yP(240)); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='rgba(79,159,255,0.5)'; ctx.font='8px monospace'; ctx.textAlign='left';
-    ctx.fillText('FTP', pL+2, yP(240)-2);
-  }
-
-  // Grid
-  ctx.strokeStyle='#1a1d27'; ctx.lineWidth=1;
-  [100,200,300,400,500].forEach(p=>{
-    if (!pw.length) return;
-    ctx.beginPath(); ctx.moveTo(pL,yP(p)); ctx.lineTo(pL+cW,yP(p)); ctx.stroke();
-    ctx.fillStyle='#3a3f5c'; ctx.font='8px monospace'; ctx.textAlign='right';
-    ctx.fillText(p, pL-3, yP(p)+3);
-  });
-
-  // Power area
-  if (pw.length) {
-    ctx.fillStyle='rgba(249,115,22,0.12)';
-    ctx.strokeStyle='rgba(249,115,22,0.75)'; ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ts.forEach((t,i)=>{ const x=xOf(t),y=yP(pw[i]||0); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.stroke();
-    ctx.lineTo(xOf(maxT),yP(0)); ctx.lineTo(xOf(0),yP(0)); ctx.closePath(); ctx.fill();
-  }
-
-  // HR line
-  if (hr.length) {
-    ctx.strokeStyle='rgba(96,165,250,0.8)'; ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ts.forEach((t,i)=>{ if(!hr[i]||hr[i]<50) return; const x=xOf(t),y=yH(hr[i]); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.stroke();
-  }
-
-  // X axis
-  ctx.fillStyle='#3a3f5c'; ctx.font='8px monospace'; ctx.textAlign='center';
-  const ticks = Math.min(6, Math.floor(maxT/60));
-  for(let i=0;i<=ticks;i++){
-    const t = Math.round(i*maxT/ticks);
-    ctx.fillText(Math.round(t/60)+"'", xOf(t), H-5);
+// ── LOAD DATA ──
+async function loadData() {
+  try {
+    const r = await fetch('data/activities.json?_='+Date.now());
+    const data = await r.json();
+    document.getElementById('loading').style.display = 'none';
+    allActivities = data.activities || [];
+    const upd = new Date(data.updated_at);
+    document.getElementById('updated-at').textContent = 'Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    renderSummary();
+    renderActivityList();
+    renderHistory();
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Keine Daten — GitHub Action noch nicht gelaufen.';
   }
 }
 
 // ── INIT ──
+renderPlan();
 loadData();
-setInterval(loadData, 5 * 60 * 1000); // refresh every 5 min
+setInterval(loadData, 5*60*1000);
 </script>
 </body>
 </html>
