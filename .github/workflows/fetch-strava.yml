@@ -22,7 +22,8 @@ jobs:
             -d client_secret=${{ secrets.STRAVA_CLIENT_SECRET }} \
             -d refresh_token=${{ secrets.STRAVA_REFRESH_TOKEN }} \
             -d grant_type=refresh_token)
-          echo "access_token=$(echo $RESPONSE | python3 -c \"import sys,json; print(json.load(sys.stdin)['access_token'])\")" >> $GITHUB_OUTPUT
+          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+          echo "access_token=$ACCESS" >> $GITHUB_OUTPUT
           NEW_REFRESH=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
           echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
 
