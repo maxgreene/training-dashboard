@@ -1,0 +1,21 @@
+name: Keepalive
+
+on:
+  schedule:
+    - cron: '23 7 * * *'   # ~9 Uhr MEZ
+    - cron: '47 14 * * *'  # ~16 Uhr MEZ
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Random delay (0-30 min)
+        run: sleep $((RANDOM % 1800))
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "keepalive $(date -u +%Y-%m-%dT%H:%M)"
+          git push
