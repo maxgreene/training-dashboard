@@ -9,11 +9,11 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_FILE = "data/activities.json"
 
 # Bump this when analysis logic changes — forces reprocessing of all activities
-ANALYSIS_VERSION = 7
+ANALYSIS_VERSION = 8
 
 # Only import activities from this date onwards (plan start date)
-PLAN_START_DATE = "2026-05-06"
-PLAN_START_EPOCH = int(datetime(2026, 5, 6, 0, 0, 0, tzinfo=timezone.utc).timestamp())
+PLAN_START_DATE = "2026-05-04"
+PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 
 def api(path):
     req = urllib.request.Request(f"https://www.strava.com/api/v3{path}", headers=HEADERS)
