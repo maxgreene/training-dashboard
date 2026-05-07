@@ -12,10 +12,13 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Random delay (0-30 min)
         run: sleep $((RANDOM % 1800))
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git commit --allow-empty -m "keepalive $(date -u +%Y-%m-%dT%H:%M)"
           git push
