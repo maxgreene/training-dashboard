@@ -2,7 +2,7 @@
 
 Automatisches Cycling-Dashboard mit Strava-Integration.
 
-## Setup (einmalig, ~10 Minuten)
+## Setup
 
 ### 1. GitHub Repo erstellen
 - Geh auf github.com → "New repository"
