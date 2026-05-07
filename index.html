@@ -7,144 +7,142 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root {
-  --bg:#1e1c1a; --bg2:#252220; --bg3:#161412;
-  --border:#302d2a; --border2:#2a2825;
-  --text-primary:#e8e4dc; --text-secondary:#908880; --text-tertiary:#4a4540;
-  --accent:#c8b87a; --accent-bg:#2a2618; --accent-border:#3a3020;
-  --green:#5a8050; --red:#a06050;
+  --bg:#181818; --bg2:#1e1e1e; --bg3:#111;
+  --border:#282828; --border2:#222;
+  --t1:#f0f0f0; --t2:#b0b0b0; --t3:#888; --t4:#777; --t5:#666;
+  --active:#e0e0e0;
+  --green:#5a8a52; --red:#a08080;
   --z1:#34d399; --z2:#60a5fa; --z3:#fbbf24; --z4:#f97316; --z5:#ef4444;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text-primary);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh;}
+body{background:#141414;color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
 
 /* NAV */
-nav{background:var(--bg3);height:50px;display:flex;align-items:center;padding:0 20px;gap:32px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;}
-.nav-brand{font-size:13px;font-weight:600;color:var(--text-primary);letter-spacing:0.3px;}
+nav{background:var(--bg3);height:52px;display:flex;align-items:center;padding:0 20px;gap:32px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;}
+.nav-brand{font-size:13px;font-weight:600;color:var(--t1);}
 .nav-tabs{display:flex;margin-left:auto;}
-.tab{font-size:11px;font-weight:500;color:var(--text-tertiary);padding:0 16px;height:50px;display:flex;align-items:center;letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid transparent;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif;transition:color 0.15s;}
-.tab:hover:not(.active){color:var(--text-secondary);}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.nav-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-tertiary);}
+.tab{font-size:11px;font-weight:500;color:var(--t5);padding:0 16px;height:52px;display:flex;align-items:center;letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid transparent;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif;transition:color 0.15s;}
+.tab:hover:not(.active){color:var(--t3);}
+.tab.active{color:var(--active);border-bottom-color:var(--active);}
+.nav-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);}
 
 /* LAYOUT */
 main{padding:20px;max-width:1000px;margin:0 auto;}
 .page{display:none;}.page.active{display:block;}
-#loading{text-align:center;padding:60px 20px;color:var(--text-tertiary);font-family:'JetBrains Mono',monospace;font-size:11px;}
+#loading{text-align:center;padding:60px 20px;color:var(--t4);font-family:'JetBrains Mono',monospace;font-size:12px;}
 
 /* STATS */
 .stats{display:flex;gap:6px;margin-bottom:24px;}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:14px 16px;flex:1;}
-.stat-label{font-size:10px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
-.stat-val{font-size:22px;font-weight:700;color:var(--text-primary);line-height:1;}
-.stat-val span{font-size:12px;font-weight:400;color:var(--text-secondary);margin-left:2px;}
-.stat-sub{font-size:10px;color:var(--text-tertiary);margin-top:4px;}
-.stat-val.accent{color:var(--accent);}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:14px 18px;flex:1;}
+.stat-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
+.stat-val{font-size:23px;font-weight:700;color:var(--t1);line-height:1;}
+.stat-val span{font-size:13px;font-weight:400;color:var(--t5);margin-left:2px;}
+.stat-sub{font-size:11px;color:var(--t5);margin-top:4px;}
 
 /* SECTION HEADER */
 .sh{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;margin-top:20px;}
-.sh:first-child{margin-top:0;}
-.sh-title{font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
-.sh-meta{font-size:11px;color:var(--text-tertiary);}
-.sh-line{flex:1;height:1px;background:var(--border2);}
+.sh-title{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
+.sh-meta{font-size:12px;color:var(--t4);}
+.sh-line{flex:1;height:1px;background:#252525;}
 
-/* ACTIVITY LIST (Rides tab) */
+/* ACTIVITY LIST */
 .act-list{display:flex;flex-direction:column;gap:2px;margin-bottom:24px;}
-.act-row{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px 16px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color 0.15s;}
-.act-row:hover{border-color:var(--text-tertiary);}
-.act-row.selected{border-color:var(--accent);}
-.act-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);width:100px;flex-shrink:0;}
-.act-name{font-size:13px;font-weight:500;color:var(--text-primary);flex:1;}
-.act-metrics{display:flex;gap:18px;align-items:center;}
-.act-metric{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);}
-.act-metric strong{color:#b8b0a4;font-weight:600;}
-.act-badge{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#908060;background:var(--accent-bg);border:1px solid var(--accent-border);padding:2px 7px;border-radius:2px;white-space:nowrap;}
-
-/* MINI DONUT */
-.mini-donut{flex-shrink:0;}
+.act-row{background:var(--bg2);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.15s;}
+.act-row:hover{border-color:#444;}
+.act-row.selected{border-color:#666;}
+.act-main{padding:12px 16px;display:flex;align-items:center;gap:16px;}
+.act-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);width:104px;flex-shrink:0;}
+.act-name{font-size:13px;font-weight:500;color:var(--t1);flex:1;}
+.act-metrics{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.am{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);white-space:nowrap;}
+.am .u{color:var(--t5);font-size:11px;}
+.asep{color:#333;font-size:12px;}
+.act-badge{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--t5);background:#252525;border:1px solid #2e2e2e;padding:2px 7px;border-radius:2px;white-space:nowrap;}
+.zstrip{height:2px;display:flex;gap:1px;border-radius:0 0 2px 2px;overflow:hidden;}
+.zs{border-radius:1px;}
 
 /* CALENDAR */
 .cal-week{margin-bottom:16px;}
 .cal-week-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;}
-.cwl{font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1.5px;}
-.cwd{font-size:11px;color:var(--text-tertiary);}
-.cwv{font-size:11px;color:var(--accent);margin-left:auto;}
-.cwline{flex:1;height:1px;background:var(--border2);}
+.cwl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;}
+.cwd{font-size:12px;color:var(--t4);}
+.cwv{font-size:12px;color:var(--t4);margin-left:auto;}
+.cwline{flex:1;height:1px;background:#252525;}
 .dow-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
-.dow-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);text-align:center;padding:2px 0;}
+.dow-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t4);text-align:center;padding:2px 0;}
 .days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.day-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;min-height:95px;cursor:pointer;transition:border-color 0.15s;position:relative;}
-.day-card:hover{border-color:var(--text-tertiary);}
-.day-card.done{background:#1e2218;border-color:#2a3020;}
-.day-card.dimmed{opacity:0.3;cursor:default;}
-.day-card.past{opacity:0.18;cursor:default;}
-.day-card.today-c{border-color:var(--accent);}
-.day-card.sel{border-color:var(--accent);border-width:2px;}
-.dc-date{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary);margin-bottom:6px;letter-spacing:0.5px;}
-.dc-type{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#908060;margin-bottom:5px;}
-.dc-type.rest{color:var(--text-tertiary);font-weight:500;}
+.day-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;min-height:96px;cursor:pointer;transition:border-color 0.15s;position:relative;}
+.day-card:hover{border-color:#444;}
+.day-card.done{background:#1a1e1a;border-color:#263026;}
+.day-card.dimmed{opacity:0.25;cursor:default;}
+.day-card.past{opacity:0.15;cursor:default;}
+.day-card.today-c{border-color:var(--t3);}
+.day-card.sel{border-color:#666;border-width:2px;}
+.dc-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);margin-bottom:6px;}
+.dc-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3);margin-bottom:5px;}
+.dc-type.rest{color:var(--t5);font-weight:500;}
 .dc-type.test{color:var(--red);}
-.dc-type.check{color:var(--accent);}
-.dc-title{font-size:11px;font-weight:500;color:#b8b0a4;line-height:1.35;}
-.dc-detail{font-size:10px;color:var(--text-secondary);margin-top:4px;line-height:1.35;}
-.dc-done{font-size:9px;font-weight:600;color:var(--green);margin-top:5px;}
+.dc-type.check{color:var(--t3);}
+.dc-title{font-size:12px;font-weight:500;color:var(--t2);line-height:1.35;}
+.dc-detail{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.35;}
+.dc-done{font-size:10px;font-weight:600;color:var(--green);margin-top:5px;}
 
-/* WEEK DETAIL PANEL */
-.week-detail{background:#1a1917;border:1px solid var(--accent);border-radius:4px;padding:16px;margin-top:6px;display:none;}
+/* WEEK DETAIL */
+.week-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:6px;display:none;}
 .week-detail.open{display:block;}
-.wd-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:12px;}
+.wd-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:12px;}
 
-/* DETAIL (shared) */
+/* DETAIL STATS */
 .detail-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
 .ds{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;flex:1;min-width:80px;}
-.ds-label{font-size:9px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
-.ds-val{font-size:18px;font-weight:700;color:var(--text-primary);}
-.ds-val span{font-size:11px;font-weight:400;color:var(--text-secondary);}
-.ds-sub{font-size:10px;color:var(--text-tertiary);margin-top:3px;}
+.ds-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+.ds-val{font-size:18px;font-weight:700;color:var(--t1);}
+.ds-val span{font-size:12px;font-weight:400;color:var(--t4);}
+.ds-sub{font-size:11px;color:var(--t5);margin-top:3px;}
 
 /* POWER CURVE */
 .pcurve{display:flex;align-items:flex-end;gap:4px;height:70px;margin:8px 0 12px;}
 .pcb-w{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .pcb{width:100%;border-radius:2px 2px 0 0;opacity:0.85;}
-.pcb-val{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-primary);text-align:center;}
-.pcb-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-tertiary);text-align:center;}
+.pcb-val{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t1);text-align:center;}
+.pcb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);text-align:center;}
 
 /* ZONE BARS */
 .zone-dist{display:flex;flex-direction:column;gap:5px;margin:8px 0 12px;}
 .zd-row{display:flex;align-items:center;gap:8px;}
-.zd-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-secondary);width:60px;text-align:right;flex-shrink:0;}
-.zd-bg{flex:1;background:#252220;border-radius:2px;height:7px;}
-.zd-bar{height:7px;border-radius:2px;transition:width 0.5s ease;}
-.zd-pct{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary);width:32px;}
+.zd-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:65px;text-align:right;flex-shrink:0;}
+.zd-bg{flex:1;background:#252525;border-radius:2px;height:6px;}
+.zd-bar{height:6px;border-radius:2px;}
+.zd-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);width:34px;}
 
 /* CHART */
 .chart-wrap{position:relative;margin-bottom:14px;}
 canvas.chart{width:100%;display:block;}
 
 /* INSIGHTS */
-.insight{border-left:2px solid var(--border);border-radius:3px;padding:8px 11px;font-size:11px;color:var(--text-secondary);line-height:1.5;margin-bottom:5px;background:var(--bg2);}
+.insight{border-left:2px solid #333;border-radius:3px;padding:9px 12px;font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:5px;background:var(--bg2);}
 .insight.good{border-color:var(--green);}
 .insight.warn{border-color:var(--red);}
-.insight.info{border-color:var(--accent);}
-.insight strong{color:var(--text-primary);}
+.insight.info{border-color:#555;}
+.insight strong{color:var(--t1);}
 
 /* FTP BLOCK */
 .ftp-block{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;margin-bottom:20px;}
-.ftp-title{font-size:9px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.ftp-title{font-size:10px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
 .ftp-zones{display:flex;gap:6px;flex-wrap:wrap;}
 .ftp-z{background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:5px 9px;}
-.ftp-zn{font-size:9px;color:var(--text-tertiary);}
-.ftp-zv{font-size:10px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-weight:500;}
+.ftp-zn{font-size:10px;color:var(--t4);}
+.ftp-zv{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace;font-weight:500;}
 
 /* RIDES DETAIL */
-#rides-detail{background:#1a1917;border:1px solid var(--border);border-radius:4px;padding:16px;margin-top:8px;display:none;}
+#rides-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:8px;display:none;}
 #rides-detail.open{display:block;}
 
 @media(max-width:680px){
   .dow-hdr{display:none;}
   .days-grid{grid-template-columns:1fr 1fr;}
-  .day-card{min-height:80px;}
   .stats{flex-wrap:wrap;}
-  .stat{min-width:40%;}
+  .stat{min-width:45%;}
   .act-metrics{display:none;}
 }
 </style>
@@ -161,7 +159,6 @@ canvas.chart{width:100%;display:block;}
 </nav>
 <main>
   <div id="loading">Lade Daten…</div>
-
   <div class="page active" id="page-plan"></div>
   <div class="page" id="page-history"></div>
   <div class="page" id="page-rides">
@@ -173,66 +170,45 @@ canvas.chart{width:100%;display:block;}
 </main>
 
 <script>
-const FTP=240, HRMAX=175;
+const FTP=240,HRMAX=175;
 const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
 const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
-let allActivities=[], selectedRideId=null;
+let allActivities=[],selectedRideId=null;
 
-// ── MINI DONUT SVG ──
-function miniDonut(zones, size=32) {
-  if (!zones || !zones.length) return '';
-  const r=12, cx=size/2, cy=size/2, stroke=5;
-  const circ=2*Math.PI*r;
-  let offset=0;
-  let segs='';
-  const total=zones.reduce((s,v)=>s+v,0)||100;
-  zones.forEach((pct,i)=>{
-    if(pct<1) return;
-    const dash=(pct/total)*circ;
-    segs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ZC[i]}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" opacity="0.85"/>`;
-    offset+=dash;
-  });
-  return `<svg width="${size}" height="${size}" class="mini-donut" style="flex-shrink:0">${segs}</svg>`;
-}
-
-// ── PLAN DATA ──
 const PLAN_WEEKS=[
   {label:'WOCHE 1',dates:'04.–10. Mai',vol:'~4.5h · Start',days:[
-    {date:'04.05',dow:'Mo',type:'rest',icon:'',title:'Vergangen',desc:'',det:'',past:true},
-    {date:'05.05',dow:'Di',type:'comm',icon:'',title:'Commute',desc:'Morgencommute ✓',det:'9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
-    {date:'06.05',dow:'Mi',type:'comm',icon:'',title:'Commute × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollst.',done:true},
-    {date:'07.05',dow:'Do',type:'roll',icon:'',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',today:true},
-    {date:'08.05',dow:'Fr',type:'rest',icon:'',title:'Ruhe',desc:'Komplette Pause',det:'Kein Rad. Beine regenerieren.',dimmed:true},
-    {date:'09.05',dow:'Sa',type:'aus',icon:'',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · Z2 · 144–180W · HR unter 145'},
-    {date:'10.05',dow:'So',type:'rest',icon:'',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren.',dimmed:true},
+    {date:'04.05',type:'rest',title:'Vergangen',desc:'',det:'',past:true},
+    {date:'05.05',type:'comm',title:'Commute',desc:'Morgencommute ✓',det:'9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
+    {date:'06.05',type:'comm',title:'Commute × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollst.',done:true},
+    {date:'07.05',type:'roll',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',today:true},
+    {date:'08.05',type:'rest',title:'Ruhe',desc:'Komplette Pause',det:'Kein Rad.',dimmed:true},
+    {date:'09.05',type:'aus',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · Z2 · 144–180W · HR unter 145'},
+    {date:'10.05',type:'rest',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren.',dimmed:true},
   ]},
   {label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5.5h · Basis festigen',days:[
-    {date:'11.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138'},
-    {date:'12.05',dow:'Di',type:'roll',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten'},
-    {date:'13.05',dow:'Mi',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
-    {date:'14.05',dow:'Do',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-    {date:'15.05',dow:'Fr',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Samstag'},
-    {date:'16.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
-    {date:'17.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
+    {date:'11.05',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138'},
+    {date:'12.05',type:'roll',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten'},
+    {date:'13.05',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
+    {date:'14.05',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+    {date:'15.05',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Samstag'},
+    {date:'16.05',type:'aus',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
+    {date:'17.05',type:'rest',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
   ]},
   {label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest',days:[
-    {date:'18.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
-    {date:'19.05',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen frei vor Test'},
-    {date:'20.05',dow:'Mi',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad. Ausgeruht in den Test.',dimmed:true},
-    {date:'21.05',dow:'Do',type:'test',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
-    {date:'22.05',dow:'Fr',type:'comm',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern.',dimmed:true},
-    {date:'23.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · mit neuen Testzonen · Genuss'},
-    {date:'24.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
+    {date:'18.05',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
+    {date:'19.05',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen frei vor Test'},
+    {date:'20.05',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
+    {date:'21.05',type:'test',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
+    {date:'22.05',type:'comm',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern.',dimmed:true},
+    {date:'23.05',type:'aus',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · mit neuen Testzonen'},
+    {date:'24.05',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
   ]},
   {label:'CHECKPOINT #1',dates:'25. Mai',vol:'→ Phase 2',days:[
-    {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Phase 2 wird gebaut'},
+    {date:'25.05',type:'check',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Phase 2 wird gebaut'},
     ...[1,2,3,4,5,6].map(()=>({empty:true})),
   ]},
 ];
 
-function typeClass(t){return{rest:'rest',test:'test',check:'check'}[t]||'';}
-
-// ── NAV ──
 function showPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -240,11 +216,11 @@ function showPage(name,btn){
   btn.classList.add('active');
 }
 
-// ── HELPERS ──
 function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
 function fmtDist(m){return(m/1000).toFixed(1)+' km';}
 function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
 function actDur(a){return a.power_duration_sec||a.duration_sec;}
+function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
 
 // ── PLAN ──
 function renderPlan(){
@@ -267,9 +243,9 @@ function renderPlan(){
       <div class="dow-hdr">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dow-label">${d}</div>`).join('')}</div>
       <div class="days-grid">`;
     week.days.forEach((d,di)=>{
-      if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.08"></div>`;return;}
+      if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.06"></div>`;return;}
+      const tc=d.type==='rest'?'rest':d.type==='test'?'test':d.type==='check'?'check':'';
       const cls=['day-card',d.past?'past':d.done?'done':d.dimmed?'dimmed':d.today?'today-c':''].filter(Boolean).join(' ');
-      const tc=typeClass(d.type||'');
       html+=`<div class="${cls}" onclick="togglePlanDetail(${wi},${di},this)">
         <div class="dc-date">${d.date}</div>
         <div class="dc-type ${tc}">${d.title}</div>
@@ -285,17 +261,17 @@ function renderPlan(){
 function togglePlanDetail(wi,di,cardEl){
   const panel=document.getElementById(`plan-detail-${wi}`);
   const d=PLAN_WEEKS[wi].days[di];
-  if(!d||d.past||d.empty||d.dimmed) return;
+  if(!d||d.past||d.empty||d.dimmed)return;
   const allCards=cardEl.parentElement.querySelectorAll('.day-card');
   const was=cardEl.classList.contains('sel');
   allCards.forEach(c=>c.classList.remove('sel'));
   if(was){panel.classList.remove('open');panel.innerHTML='';return;}
   cardEl.classList.add('sel');
-  const [day,mon]=d.date.split('.');
+  const[day,mon]=d.date.split('.');
   const act=allActivities.find(a=>a.date===`2026-${mon}-${day}`);
   let html=`<div class="wd-title">${d.title} · ${d.date}</div>`;
   html+=`<div class="insight info"><strong>Geplant:</strong> ${d.det}</div>`;
-  if(act) html+=`<div class="insight good"><strong>Gefahren:</strong> ${act.avg_power?`Ø ${act.avg_power}W · NP ${act.np||'—'}W · `:''}${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}</div>`;
+  if(act)html+=`<div class="insight good"><strong>Gefahren:</strong> ${act.avg_power?`Ø ${act.avg_power}W · NP ${act.np||'—'}W · `:''}${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}</div>`;
   else html+=`<div class="insight">Noch nicht gefahren.</div>`;
   panel.innerHTML=html;
   panel.classList.add('open');
@@ -318,8 +294,8 @@ function renderHistory(){
       </div>
       <div class="dow-hdr">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dow-label">${d}</div>`).join('')}</div>
       <div class="days-grid">`;
-    week.days.forEach((d,di)=>{
-      if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.08"></div>`;return;}
+    week.days.forEach((d)=>{
+      if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.06"></div>`;return;}
       const[day,mon]=d.date.split('.');
       const iso=`2026-${mon}-${day}`;
       const today=new Date().toISOString().slice(0,10);
@@ -331,21 +307,17 @@ function renderHistory(){
       dayActs.forEach(act=>{
         const zones=act.power_zones||act.hr_zones||[];
         html+=`<div class="day-card done" onclick="toggleHistDetail(${wi},'${act.id}',this)">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <div class="dc-date">${d.date} ${act.start_time}</div>
-              <div class="dc-type">${act.name}</div>
-              <div class="dc-detail">${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}${!act.gps_ok?' ⚠️':''}</div>
-              <div class="dc-detail">${act.avg_power?`${act.avg_power}W · NP ${act.np||'—'}W`:''}${act.avg_hr?' · '+act.avg_hr+' bpm':''}</div>
-            </div>
-            ${zones.length?miniDonut(zones,34):''}
-          </div>
+          <div class="dc-date">${d.date} ${act.start_time}</div>
+          <div class="dc-type">${act.name}</div>
+          <div class="dc-detail">${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}${!act.gps_ok?' ⚠️':''}</div>
+          <div class="dc-detail">${act.avg_power?`${act.avg_power}W · NP ${act.np||'—'}W`:''}${act.avg_hr?' · '+act.avg_hr+' bpm':''}</div>
+          ${zstrip(zones)}
         </div>`;
       });
     });
     html+=`</div><div class="week-detail" id="hist-detail-${wi}"></div></div>`;
   });
-  el.innerHTML=html||'<div id="loading">Noch keine Aktivitäten.</div>';
+  el.innerHTML=html||'<p style="color:#666;padding:20px">Noch keine Aktivitäten.</p>';
 }
 
 function toggleHistDetail(wi,actId,cardEl){
@@ -363,7 +335,7 @@ function toggleHistDetail(wi,actId,cardEl){
   setTimeout(()=>drawChart(act),50);
 }
 
-// ── RIDES TAB ──
+// ── RIDES ──
 function renderSummary(){
   const recent=allActivities.filter(a=>a.date>='2026-05-05');
   const hours=recent.reduce((s,a)=>s+actDur(a),0)/3600;
@@ -375,25 +347,28 @@ function renderSummary(){
     <div class="stat"><div class="stat-label">Stunden</div><div class="stat-val">${hours.toFixed(1)}<span> h</span></div><div class="stat-sub">Gesamtvolumen</div></div>
     <div class="stat"><div class="stat-label">Ø Watt</div><div class="stat-val">${avgP?Math.round(avgP):'—'}<span> W</span></div><div class="stat-sub">mit Powermeter</div></div>
     <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP||'—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
-    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val accent">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>`;
+    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>`;
 }
 
 function renderActivityList(){
-  const zones=a=>a.power_zones||a.hr_zones||[];
-  document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>`
-    <div class="act-row${selectedRideId===a.id?' selected':''}" onclick="selectRide(${a.id})">
-      <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
-      <div class="act-name">${a.name}</div>
-      <div class="act-metrics">
-        ${a.distance_m?`<div class="act-metric"><strong>${fmtDist(a.distance_m)}</strong>${!a.gps_ok?' ⚠️':''}</div>`:''}
-        <div class="act-metric"><strong>${fmtDur(actDur(a))}</strong></div>
-        ${a.avg_power?`<div class="act-metric">Ø <strong>${a.avg_power}W</strong> · NP <strong>${a.np||'—'}W</strong></div>`:''}
-        ${a.avg_hr?`<div class="act-metric">♥ <strong>${a.avg_hr} bpm</strong></div>`:''}
-        ${a.elevation_m?`<div class="act-metric">↑ <strong>${a.elevation_m}m</strong></div>`:''}
+  document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>{
+    const zones=a.power_zones||a.hr_zones||[];
+    return`<div class="act-row${selectedRideId===a.id?' selected':''}" onclick="selectRide(${a.id})">
+      <div class="act-main">
+        <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
+        <div class="act-name">${a.name}</div>
+        <div class="act-metrics">
+          ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
+          <div class="am">${fmtDur(actDur(a))}</div>
+          ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
+          ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
+          ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
+        </div>
+        <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
       </div>
-      ${zones(a).length?miniDonut(zones(a),32):''}
-      <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
-    </div>`).join('');
+      ${zstrip(zones)}
+    </div>`;
+  }).join('');
 }
 
 function selectRide(id){
@@ -414,19 +389,19 @@ function buildDetail(act){
   const hasStreams=act.streams&&(act.streams.watts?.length||act.streams.hr?.length);
   let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)}</div>`;
   h+=`<div class="detail-stats">
-    ${act.avg_power?`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span>W</span></div>${act.np?`<div class="ds-sub">NP: ${act.np}W</div>`:''}</div>`:''}
-    ${act.avg_hr?`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span>bpm</span></div><div class="ds-sub">Max: ${act.max_hr}</div></div>`:''}
+    ${act.avg_power?`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div>${act.np?`<div class="ds-sub">NP: ${act.np}W</div>`:''}</div>`:''}
+    ${act.avg_hr?`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div><div class="ds-sub">Max: ${act.max_hr}</div></div>`:''}
     <div class="ds" style="${!act.gps_ok?'border-color:var(--red)':''}">
       <div class="ds-label">Distanz${!act.gps_ok?' ⚠️':''}</div>
       <div class="ds-val">${act.distance_m?fmtDist(act.distance_m):'—'}</div>
       <div class="ds-sub">${fmtDur(actDur(act))}${act.kilojoules?' · '+act.kilojoules+'kJ':''}</div>
     </div>
-    ${act.elevation_m?`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span>m</span></div></div>`:''}
+    ${act.elevation_m?`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`:''}
     ${act.decoupling_pct!==undefined?`<div class="ds"><div class="ds-label">HR/W Drift</div><div class="ds-val" style="color:${act.decoupling_pct<5?'var(--green)':'var(--red)'}">${act.decoupling_pct}<span>%</span></div><div class="ds-sub">${act.decoupling_pct<5?'gut ✓':'hoch'}</div></div>`:''}
   </div>`;
   if(act.power_curve&&Object.keys(act.power_curve).length){
     const dur=[5,10,30,60,120,300,600,1200],lbl=['5s','10s','30s','1m','2m','5m','10m','20m'];
-    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#6b7194','#6b7194'];
+    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#777','#555'];
     const vals=dur.map(d=>act.power_curve[String(d)]||null).filter(Boolean);
     const maxV=Math.max(...vals);
     h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
@@ -440,12 +415,12 @@ function buildDetail(act){
     zones.forEach((p,i)=>{h+=`<div class="zd-row"><div class="zd-lbl">${ZN[i]}</div><div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div><div class="zd-pct">${p}%</div></div>`;});
     h+=`</div>`;
   }
-  if(hasStreams) h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Verlauf</div><div class="sh-line"></div></div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
+  if(hasStreams)h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Verlauf</div><div class="sh-line"></div></div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
   h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
-  if(act.np&&act.np>FTP*1.05) h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für hügelige Strecken ohne Pausen.</div>`;
-  if(act.decoupling_pct!==undefined&&act.decoupling_pct<5) h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
-  if(act.avg_power&&act.avg_power<FTP*0.75) h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — genau richtig für Phase 1.</div>`;
-  if(!act.gps_ok) h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% der Fahrt getrackt. Distanz nicht zuverlässig.</div>`;
+  if(act.np&&act.np>FTP*1.05)h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für hügelige Strecken.</div>`;
+  if(act.decoupling_pct!==undefined&&act.decoupling_pct<5)h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
+  if(act.avg_power&&act.avg_power<FTP*0.75)h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — genau richtig für Phase 1.</div>`;
+  if(!act.gps_ok)h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% der Fahrt getrackt. Distanz nicht zuverlässig.</div>`;
   return h;
 }
 
@@ -464,12 +439,22 @@ function drawChart(act){
   function xOf(t){return pL+(t/maxT)*cW;}
   function yP(p){return pT+cH-(p/maxP)*cH;}
   function yH(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-  if(pw.length){ctx.strokeStyle='rgba(200,184,122,0.25)';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(200,184,122,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);}
-  ctx.strokeStyle='#2a2825';ctx.lineWidth=1;
-  [100,200,300,400,500].forEach(p=>{if(!pw.length)return;ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#4a4540';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p,pL-3,yP(p)+3);});
-  if(pw.length){ctx.fillStyle='rgba(200,184,122,0.1)';ctx.strokeStyle='rgba(200,184,122,0.7)';ctx.lineWidth=1.5;ctx.beginPath();ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();ctx.fill();}
-  if(hr.length){ctx.strokeStyle='rgba(144,136,128,0.7)';ctx.lineWidth=1.5;ctx.beginPath();ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();}
-  ctx.fillStyle='#4a4540';ctx.font='8px monospace';ctx.textAlign='center';
+  ctx.strokeStyle='#333';ctx.lineWidth=1;
+  [100,200,300,400,500].forEach(p=>{if(!pw.length)return;ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p,pL-3,yP(p)+3);});
+  if(pw.length){
+    ctx.strokeStyle='rgba(180,180,180,0.25)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);
+    ctx.fillStyle='rgba(176,176,176,0.1)';ctx.strokeStyle='rgba(176,176,176,0.7)';ctx.lineWidth=1.5;ctx.beginPath();
+    ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.stroke();ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();ctx.fill();
+  }
+  if(hr.length){
+    ctx.strokeStyle='rgba(136,136,136,0.6)';ctx.lineWidth=1.5;ctx.beginPath();
+    ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.stroke();
+  }
+  ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='center';
   const ticks=Math.min(6,Math.floor(maxT/60));
   for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
 }
