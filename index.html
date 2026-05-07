@@ -305,7 +305,7 @@ function renderHistory(){
         return;
       }
       dayActs.forEach(act=>{
-        const zones=act.power_zones||act.hr_zones||[];
+        const zones=(act.power_zones&&act.power_zones.length)?act.power_zones:(act.hr_zones&&act.hr_zones.length)?act.hr_zones:[];
         html+=`<div class="day-card done" onclick="toggleHistDetail(${wi},'${act.id}',this)">
           <div class="dc-date">${d.date} ${act.start_time}</div>
           <div class="dc-type">${act.name}</div>
@@ -352,7 +352,7 @@ function renderSummary(){
 
 function renderActivityList(){
   document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>{
-    const zones=a.power_zones||a.hr_zones||[];
+    const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
     return`<div class="act-row${selectedRideId===a.id?' selected':''}" onclick="selectRide(${a.id})">
       <div class="act-main">
         <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
