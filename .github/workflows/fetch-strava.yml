@@ -2,7 +2,7 @@ name: Fetch Strava Activities
 
 on:
   schedule:
-    - cron: '0 * * * *'   # stündlich
+   - cron: '*/15 * * * *'   # stündlich
   workflow_dispatch:        # manuell auslösbar
 
 jobs:
