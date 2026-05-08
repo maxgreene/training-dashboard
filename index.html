@@ -166,7 +166,6 @@ canvas.chart{width:100%;display:block;}
   <div class="nav-brand">Wolf · Training</div>
   <div class="nav-tabs">
     <button class="tab active" onclick="showPage('plan',this)">Plan</button>
-    <button class="tab" onclick="showPage('history',this)">History</button>
     <button class="tab" onclick="showPage('rides',this)">Rides</button>
   </div>
   <div class="nav-meta" id="updated-at"></div>
@@ -174,8 +173,7 @@ canvas.chart{width:100%;display:block;}
 <main>
   <div id="loading">Lade Daten…</div>
   <div class="page active" id="page-plan"></div>
-  <div class="page" id="page-history"></div>
-  <div class="page" id="page-rides">
+<div class="page" id="page-rides">
     <div class="stats" id="summary-stats"></div>
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
     <div class="act-list" id="activity-list"></div>
@@ -189,138 +187,139 @@ const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 let allActivities=[],selectedRideId=null;
 
 const PLAN_WEEKS=[
-  // ─── PHASE 1 ───────────────────────────────────────
+  // ─── PHASE 1 · Reaktivierung ───────────────────────
   {
-    phase:'PHASE 1 · Reaktivierung',phaseDesc:'Aerobe Basis aufbauen · kein Vollgas · FTP-Test Ende Mai',
-    label:'WOCHE 1',dates:'04.–10. Mai',vol:'~4.5h',
+    phase:'PHASE 1 · Reaktivierung',phaseDesc:'Aerobe Basis · Commute-Rhythmus etablieren · FTP-Test Ende Mai',
+    label:'WOCHE 1',dates:'04.–10. Mai',vol:'~5h',
     days:[
-      {date:'04.05',dow:'Mo',type:'comm',title:'Commute',desc:'Morgen- & Abendcommute',det:'Gravel · HR only · locker ankommen',done:true},
-      {date:'05.05',dow:'Di',type:'comm',title:'Commute',desc:'Morgen- & Abendcommute ✓',det:'Morgen 9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
-      {date:'06.05',dow:'Mi',type:'comm',title:'Commute ⚡ × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollst.',done:true},
-      {date:'07.05',dow:'Do',type:'roll',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',done:true},
-      {date:'08.05',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad. Beine regenerieren.',dimmed:true},
-      {date:'09.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · Z2 · 144–180W · HR unter 145'},
-      {date:'10.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren.',dimmed:true},
+      {date:'04.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · locker ankommen · erster Tag mit PM'},
+      {date:'05.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z2 · Basischeck mit Powermeter',done:true},
+      {date:'06.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · gleichmäßiges Watt · HR unter 145',done:true},
+      {date:'07.05',type:'roll',title:'Commute + 🎯 Rolle',desc:'Kurzer Weg + Rolleneinheit',det:'Morgen kurz Z1 · Abends: 45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',done:true},
+      {date:'08.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
+      {date:'09.05',type:'aus',title:'🌄 Ausfahrt',desc:'Erste längere Fahrt',det:'60–75 min · reines Z2 · 144–180W · HR unter 145 · Pacing üben'},
+      {date:'10.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · Dehnen · Spazieren',dimmed:true},
     ]
   },
   {
     label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5.5h',
     days:[
-      {date:'11.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138'},
-      {date:'12.05',dow:'Di',type:'roll',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten'},
-      {date:'13.05',dow:'Mi',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
-      {date:'14.05',dow:'Do',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-      {date:'15.05',dow:'Fr',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Samstag'},
-      {date:'16.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
-      {date:'17.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
+      {date:'11.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Wochenbeginn mit Volumen'},
+      {date:'12.05',type:'roll',title:'Commute + 🎯 Rolle',desc:'Kurzer Weg + Rolleneinheit',det:'Morgen kurz · Abends: 50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten · 10\' auslaufen'},
+      {date:'13.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · oberes Z2 · Watt gleichmäßig halten'},
+      {date:'14.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · locker'},
+      {date:'15.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
+      {date:'16.05',type:'aus',title:'🌄 Ausfahrt',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt aber kein Vollgas · Ø HR unter 145'},
+      {date:'17.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · Beine hoch',dimmed:true},
     ]
   },
   {
-    label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest',
+    label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest Sa',
     days:[
-      {date:'18.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
-      {date:'19.05',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen frei vor Test'},
-      {date:'20.05',dow:'Mi',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
-      {date:'21.05',dow:'Do',type:'test',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
-      {date:'22.05',dow:'Fr',type:'comm',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern.',dimmed:true},
-      {date:'23.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · mit neuen Testzonen · Genuss'},
-      {date:'24.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
+      {date:'18.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · letzte harte Woche vor Taper'},
+      {date:'19.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z2 · locker'},
+      {date:'20.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · tapern vor Test'},
+      {date:'21.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · sehr locker · morgen Test'},
+      {date:'22.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · Beine schonen'},
+      {date:'23.05',type:'test',title:'🔬 Rampentest',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen · frisch und motiviert antreten'},
+      {date:'24.05',type:'rest',title:'Pause',desc:'Erholung nach Test',det:'Kein Rad · Checkpoint morgen',dimmed:true},
     ]
   },
-  // ─── PHASE 2 ───────────────────────────────────────
+  // ─── PHASE 2 · Aufbau ───────────────────────────────
   {
-    phase:'PHASE 2 · Aufbau',phaseDesc:'Sweetspot-Arbeit · längere Ausfahrten · Intensität steigt',
-    checkpoint:{label:'CHECKPOINT #1',det:'Rampentest-Ergebnis · Zonen aktualisieren · Phase 2 beginnt'},
+    phase:'PHASE 2 · Aufbau',phaseDesc:'Sweetspot-Reize · mehr Volumen · Intensität steigt kontrolliert',
+    checkpoint:{label:'CHECKPOINT #1 · 25. Mai',det:'Rampentest-Ergebnis auswerten · Zonen aktualisieren · Plan Phase 2 bestätigen'},
     label:'WOCHE 4',dates:'25.–31. Mai',vol:'~6h',
     days:[
-      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Zonen werden aktualisiert'},
-      {date:'26.05',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · nach Checkpoint: locker bleiben'},
-      {date:'27.05',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Erste Sweetspot',det:'55 min · 10\' Z1 · 2×10\' Sweetspot 185–200W (5\' Pause) · 10\' auslaufen'},
-      {date:'28.05',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · stabiles Z2'},
-      {date:'29.05',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
-      {date:'30.05',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
-      {date:'31.05',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Hügel mit Biss',det:'90–100 min · Z2 Basis · Anstiege im oberen Z3 angehen'},
+      {date:'25.05',type:'check',title:'📊 Checkpoint #1',desc:'Analyse + Commute kurz',det:'Rampentest-Ergebnis · neue Zonen · danach kurzer Commute Z1'},
+      {date:'26.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · erste Woche Phase 2 · Volumen aufbauen'},
+      {date:'27.05',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 55 min · 10\' Z1 · 2×10\' Sweetspot 185–200W (5\' Pause) · 10\' auslaufen'},
+      {date:'28.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Erholung nach Sweetspot'},
+      {date:'29.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
+      {date:'30.05',type:'aus',title:'🌄 Ausfahrt',desc:'Hügel mit Biss',det:'90–100 min · Z2 Basis · Anstiege kurz im Z3 angehen · Pacing üben'},
+      {date:'31.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad',dimmed:true},
     ]
   },
   {
     label:'WOCHE 5',dates:'01.–07. Jun',vol:'~6.5h',
     days:[
-      {date:'01.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2'},
-      {date:'02.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-      {date:'03.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Sweetspot länger',det:'60 min · 10\' Z1 · 2×15\' Sweetspot 190–205W (5\' Pause) · 10\' auslaufen'},
-      {date:'04.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg Z2',det:'Beide Richtungen · gleichmäßig · HR unter 148'},
-      {date:'05.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-      {date:'06.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
-      {date:'07.06',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Echte Berge',det:'100–120 min · Z2 Basis · gezielte Anstiege · Pacing üben'},
+      {date:'01.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Volumen Wochenbeginn'},
+      {date:'02.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · locker'},
+      {date:'03.06',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 60 min · 10\' Z1 · 2×15\' Sweetspot 190–205W (5\' Pause) · 10\' auslaufen'},
+      {date:'04.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · aktive Erholung nach Sweetspot'},
+      {date:'05.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
+      {date:'06.06',type:'aus',title:'🌄 Ausfahrt',desc:'Echte Berge',det:'100–120 min · Z2 Basis · gezielte Anstiege · Pacing auf dem Berg üben'},
+      {date:'07.06',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad',dimmed:true},
     ]
   },
   {
-    label:'WOCHE 6',dates:'08.–14. Jun',vol:'~6h · 4DP-Test',
+    label:'WOCHE 6',dates:'08.–14. Jun',vol:'~5.5h · 4DP-Test Sa',
     days:[
-      {date:'08.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Woche ruhig beginnen'},
-      {date:'09.06',dow:'Di',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
-      {date:'10.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Sweetspot + Schwelle',det:'60 min · 10\' Z1 · 3×10\' Sweetspot 195–210W (5\' Pause) · 10\' auslaufen'},
-      {date:'11.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg Z2',det:'Beide Richtungen · stabil'},
-      {date:'12.06',dow:'Fr',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
-      {date:'13.06',dow:'Sa',type:'test',title:'4DP-Test ⚡',desc:'Voller Leistungstest',det:'NM · AC · MAP · FTP — ~75 min gesamt · frisch antreten · echte Trainingszonen für Phase 3'},
-      {date:'14.06',dow:'So',type:'rest',title:'Erholung',desc:'Sehr locker',det:'Morgen: Checkpoint #2.',dimmed:true},
+      {date:'08.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · letzte Aufbaueinheit'},
+      {date:'09.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z2'},
+      {date:'10.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · tapern'},
+      {date:'11.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · sehr locker · übermorgen Test'},
+      {date:'12.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · Beine frisch halten'},
+      {date:'13.06',type:'test',title:'🔬 4DP-Test',desc:'Voller Leistungstest',det:'~75 min gesamt · NM (5 Sek) · AC (1 Min) · MAP (5 Min) · FTP (20 Min) · frisch antreten · ergibt echte Zonen für Phase 3'},
+      {date:'14.06',type:'rest',title:'Pause',desc:'Erholung nach Test',det:'Kein Rad · Checkpoint morgen',dimmed:true},
     ]
   },
-  // ─── PHASE 3 ───────────────────────────────────────
+  // ─── PHASE 3 · Form & Peak ──────────────────────────
   {
-    phase:'PHASE 3 · Form & Peak',phaseDesc:'VO2max-Reize · Qualität vor Quantität · Bergfitness',
-    checkpoint:{label:'CHECKPOINT #2',det:'4DP-Ergebnis · Zonenupdate · Berg-Fitness Einschätzung · Phase 3 finalisieren'},
+    phase:'PHASE 3 · Form & Peak',phaseDesc:'VO2max-Reize · Qualität vor Quantität · Bergfitness simulieren',
+    checkpoint:{label:'CHECKPOINT #2 · 15. Jun',det:'4DP-Ergebnis auswerten · neue Zonen · Phase 3 finalisieren'},
     label:'WOCHE 7',dates:'15.–21. Jun',vol:'~7h',
     days:[
-      {date:'15.06',dow:'Mo',type:'check',title:'Checkpoint #2',desc:'Feedback → Phase 3',det:'4DP-Ergebnis · Zonen aktualisieren · Phase 3 wird finalisiert'},
-      {date:'16.06',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
-      {date:'17.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Erste VO2max',det:'50 min · 10\' Z1 · 5×3\' bei 115–120% FTP (3\' Pause) · 10\' auslaufen'},
-      {date:'18.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · Z2 · Erholung nach Intervallen'},
-      {date:'19.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
-      {date:'20.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
-      {date:'21.06',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Bergankurbeln',det:'120 min · Z2 Basis · 3–4 Anstiege mit Punch · je 3–5 min Z4 · Pacing Bergziel'},
+      {date:'15.06',type:'check',title:'📊 Checkpoint #2',desc:'Analyse + Commute kurz',det:'4DP-Ergebnis · Zonen aktualisieren · danach kurzer Commute Z1'},
+      {date:'16.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · erste Woche Phase 3'},
+      {date:'17.06',type:'roll',title:'Commute + 🎯 VO2max',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 50 min · 10\' Z1 · 5×3\' bei 115–120% FTP (3\' Pause) · 10\' auslaufen'},
+      {date:'18.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · aktive Erholung nach VO2max'},
+      {date:'19.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
+      {date:'20.06',type:'aus',title:'🌄 Ausfahrt',desc:'Bergankurbeln',det:'120 min · Z2 Basis · 3–4 Anstiege mit Punch · je 3–5 min Z4 · simuliert Bergziel'},
+      {date:'21.06',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad',dimmed:true},
     ]
   },
   {
     label:'WOCHE 8',dates:'22.–28. Jun',vol:'~7.5h',
     days:[
-      {date:'22.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2'},
-      {date:'23.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-      {date:'24.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Schwelle + VO2max',det:'55 min · 10\' Z1 · 3×8\' Schwelle 100–105% FTP (4\' Pause) · 10\' auslaufen'},
-      {date:'25.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · stabiles Z2'},
-      {date:'26.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-      {date:'27.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für große Ausfahrt'},
-      {date:'28.06',dow:'So',type:'aus',title:'Große Ausfahrt ⚡',desc:'Haupteinheit Phase 3',det:'150–180 min · echte Anstiege · Rennpace an den Bergen · simuliert Ziel-WE'},
+      {date:'22.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2'},
+      {date:'23.06',type:'roll',title:'Commute + 🎯 Schwelle',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 55 min · 10\' Z1 · 3×8\' Schwelle 100–105% FTP (4\' Pause) · 10\' auslaufen'},
+      {date:'24.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Erholung nach Schwelle'},
+      {date:'25.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2'},
+      {date:'26.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für große Ausfahrt'},
+      {date:'27.06',type:'aus',title:'🌄 Große Ausfahrt',desc:'Haupteinheit Phase 3',det:'150–180 min · echte Anstiege · Rennpace an den Bergen · simuliert Ziel-WE komplett'},
+      {date:'28.06',type:'rest',title:'Aktive Erholung',desc:'Sehr lockere Ausfahrt',det:'30–45 min · Z1 · Beine auslockern nach Haupteinheit'},
     ]
   },
   {
-    label:'WOCHE 9',dates:'29. Jun – 05. Jul',vol:'~5h · Taper',
+    label:'WOCHE 9',dates:'29. Jun – 05. Jul',vol:'~4h · Taper',
     days:[
-      {date:'29.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker',det:'Kurzer Weg · Z1–Z2 · Taper beginnt · Volumen runter'},
-      {date:'30.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
-      {date:'01.07',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Aktivierung',det:'35 min · 10\' Z1 · 2×5\' Z3 (5\' Pause) · 10\' auslaufen · kein Vollgas'},
-      {date:'02.07',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Sehr locker Z1',det:'Kurzer Weg · leichter als leicht'},
-      {date:'03.07',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
-      {date:'04.07',dow:'Sa',type:'aus',title:'Kurze Aktivierung',desc:'Letzte Einheit',det:'45 min · locker · 3–4 kurze Antritte (20 Sek) · frisch bleiben'},
-      {date:'05.07',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Abfahrt zum Berg-WE.',dimmed:true},
+      {date:'29.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · Taper beginnt · deutlich weniger Volumen'},
+      {date:'30.06',type:'roll',title:'Commute + 🎯 Aktivierung',desc:'Kurzer Weg + Rolle kurz',det:'Morgen kurz · Abends: 35 min · 10\' Z1 · 2×5\' Z3 (5\' Pause) · 10\' auslaufen · kein Vollgas'},
+      {date:'01.07',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · Taper'},
+      {date:'02.07',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · sehr locker'},
+      {date:'03.07',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · letzter Pendeltag'},
+      {date:'04.07',type:'aus',title:'🌄 Aktivierungsfahrt',desc:'Kurze Aktivierung',det:'45 min · locker · 3–4 Antritte à 20 Sek · Beine wecken ohne zu belasten'},
+      {date:'05.07',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · gut schlafen',dimmed:true},
     ]
   },
-  // ─── ZIEL ──────────────────────────────────────────
+  // ─── ZIEL ───────────────────────────────────────────
   {
-    phase:'ZIEL · Berg-WE',phaseDesc:'Topfit ankommen · 3,0+ W/kg · am Berg nicht abkacken 🏔️',
+    phase:'ZIEL · Berg-WE 10. Juli',phaseDesc:'Ankommen · 3,0+ W/kg · Genießen 🏔️',
     checkpoint:{label:'ZIEL 10. Juli 2026',det:'Berg-WE mit Freunden · alles was zählt',goal:true},
     label:'WOCHE 10',dates:'06.–10. Jul',vol:'Taper + Ziel',
     days:[
-      {date:'06.07',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Sehr locker Z1',det:'Letzter Pendeltag · Beine frisch halten'},
-      {date:'07.07',dow:'Di',type:'rest',title:'Aktivierung',desc:'Kurze Aktivierung',det:'20 min · locker · ein paar Antritte · fertig machen'},
-      {date:'08.07',dow:'Mi',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad. Packen.',dimmed:true},
-      {date:'09.07',dow:'Do',type:'rest',title:'Anreise',desc:'Fahrt zum Berg-WE',det:'Beine hoch, gut schlafen.',dimmed:true},
-      {date:'10.07',dow:'Fr',type:'goal',title:'🏁 ZIEL',desc:'Berg-WE Tag 1',det:'Alles was zählt. Viel Spaß!'},
+      {date:'06.07',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · letzter normaler Tag'},
+      {date:'07.07',type:'roll',title:'Commute + 🎯 Aktivierung',desc:'Kurzer Weg + Rolle mini',det:'Morgen kurz · Abends: 20 min · locker mit 2–3 kurzen Antritten · Beine frisch halten'},
+      {date:'08.07',type:'comm',title:'Commute',desc:'Letzter Pendeltag',det:'2× ~15 min · Z1 · danach Packen'},
+      {date:'09.07',type:'rest',title:'Anreise',desc:'Fahrt zum Berg-WE',det:'Beine hoch · gut essen · früh schlafen',dimmed:true},
+      {date:'10.07',type:'goal',title:'🏁 ZIEL',desc:'Berg-WE Tag 1',det:'Alles was zählt. 3,0 W/kg. Viel Spaß!'},
       {date:'',dow:'Sa',empty:true},
       {date:'',dow:'So',empty:true},
     ]
   },
 ];
+
 
 
 function showPage(name,btn){
@@ -407,64 +406,6 @@ function togglePlanDetail(wi,di,cardEl){
 }
 
 // ── HISTORY ──
-function renderHistory(){
-  const el=document.getElementById('page-history');
-  let html='';
-  PLAN_WEEKS.forEach((week,wi)=>{
-    if(!week.days)return; // skip any entry without days (shouldn't happen now)
-    const weekDates=week.days.filter(d=>d.date).map(d=>{const[day,mon]=d.date.split('.');return`2026-${mon}-${day}`;});
-    const weekActs=allActivities.filter(a=>weekDates.includes(a.date));
-    const totalSec=weekActs.reduce((s,a)=>s+actDur(a),0);
-    // DOW offset
-    html+=`<div class="cal-week">
-      <div class="cal-week-hdr">
-        <span class="cwl">${week.label}</span><span class="cwd">${week.dates}</span>
-        <div class="cwline"></div>
-        <span class="cwv">${weekActs.length?weekActs.length+' Rides · '+fmtDur(totalSec):'—'}</span>
-      </div>
-      <div class="dow-hdr">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dow-label">${d}</div>`).join('')}</div>
-      <div class="days-grid">`;
-    week.days.forEach((d)=>{
-      if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.06"></div>`;return;}
-      const[day,mon]=d.date.split('.');
-      const iso=`2026-${mon}-${day}`;
-      const today=new Date().toISOString().slice(0,10);
-      const dayActs=allActivities.filter(a=>a.date===iso);
-      if(!dayActs.length){
-        html+=`<div class="day-card ${iso<today?'past':'dimmed'}"><div class="dc-date">${d.date}</div><div class="dc-detail" style="margin-top:4px">${iso<today?'kein Ride':'—'}</div></div>`;
-        return;
-      }
-      dayActs.forEach(act=>{
-        const zones=(act.power_zones&&act.power_zones.length)?act.power_zones:(act.hr_zones&&act.hr_zones.length)?act.hr_zones:[];
-        html+=`<div class="day-card done" onclick="toggleHistDetail(${wi},'${act.id}',this)">
-          <div class="dc-date">${d.date} ${act.start_time}</div>
-          <div class="dc-type">${act.name}</div>
-          <div class="dc-detail">${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}${!act.gps_ok?' ⚠️':''}</div>
-          <div class="dc-detail">${act.avg_power?`${act.avg_power}W · NP ${act.np||'—'}W`:''}${act.avg_hr?' · '+act.avg_hr+' bpm':''}</div>
-          ${zstrip(zones)}
-        </div>`;
-      });
-    });
-    html+=`</div><div class="week-detail" id="hist-detail-${wi}"></div></div>`;
-  });
-  el.innerHTML=html||'<p style="color:#666;padding:20px">Noch keine Aktivitäten.</p>';
-}
-
-function toggleHistDetail(wi,actId,cardEl){
-  const panel=document.getElementById(`hist-detail-${wi}`);
-  const act=allActivities.find(a=>a.id==actId);
-  if(!act)return;
-  const allCards=cardEl.closest('.days-grid').querySelectorAll('.day-card');
-  const was=cardEl.classList.contains('sel');
-  allCards.forEach(c=>c.classList.remove('sel'));
-  if(was){panel.classList.remove('open');panel.innerHTML='';return;}
-  cardEl.classList.add('sel');
-  panel.innerHTML=buildDetail(act);
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>drawChart(act),50);
-}
-
 // ── RIDES ──
 function renderSummary(){
   const recent=allActivities.filter(a=>a.date>='2026-05-05');
@@ -853,7 +794,6 @@ async function loadData(){
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
     renderActivityList();
-    renderHistory();
   }catch(e){
     document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
   }
