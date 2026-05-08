@@ -134,9 +134,23 @@ canvas.chart{width:100%;display:block;}
 .ftp-zn{font-size:10px;color:var(--t4);}
 .ftp-zv{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace;font-weight:500;}
 
-/* RIDES DETAIL */
-#rides-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:8px;display:none;}
-#rides-detail.open{display:block;}
+/* PHASE HEADER */
+.phase-header{display:flex;align-items:baseline;gap:14px;padding:20px 0 10px;border-top:1px solid #2a2a2a;margin-top:8px;}
+.phase-header:first-child{border-top:none;padding-top:0;}
+.phase-label{font-size:11px;font-weight:700;color:#c0c0c0;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
+.phase-desc{font-size:11px;color:#555;}
+
+/* CHECKPOINT SEPARATOR */
+.checkpoint-sep{display:flex;align-items:center;gap:14px;background:#1a1a1a;border:1px solid #333;border-radius:3px;padding:12px 16px;margin:12px 0;cursor:pointer;transition:border-color 0.15s;}
+.checkpoint-sep:hover{border-color:#555;}
+.checkpoint-sep.sel{border-color:#666;}
+.cp-left{display:flex;align-items:baseline;gap:10px;}
+.cp-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;}
+.cp-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;}
+.cp-arrow{color:#333;font-size:14px;}
+.cp-next{font-size:12px;color:#777;}
+.ride-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:2px;margin-bottom:4px;display:none;}
+.ride-detail.open{display:block;}
 
 @media(max-width:680px){
   .dow-hdr{display:none;}
@@ -165,7 +179,6 @@ canvas.chart{width:100%;display:block;}
     <div class="stats" id="summary-stats"></div>
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
     <div class="act-list" id="activity-list"></div>
-    <div id="rides-detail"></div>
   </div>
 </main>
 
@@ -176,38 +189,139 @@ const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 let allActivities=[],selectedRideId=null;
 
 const PLAN_WEEKS=[
-  {label:'WOCHE 1',dates:'04.–10. Mai',vol:'~4.5h · Start',days:[
-    {date:'04.05',type:'rest',title:'Vergangen',desc:'',det:'',past:true},
-    {date:'05.05',type:'comm',title:'Commute',desc:'Morgencommute ✓',det:'9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
-    {date:'06.05',type:'comm',title:'Commute × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollst.',done:true},
-    {date:'07.05',type:'roll',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',today:true},
-    {date:'08.05',type:'rest',title:'Ruhe',desc:'Komplette Pause',det:'Kein Rad.',dimmed:true},
-    {date:'09.05',type:'aus',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · Z2 · 144–180W · HR unter 145'},
-    {date:'10.05',type:'rest',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren.',dimmed:true},
-  ]},
-  {label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5.5h · Basis festigen',days:[
-    {date:'11.05',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138'},
-    {date:'12.05',type:'roll',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten'},
-    {date:'13.05',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
-    {date:'14.05',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
-    {date:'15.05',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Samstag'},
-    {date:'16.05',type:'aus',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
-    {date:'17.05',type:'rest',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
-  ]},
-  {label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest',days:[
-    {date:'18.05',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
-    {date:'19.05',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen frei vor Test'},
-    {date:'20.05',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
-    {date:'21.05',type:'test',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
-    {date:'22.05',type:'comm',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern.',dimmed:true},
-    {date:'23.05',type:'aus',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · mit neuen Testzonen'},
-    {date:'24.05',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
-  ]},
-  {label:'CHECKPOINT #1',dates:'25. Mai',vol:'→ Phase 2',days:[
-    {date:'25.05',type:'check',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Phase 2 wird gebaut'},
-    ...[1,2,3,4,5,6].map(()=>({empty:true})),
-  ]},
+  // ─── PHASE 1 ───────────────────────────────────────
+  {
+    phase:'PHASE 1 · Reaktivierung',phaseDesc:'Aerobe Basis aufbauen · kein Vollgas · FTP-Test Ende Mai',
+    label:'WOCHE 1',dates:'04.–10. Mai',vol:'~4.5h',
+    days:[
+      {date:'04.05',dow:'Mo',type:'comm',title:'Commute',desc:'Morgen- & Abendcommute',det:'Gravel · HR only · locker ankommen',done:true},
+      {date:'05.05',dow:'Di',type:'comm',title:'Commute',desc:'Morgen- & Abendcommute ✓',det:'Morgen 9,7 km · Ø 132 bpm · Z2 Basis bestätigt',done:true},
+      {date:'06.05',dow:'Mi',type:'comm',title:'Commute ⚡ × 2',desc:'Doppelcommute ✓',det:'Morgen: 10,4 km · Ø 194W · NP 238W · Abend: GPS unvollst.',done:true},
+      {date:'07.05',dow:'Do',type:'roll',title:'Rolle ⚡',desc:'Erste Rolleneinheit',det:'45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',done:true},
+      {date:'08.05',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad. Beine regenerieren.',dimmed:true},
+      {date:'09.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Erste längere Fahrt',det:'60–75 min · Z2 · 144–180W · HR unter 145'},
+      {date:'10.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Dehnen, Spazieren.',dimmed:true},
+    ]
+  },
+  {
+    label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5.5h',
+    days:[
+      {date:'11.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2 · HR unter 138'},
+      {date:'12.05',dow:'Di',type:'roll',title:'Rolle ⚡',desc:'Aerob mit Pacing',det:'50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten'},
+      {date:'13.05',dow:'Mi',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · oberes Z2 · Watt gleichmäßig halten'},
+      {date:'14.05',dow:'Do',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+      {date:'15.05',dow:'Fr',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Samstag'},
+      {date:'16.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt · kein Vollgas · Ø HR unter 145'},
+      {date:'17.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Optional: kurzer Spaziergang.',dimmed:true},
+    ]
+  },
+  {
+    label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest',
+    days:[
+      {date:'18.05',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
+      {date:'19.05',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · morgen frei vor Test'},
+      {date:'20.05',dow:'Mi',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
+      {date:'21.05',dow:'Do',type:'test',title:'Rampentest ⚡',desc:'MAP / FTP Messung',det:'~35 min · 10\' Z1 · alle 1 Min +10W bis Abbruch · 10\' auslaufen'},
+      {date:'22.05',dow:'Fr',type:'comm',title:'Commute',desc:'Sehr locker Z1',det:'Kurzer Weg · Beine auslockern.',dimmed:true},
+      {date:'23.05',dow:'Sa',type:'aus',title:'Ausfahrt ⚡',desc:'Abschluss Phase 1',det:'90 min · Z2 · mit neuen Testzonen · Genuss'},
+      {date:'24.05',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Checkpoint #1.',dimmed:true},
+    ]
+  },
+  // ─── PHASE 2 ───────────────────────────────────────
+  {
+    phase:'PHASE 2 · Aufbau',phaseDesc:'Sweetspot-Arbeit · längere Ausfahrten · Intensität steigt',
+    checkpoint:{label:'CHECKPOINT #1',det:'Rampentest-Ergebnis · Zonen aktualisieren · Phase 2 beginnt'},
+    label:'WOCHE 4',dates:'25.–31. Mai',vol:'~6h',
+    days:[
+      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1',desc:'Feedback → Plan',det:'Rampentest-Ergebnis · Wochenstunden · Gefühl · Zonen werden aktualisiert'},
+      {date:'26.05',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · nach Checkpoint: locker bleiben'},
+      {date:'27.05',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Erste Sweetspot',det:'55 min · 10\' Z1 · 2×10\' Sweetspot 185–200W (5\' Pause) · 10\' auslaufen'},
+      {date:'28.05',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · stabiles Z2'},
+      {date:'29.05',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
+      {date:'30.05',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
+      {date:'31.05',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Hügel mit Biss',det:'90–100 min · Z2 Basis · Anstiege im oberen Z3 angehen'},
+    ]
+  },
+  {
+    label:'WOCHE 5',dates:'01.–07. Jun',vol:'~6.5h',
+    days:[
+      {date:'01.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2'},
+      {date:'02.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+      {date:'03.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Sweetspot länger',det:'60 min · 10\' Z1 · 2×15\' Sweetspot 190–205W (5\' Pause) · 10\' auslaufen'},
+      {date:'04.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg Z2',det:'Beide Richtungen · gleichmäßig · HR unter 148'},
+      {date:'05.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+      {date:'06.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
+      {date:'07.06',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Echte Berge',det:'100–120 min · Z2 Basis · gezielte Anstiege · Pacing üben'},
+    ]
+  },
+  {
+    label:'WOCHE 6',dates:'08.–14. Jun',vol:'~6h · 4DP-Test',
+    days:[
+      {date:'08.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Woche ruhig beginnen'},
+      {date:'09.06',dow:'Di',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
+      {date:'10.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Sweetspot + Schwelle',det:'60 min · 10\' Z1 · 3×10\' Sweetspot 195–210W (5\' Pause) · 10\' auslaufen'},
+      {date:'11.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg Z2',det:'Beide Richtungen · stabil'},
+      {date:'12.06',dow:'Fr',type:'rest',title:'Ruhe vor Test',desc:'Komplett frei',det:'Kein Rad.',dimmed:true},
+      {date:'13.06',dow:'Sa',type:'test',title:'4DP-Test ⚡',desc:'Voller Leistungstest',det:'NM · AC · MAP · FTP — ~75 min gesamt · frisch antreten · echte Trainingszonen für Phase 3'},
+      {date:'14.06',dow:'So',type:'rest',title:'Erholung',desc:'Sehr locker',det:'Morgen: Checkpoint #2.',dimmed:true},
+    ]
+  },
+  // ─── PHASE 3 ───────────────────────────────────────
+  {
+    phase:'PHASE 3 · Form & Peak',phaseDesc:'VO2max-Reize · Qualität vor Quantität · Bergfitness',
+    checkpoint:{label:'CHECKPOINT #2',det:'4DP-Ergebnis · Zonenupdate · Berg-Fitness Einschätzung · Phase 3 finalisieren'},
+    label:'WOCHE 7',dates:'15.–21. Jun',vol:'~7h',
+    days:[
+      {date:'15.06',dow:'Mo',type:'check',title:'Checkpoint #2',desc:'Feedback → Phase 3',det:'4DP-Ergebnis · Zonen aktualisieren · Phase 3 wird finalisiert'},
+      {date:'16.06',dow:'Di',type:'comm',title:'Commute ⚡',desc:'Locker starten',det:'Kurzer Weg · Z1–Z2'},
+      {date:'17.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Erste VO2max',det:'50 min · 10\' Z1 · 5×3\' bei 115–120% FTP (3\' Pause) · 10\' auslaufen'},
+      {date:'18.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · Z2 · Erholung nach Intervallen'},
+      {date:'19.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
+      {date:'20.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für Sonntag'},
+      {date:'21.06',dow:'So',type:'aus',title:'Ausfahrt ⚡',desc:'Bergankurbeln',det:'120 min · Z2 Basis · 3–4 Anstiege mit Punch · je 3–5 min Z4 · Pacing Bergziel'},
+    ]
+  },
+  {
+    label:'WOCHE 8',dates:'22.–28. Jun',vol:'~7.5h',
+    days:[
+      {date:'22.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Erholungscommute',det:'Kurzer Weg · Z1–Z2'},
+      {date:'23.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+      {date:'24.06',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Schwelle + VO2max',det:'55 min · 10\' Z1 · 3×8\' Schwelle 100–105% FTP (4\' Pause) · 10\' auslaufen'},
+      {date:'25.06',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Langer Weg',det:'Beide Richtungen · stabiles Z2'},
+      {date:'26.06',dow:'Fr',type:'rest',title:'Ruhe',desc:'Aktive Erholung',det:'Gehen, Stretching.',dimmed:true},
+      {date:'27.06',dow:'Sa',type:'comm',title:'Commute ⚡',desc:'Locker Z2',det:'Kurzer Weg · frisch für große Ausfahrt'},
+      {date:'28.06',dow:'So',type:'aus',title:'Große Ausfahrt ⚡',desc:'Haupteinheit Phase 3',det:'150–180 min · echte Anstiege · Rennpace an den Bergen · simuliert Ziel-WE'},
+    ]
+  },
+  {
+    label:'WOCHE 9',dates:'29. Jun – 05. Jul',vol:'~5h · Taper',
+    days:[
+      {date:'29.06',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Locker',det:'Kurzer Weg · Z1–Z2 · Taper beginnt · Volumen runter'},
+      {date:'30.06',dow:'Di',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
+      {date:'01.07',dow:'Mi',type:'roll',title:'Rolle ⚡',desc:'Aktivierung',det:'35 min · 10\' Z1 · 2×5\' Z3 (5\' Pause) · 10\' auslaufen · kein Vollgas'},
+      {date:'02.07',dow:'Do',type:'comm',title:'Commute ⚡',desc:'Sehr locker Z1',det:'Kurzer Weg · leichter als leicht'},
+      {date:'03.07',dow:'Fr',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad.',dimmed:true},
+      {date:'04.07',dow:'Sa',type:'aus',title:'Kurze Aktivierung',desc:'Letzte Einheit',det:'45 min · locker · 3–4 kurze Antritte (20 Sek) · frisch bleiben'},
+      {date:'05.07',dow:'So',type:'rest',title:'Erholung',desc:'Pause',det:'Morgen: Abfahrt zum Berg-WE.',dimmed:true},
+    ]
+  },
+  // ─── ZIEL ──────────────────────────────────────────
+  {
+    phase:'ZIEL · Berg-WE',phaseDesc:'Topfit ankommen · 3,0+ W/kg · am Berg nicht abkacken 🏔️',
+    checkpoint:{label:'ZIEL 10. Juli 2026',det:'Berg-WE mit Freunden · alles was zählt',goal:true},
+    label:'WOCHE 10',dates:'06.–10. Jul',vol:'Taper + Ziel',
+    days:[
+      {date:'06.07',dow:'Mo',type:'comm',title:'Commute ⚡',desc:'Sehr locker Z1',det:'Letzter Pendeltag · Beine frisch halten'},
+      {date:'07.07',dow:'Di',type:'rest',title:'Aktivierung',desc:'Kurze Aktivierung',det:'20 min · locker · ein paar Antritte · fertig machen'},
+      {date:'08.07',dow:'Mi',type:'rest',title:'Ruhe',desc:'Pause',det:'Kein Rad. Packen.',dimmed:true},
+      {date:'09.07',dow:'Do',type:'rest',title:'Anreise',desc:'Fahrt zum Berg-WE',det:'Beine hoch, gut schlafen.',dimmed:true},
+      {date:'10.07',dow:'Fr',type:'goal',title:'🏁 ZIEL',desc:'Berg-WE Tag 1',det:'Alles was zählt. Viel Spaß!'},
+      {date:'',dow:'Sa',empty:true},
+      {date:'',dow:'So',empty:true},
+    ]
+  },
 ];
+
 
 function showPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -235,6 +349,19 @@ function renderPlan(){
     </div>
   </div>`;
   PLAN_WEEKS.forEach((week,wi)=>{
+    // Phase header + optional checkpoint separator (both on same week object)
+    if(week.phase){
+      html+=`<div class="phase-header"><span class="phase-label">${week.phase}</span><span class="phase-desc">${week.phaseDesc}</span></div>`;
+    }
+    if(week.checkpoint){
+      const gs=week.checkpoint.goal?'border-color:#555;':'';
+      html+=`<div class="checkpoint-sep" style="${gs}">
+        <span class="cp-label">${week.checkpoint.label}</span>
+        <div class="cp-arrow">→</div>
+        <span class="cp-next">${week.checkpoint.det}</span>
+      </div>`;
+    }
+    // Normal week — all weeks start Monday, no offset needed
     html+=`<div class="cal-week">
       <div class="cal-week-hdr">
         <span class="cwl">${week.label}</span><span class="cwd">${week.dates}</span>
@@ -260,8 +387,9 @@ function renderPlan(){
 
 function togglePlanDetail(wi,di,cardEl){
   const panel=document.getElementById(`plan-detail-${wi}`);
-  const d=PLAN_WEEKS[wi].days[di];
-  if(!d||d.past||d.empty||d.dimmed)return;
+  const week=PLAN_WEEKS[wi];
+  const d=week.days?.[di];
+  if(!d||d.empty||d.dimmed)return;
   const allCards=cardEl.parentElement.querySelectorAll('.day-card');
   const was=cardEl.classList.contains('sel');
   allCards.forEach(c=>c.classList.remove('sel'));
@@ -283,9 +411,11 @@ function renderHistory(){
   const el=document.getElementById('page-history');
   let html='';
   PLAN_WEEKS.forEach((week,wi)=>{
+    if(!week.days)return; // skip any entry without days (shouldn't happen now)
     const weekDates=week.days.filter(d=>d.date).map(d=>{const[day,mon]=d.date.split('.');return`2026-${mon}-${day}`;});
     const weekActs=allActivities.filter(a=>weekDates.includes(a.date));
     const totalSec=weekActs.reduce((s,a)=>s+actDur(a),0);
+    // DOW offset
     html+=`<div class="cal-week">
       <div class="cal-week-hdr">
         <span class="cwl">${week.label}</span><span class="cwd">${week.dates}</span>
@@ -353,39 +483,65 @@ function renderSummary(){
 function renderActivityList(){
   document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>{
     const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
-    return`<div class="act-row${selectedRideId===a.id?' selected':''}" onclick="selectRide(${a.id})">
-      <div class="act-main">
-        <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
-        <div class="act-name">${a.name}</div>
-        <div class="act-metrics">
-          ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
-          <div class="am">${fmtDur(actDur(a))}</div>
-          ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
-          ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
-          ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
+    const sel=selectedRideId===a.id;
+    return`<div class="act-item">
+      <div class="act-row${sel?' selected':''}" onclick="selectRide(${a.id})">
+        <div class="act-main">
+          <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
+          <div class="act-name">${a.name}</div>
+          <div class="act-metrics">
+            ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
+            <div class="am">${fmtDur(actDur(a))}</div>
+            ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
+            ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
+            ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
+          </div>
+          <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
         </div>
-        <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
+        ${zstrip(zones)}
       </div>
-      ${zstrip(zones)}
+      <div class="ride-detail${sel?' open':''}" id="rd-${a.id}"></div>
     </div>`;
   }).join('');
+  if(selectedRideId){
+    const act=allActivities.find(a=>a.id===selectedRideId);
+    const panel=document.getElementById('rd-'+selectedRideId);
+    if(act&&panel&&!panel.innerHTML){
+      panel.innerHTML=buildDetail(act);
+      setTimeout(()=>{drawChart(act);drawAnalysis(act);},50);
+    }
+  }
 }
 
 function selectRide(id){
-  const panel=document.getElementById('rides-detail');
+  if(selectedRideId&&selectedRideId!==id){
+    const prev=document.getElementById('rd-'+selectedRideId);
+    if(prev){prev.classList.remove('open');prev.innerHTML='';}
+  }
   selectedRideId=(selectedRideId===id)?null:id;
-  renderActivityList();
-  if(!selectedRideId){panel.classList.remove('open');return;}
+  if(!selectedRideId){
+    const prev=document.getElementById('rd-'+id);
+    if(prev){prev.classList.remove('open');prev.innerHTML='';}
+    document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
+    return;
+  }
   const act=allActivities.find(a=>a.id===id);
   if(!act)return;
+  document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
+  const clickedRow=document.querySelector(`#rd-${id}`)?.previousElementSibling;
+  if(clickedRow)clickedRow.classList.add('selected');
+  const panel=document.getElementById('rd-'+id);
+  if(!panel)return;
   panel.innerHTML=buildDetail(act);
   panel.classList.add('open');
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>drawChart(act),50);
+  setTimeout(()=>{drawChart(act);drawAnalysis(act);},50);
 }
 
 // ── DETAIL ──
 function buildDetail(act){
+  const durMin=actDur(act)/60;
+  const hasAnalysis=durMin>=30&&act.streams?.watts?.length&&act.streams?.hr?.length;
   const hasStreams=act.streams&&(act.streams.watts?.length||act.streams.hr?.length);
   let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)}</div>`;
   h+=`<div class="detail-stats">
@@ -416,12 +572,174 @@ function buildDetail(act){
     h+=`</div>`;
   }
   if(hasStreams)h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Verlauf</div><div class="sh-line"></div></div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
-  h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
+  if(hasAnalysis){
+    h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Aerobe Analyse</div><div class="sh-line"></div></div>`;
+    h+=`<canvas id="an-dual-${act.id}" style="display:block;width:100%;margin-bottom:6px"></canvas>`;
+    h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%"></canvas>`;
+  }
+  h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
   if(act.np&&act.np>FTP*1.05)h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für hügelige Strecken.</div>`;
   if(act.decoupling_pct!==undefined&&act.decoupling_pct<5)h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
   if(act.avg_power&&act.avg_power<FTP*0.75)h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — genau richtig für Phase 1.</div>`;
   if(!act.gps_ok)h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% der Fahrt getrackt. Distanz nicht zuverlässig.</div>`;
   return h;
+}
+
+
+// ── ANALYSIS CHARTS (dual timeseries + rolling EF) ──
+function drawAnalysis(act){
+  if(!act.streams)return;
+  const dur=actDur(act)/60; // minutes
+  if(dur<30||!act.streams.watts||!act.streams.hr)return;
+  const ts=act.streams.time||[], pw=act.streams.watts||[], hr=act.streams.hr||[];
+  if(!ts.length)return;
+
+  // Build points (every 5th for perf)
+  const raw=[];
+  for(let i=0;i<ts.length;i+=5){
+    if(pw[i]>10&&hr[i]>50) raw.push({t:ts[i]/60,w:pw[i],hr:hr[i]});
+  }
+  if(raw.length<10)return;
+
+  // Rolling EF (30s window)
+  const winSize=30;
+  const efSeries=[];
+  const allTs=ts, allPw=pw, allHr=hr;
+  for(let i=winSize;i<allTs.length;i+=5){
+    const wSlice=allPw.slice(i-winSize,i).filter(v=>v>10);
+    const hSlice=allHr.slice(i-winSize,i).filter(v=>v>50);
+    if(!wSlice.length||!hSlice.length)continue;
+    const np4=(wSlice.reduce((s,v)=>s+v**4,0)/wSlice.length)**0.25;
+    const hrAvg=hSlice.reduce((s,v)=>s+v,0)/hSlice.length;
+    efSeries.push({t:allTs[i]/60,ef:np4/hrAvg});
+  }
+
+  // Average EF for reference
+  const avgEF=efSeries.length?efSeries.reduce((s,p)=>s+p.ef,0)/efSeries.length:1.2;
+
+  // Half-time for decoupling annotation
+  const halfT=raw[Math.floor(raw.length/2)]?.t||dur/2;
+  const h1=raw.filter(p=>p.t<=halfT), h2=raw.filter(p=>p.t>halfT);
+  const ef1=h1.length?(h1.reduce((s,p)=>s+p.w,0)/h1.length)/(h1.reduce((s,p)=>s+p.hr,0)/h1.length):0;
+  const ef2=h2.length?(h2.reduce((s,p)=>s+p.w,0)/h2.length)/(h2.reduce((s,p)=>s+p.hr,0)/h2.length):0;
+  const decouple=ef1?((ef2-ef1)/ef1*100).toFixed(1):null;
+
+  // Draw dual timeseries
+  const c1=document.getElementById('an-dual-'+act.id);
+  const c2=document.getElementById('an-ef-'+act.id);
+  if(!c1||!c2)return;
+
+  function setupCanvas(c,h){
+    const dpr=window.devicePixelRatio||1;
+    const W=c.parentElement.offsetWidth;
+    c.width=W*dpr; c.height=h*dpr;
+    c.style.width=W+'px'; c.style.height=h+'px';
+    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+    return{ctx,W,H:h};
+  }
+
+  // ── DUAL CHART ──
+  {
+    const {ctx,W,H}=setupCanvas(c1,160);
+    const pL=38,pR=10,pT=16,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const maxT=raw[raw.length-1].t;
+    const minW=50,maxW=Math.max(250,...raw.map(p=>p.w));
+    const minH=70,maxH=Math.min(185,Math.max(145,...raw.map(p=>p.hr))+5);
+
+    function xOf(t){return pL+(t/maxT)*cW;}
+    function yW(w){return pT+cH-(w-minW)/(maxW-minW)*cH;}
+    function yH(h){return pT+cH-(h-minH)/(maxH-minH)*cH;}
+
+    // Grid
+    ctx.strokeStyle='#1e1e1e'; ctx.lineWidth=1;
+    const ticks=Math.min(6,Math.floor(maxT/5));
+    for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+    [100,150,200,250].filter(w=>w<maxW).forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yW(w));ctx.lineTo(pL+cW,yW(w));ctx.stroke();});
+
+    // Half line
+    ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.moveTo(xOf(halfT),pT);ctx.lineTo(xOf(halfT),pT+cH);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // EF annotations
+    ctx.fillStyle='rgba(255,255,255,0.22)';ctx.font='9px monospace';ctx.textAlign='center';
+    if(ef1)ctx.fillText(`EF₁ ${ef1.toFixed(2)}`,xOf(halfT*0.5),pT+12);
+    if(ef2)ctx.fillText(`EF₂ ${ef2.toFixed(2)}`,xOf(halfT*1.5<maxT?halfT*1.5:maxT*0.75),pT+12);
+    if(decouple){
+      const col=Math.abs(decouple)<5?'#5a8a52':'#a08060';
+      ctx.fillStyle=col;
+      ctx.fillText(`Δ ${decouple}%`,xOf(halfT),pT+12);
+    }
+
+    // Power
+    ctx.beginPath();
+    raw.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.t),yW(p.w)):ctx.lineTo(xOf(p.t),yW(p.w));});
+    ctx.strokeStyle='rgba(249,115,22,0.75)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.lineTo(xOf(maxT),yW(minW));ctx.lineTo(xOf(0),yW(minW));ctx.closePath();
+    ctx.fillStyle='rgba(249,115,22,0.08)';ctx.fill();
+
+    // HR
+    ctx.beginPath();
+    raw.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.t),yH(p.hr)):ctx.lineTo(xOf(p.t),yH(p.hr));});
+    ctx.strokeStyle='rgba(180,180,180,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='rgba(249,115,22,0.6)';ctx.font='9px monospace';ctx.textAlign='right';
+    [100,150,200].filter(w=>w<maxW).forEach(w=>ctx.fillText(w+'W',pL-3,yW(w)+3));
+    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.textAlign='left';
+    [Math.round(minH+10),Math.round((minH+maxH)/2),Math.round(maxH-5)].forEach(h=>ctx.fillText(h,W-pR+2,yH(h)+3));
+    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t)+"'",xOf(t),H-5);}
+
+    ctx.fillStyle='rgba(249,115,22,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+23);
+    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.fillText('HR',pL+4,pT+33);
+  }
+
+  // ── EF CHART ──
+  {
+    const {ctx,W,H}=setupCanvas(c2,140);
+    const pL=38,pR=10,pT=8,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const maxT=efSeries.length?efSeries[efSeries.length-1].t:45;
+    const efVals=efSeries.map(p=>p.ef);
+    const minEF=Math.max(0.8,Math.min(...efVals)-0.05);
+    const maxEF=Math.max(...efVals)+0.05;
+
+    function xOf(t){return pL+(t/maxT)*cW;}
+    function yEF(e){return pT+cH-(e-minEF)/(maxEF-minEF)*cH;}
+
+    // Grid
+    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+    const ticks=Math.min(6,Math.floor(maxT/5));
+    for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+
+    // Avg EF line
+    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,6]);
+    ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='9px monospace';ctx.textAlign='left';
+    ctx.fillText('Ø '+avgEF.toFixed(2),pL+4,yEF(avgEF)-3);
+
+    // Good zone above avg
+    ctx.fillStyle='rgba(90,138,82,0.05)';
+    ctx.fillRect(pL,yEF(maxEF),cW,yEF(avgEF)-yEF(maxEF));
+
+    // EF line + fill
+    ctx.beginPath();
+    efSeries.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.t),yEF(p.ef)):ctx.lineTo(xOf(p.t),yEF(p.ef));});
+    ctx.strokeStyle='rgba(96,165,250,0.8)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.lineTo(xOf(maxT),yEF(minEF));ctx.lineTo(xOf(0),yEF(minEF));ctx.closePath();
+    ctx.fillStyle='rgba(96,165,250,0.07)';ctx.fill();
+
+    // Labels
+    const efRange=maxEF-minEF;
+    [0,0.25,0.5,0.75,1].map(f=>minEF+f*efRange).forEach(e=>{
+      ctx.fillStyle='rgba(96,165,250,0.45)';ctx.font='9px monospace';ctx.textAlign='right';
+      ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);
+    });
+    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t)+"'",xOf(t),H-5);}
+    ctx.fillStyle='rgba(96,165,250,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('EF (W/bpm)',pL+4,pT+14);
+  }
 }
 
 // ── CHART ──
