@@ -798,11 +798,11 @@ async function loadData(){
     renderSummary();
     renderActivityList();
   }catch(e){
-    document.getElementById('loading').textContent='Fehler: '+e.message;
+    document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
   }
 }
 
-try{renderPlan();}catch(e){document.getElementById('page-plan').innerHTML='<div style="color:#a06060;padding:20px;font-size:12px">Plan-Fehler: '+e.message+'<br>'+e.stack+'</div>';}
+renderPlan();
 loadData();
 setInterval(loadData,5*60*1000);
 </script>
