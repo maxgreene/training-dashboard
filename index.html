@@ -152,6 +152,23 @@ canvas.chart{width:100%;display:block;}
 .ride-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:2px;margin-bottom:4px;display:none;}
 .ride-detail.open{display:block;}
 
+
+/* WEIGHT WIDGET */
+.weight-widget{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px 16px;margin-bottom:16px;}
+.weight-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.weight-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.weight-val{font-size:18px;font-weight:700;color:var(--t1);}
+.weight-val small{font-size:11px;color:var(--t4);font-weight:400;}
+.weight-input{background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--t1);font-size:13px;font-family:'JetBrains Mono',monospace;padding:5px 10px;width:80px;outline:none;}
+.weight-input:focus{border-color:#555;}
+.weight-btn{background:#252525;border:1px solid #333;border-radius:3px;color:var(--t3);font-size:11px;padding:5px 12px;cursor:pointer;font-family:'Inter',sans-serif;transition:border-color 0.15s;}
+.weight-btn:hover{border-color:#555;color:var(--t1);}
+.weight-btn.primary{border-color:#555;color:var(--t2);}
+.weight-wkg{font-size:11px;color:var(--t4);margin-left:auto;}
+.weight-chart-wrap{margin-top:12px;}
+.token-hint{font-size:10px;color:var(--t4);margin-top:6px;}
+.token-hint a{color:#555;cursor:pointer;text-decoration:underline;}
+
 @media(max-width:680px){
   .dow-hdr{display:none;}
   .days-grid{grid-template-columns:1fr 1fr;}
@@ -174,6 +191,7 @@ canvas.chart{width:100%;display:block;}
   <div id="loading">Lade Daten…</div>
   <div class="page active" id="page-plan"></div>
 <div class="page" id="page-rides">
+    <div class="weight-widget" id="weight-widget"></div>
     <div class="stats" id="summary-stats"></div>
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
     <div class="act-list" id="activity-list"></div>
@@ -783,6 +801,174 @@ function drawChart(act){
   for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
 }
 
+
+// ── WEIGHT TRACKING ──
+const REPO = 'maxgreene/training-dashboard';
+const WEIGHT_FILE = 'data/weight.json';
+let weightData = []; // [{date:'2026-05-08',kg:81.0}]
+let ghToken = localStorage.getItem('gh_pat_weight') || '';
+let weightFileSha = null;
+
+function renderWeightWidget(){
+  const el = document.getElementById('weight-widget');
+  if(!el) return;
+  const today = new Date().toISOString().slice(0,10);
+  const todayEntry = weightData.find(e=>e.date===today);
+  const lastEntry = weightData.length ? weightData[weightData.length-1] : null;
+  const ftp = 240;
+  const wkg = lastEntry ? (ftp/lastEntry.kg).toFixed(2) : '—';
+
+  let html = `<div class="weight-row">
+    <span class="weight-label">Gewicht</span>
+    <span class="weight-val">${todayEntry?todayEntry.kg.toFixed(1):(lastEntry?lastEntry.kg.toFixed(1)+'*':'—')}<small> kg</small></span>
+    <input class="weight-input" id="weight-in" type="number" step="0.1" min="50" max="120" placeholder="${lastEntry?lastEntry.kg.toFixed(1):'81.0'}">
+    <button class="weight-btn primary" onclick="saveWeight()">Eintragen</button>
+    <span class="weight-wkg">→ ${wkg} W/kg bei FTP ${ftp}W${lastEntry&&!todayEntry?' (gestern)':''}</span>
+  </div>`;
+
+  if(!ghToken){
+    html += `<div class="token-hint">GitHub Token nötig zum Speichern. <a onclick="setupToken()">Token eingeben</a></div>`;
+  }
+
+  if(weightData.length > 1){
+    html += `<div class="weight-chart-wrap"><canvas id="weight-chart" style="display:block;width:100%;box-sizing:border-box"></canvas></div>`;
+  }
+
+  el.innerHTML = html;
+  if(weightData.length > 1) setTimeout(drawWeightChart, 30);
+}
+
+function setupToken(){
+  const tok = prompt('GitHub Personal Access Token (wird nur lokal gespeichert):
+
+Benötigt: repo → contents → read/write');
+  if(tok && tok.trim()){
+    ghToken = tok.trim();
+    localStorage.setItem('gh_pat_weight', ghToken);
+    loadWeightData();
+  }
+}
+
+async function loadWeightData(){
+  try{
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${WEIGHT_FILE}`, {
+      headers: ghToken ? {Authorization: `Bearer ${ghToken}`} : {}
+    });
+    if(r.ok){
+      const json = await r.json();
+      weightFileSha = json.sha;
+      const decoded = atob(json.content.replace(/
+/g,''));
+      weightData = JSON.parse(decoded).entries || [];
+    } else if(r.status===404){
+      weightData = [];
+      weightFileSha = null;
+    }
+  } catch(e){ weightData = []; }
+  renderWeightWidget();
+}
+
+async function saveWeight(){
+  const val = parseFloat(document.getElementById('weight-in')?.value);
+  if(!val || val < 40 || val > 150){ alert('Bitte gültiges Gewicht eingeben (40–150 kg)'); return; }
+  if(!ghToken){ setupToken(); return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  // Upsert today's entry
+  const idx = weightData.findIndex(e=>e.date===today);
+  if(idx>=0) weightData[idx].kg = val;
+  else weightData.push({date:today, kg:val});
+  weightData.sort((a,b)=>a.date.localeCompare(b.date));
+
+  const body = {
+    message: `weight: ${val}kg on ${today}`,
+    content: btoa(JSON.stringify({entries:weightData}, null, 2)),
+    ...(weightFileSha ? {sha: weightFileSha} : {})
+  };
+
+  try{
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${WEIGHT_FILE}`, {
+      method:'PUT',
+      headers:{Authorization:`Bearer ${ghToken}`,'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(r.ok){
+      const json = await r.json();
+      weightFileSha = json.content.sha;
+      renderWeightWidget();
+    } else {
+      const err = await r.json();
+      alert('Fehler: ' + (err.message||r.status));
+    }
+  } catch(e){ alert('Netzwerkfehler: '+e.message); }
+}
+
+function drawWeightChart(){
+  const canvas = document.getElementById('weight-chart');
+  if(!canvas || weightData.length < 2) return;
+  const dpr = window.devicePixelRatio||1;
+  const W = Math.floor(canvas.parentElement.clientWidth);
+  const H = 80;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+
+  const ftp = 240;
+  const pL=38,pR=10,pT=8,pB=20,cW=W-pL-pR,cH=H-pT-pB;
+  const wkgVals = weightData.map(e=>ftp/e.kg);
+  const minV = Math.min(...wkgVals)-0.05;
+  const maxV = Math.max(...wkgVals)+0.05;
+  const n = weightData.length;
+
+  function xOf(i){return pL+(i/(n-1))*cW;}
+  function yOf(v){return pT+cH-(v-minV)/(maxV-minV)*cH;}
+
+  // Grid
+  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+  [minV,minV+(maxV-minV)/2,maxV].forEach(v=>{
+    ctx.beginPath();ctx.moveTo(pL,yOf(v));ctx.lineTo(pL+cW,yOf(v));ctx.stroke();
+    ctx.fillStyle='#3a3a3a';ctx.font='9px monospace';ctx.textAlign='right';
+    ctx.fillText(v.toFixed(2),pL-3,yOf(v)+3);
+  });
+
+  // Target line at 3.0 W/kg
+  const target=3.0;
+  if(target>=minV&&target<=maxV){
+    ctx.strokeStyle='rgba(90,138,82,0.3)';ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.moveTo(pL,yOf(target));ctx.lineTo(pL+cW,yOf(target));ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(90,138,82,0.5)';ctx.font='9px monospace';ctx.textAlign='left';
+    ctx.fillText('3.0 Ziel',pL+4,yOf(target)-3);
+  }
+
+  // Line
+  ctx.beginPath();
+  weightData.forEach((e,i)=>{
+    const x=xOf(i),y=yOf(ftp/e.kg);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='rgba(96,165,250,0.8)';ctx.lineWidth=2;ctx.stroke();
+
+  // Dots
+  weightData.forEach((e,i)=>{
+    ctx.beginPath();ctx.arc(xOf(i),yOf(ftp/e.kg),3,0,Math.PI*2);
+    ctx.fillStyle='rgba(96,165,250,0.9)';ctx.fill();
+  });
+
+  // X labels (show first, last, and evenly spaced)
+  ctx.fillStyle='#3a3a3a';ctx.font='9px monospace';ctx.textAlign='center';
+  const showAt=new Set([0,n-1]);
+  if(n>4) showAt.add(Math.floor(n/2));
+  showAt.forEach(i=>{
+    const d=weightData[i].date.slice(5); // MM-DD
+    ctx.fillText(d.replace('-','.'),xOf(i),H-4);
+  });
+
+  // Label
+  ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';
+  ctx.fillText('W/kg (FTP '+ftp+'W ÷ Gewicht)',pL+4,pT+12);
+}
+
 // ── LOAD ──
 async function loadData(){
   try{
@@ -794,12 +980,15 @@ async function loadData(){
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
     renderActivityList();
+    if(!weightData.length) loadWeightData();
   }catch(e){
     document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
   }
 }
 
 renderPlan();
+renderWeightWidget();
+loadWeightData();
 loadData();
 setInterval(loadData,5*60*1000);
 </script>
