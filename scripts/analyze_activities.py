@@ -273,7 +273,7 @@ def main():
         if res.get('cadence_avg'):   act['avg_cadence']    = res['cadence_avg']
         if res.get('decoupling'):    act['decoupling_pct'] = res['decoupling']['drift_pct']
         if res.get('duration_sec'):  act['duration_sec']   = res['duration_sec']
-        d = res.get('decoupling',{})
+        d = res.get('decoupling') or {}
         print('    OK: ef_gesamt=' + str(d.get('ef_gesamt','?')) +
               ' drift=' + str(d.get('drift_pct','?')) + '%' +
               ' ef_pts=' + str(len(res['ef_series'])) +
