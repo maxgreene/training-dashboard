@@ -160,11 +160,12 @@ canvas.chart{width:100%;display:block;}
 /* VERTICAL ZONE BARS */
 .vzones-wrap{display:flex;gap:10px;margin-bottom:14px;}
 .vzones-panel{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;}
-.vzones-title{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
-.vzones-chart{display:flex;align-items:flex-end;gap:3px;height:110px;}
-.vzbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
-.vzbar-fill{width:100%;min-height:2px;border-radius:2px 2px 0 0;}
-.vzbar-meta{margin-top:4px;text-align:center;}
+.vzones-title{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.vzones-chart{display:flex;align-items:flex-end;gap:3px;}
+.vzbar{flex:1;}
+.vzbar-fill{width:100%;border-radius:2px 2px 0 0;}
+.vzones-labels{display:flex;gap:3px;margin-top:4px;}
+.vzbar-lbl-col{flex:1;text-align:center;}
 .vzbar-pct{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
 .vzbar-time{font-size:7px;color:var(--t4);}
 .vzbar-name{font-size:8px;color:var(--t4);margin-top:1px;}
@@ -513,15 +514,21 @@ function buildDetail(act){
   function vzBars(zones,names,title){
     if(!zones||!zones.length)return '';
     const maxZ=Math.max(...zones)||1;
-    let h=`<div class="vzones-panel"><div class="vzones-title">${title}</div><div class="vzones-chart">`;
+    const CHART_H=90; // fixed chart area height px
+    let h=`<div class="vzones-panel"><div class="vzones-title">${title}</div>`;
+    h+=`<div class="vzones-chart" style="height:${CHART_H}px">`;
     zones.forEach((p,i)=>{
+      const barH=Math.max(2,Math.round(p/maxZ*CHART_H));
       h+=`<div class="vzbar">
-        <div class="vzbar-fill" style="height:${(p/maxZ*100).toFixed(1)}%;background:${ZC[i]}"></div>
-        <div class="vzbar-meta">
-          <div class="vzbar-pct">${p}%</div>
-          <div class="vzbar-time">${zTime(p)}</div>
-          <div class="vzbar-name">${names[i]}</div>
-        </div>
+        <div class="vzbar-fill" style="height:${barH}px;background:${ZC[i]}"></div>
+      </div>`;
+    });
+    h+=`</div><div class="vzones-labels">`;
+    zones.forEach((p,i)=>{
+      h+=`<div class="vzbar-lbl-col">
+        <div class="vzbar-pct">${p}%</div>
+        <div class="vzbar-time">${zTime(p)}</div>
+        <div class="vzbar-name">${names[i]}</div>
       </div>`;
     });
     h+=`</div></div>`;
