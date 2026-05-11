@@ -535,7 +535,10 @@ function buildDetail(act){
   h+=`<canvas id="chart-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
   if(hasAnalysis){
     h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-    h+=`<canvas id="an-sc-${act.id}" style="display:block;box-sizing:border-box;margin-bottom:4px"></canvas>`;
+    h+=`<div style="display:flex;gap:6px;margin-bottom:4px">
+      <canvas id="an-sc-\${act.id}" style="flex:1;min-width:0;box-sizing:border-box"></canvas>
+      <canvas id="an-pc-\${act.id}" style="flex:1;min-width:0;box-sizing:border-box"></canvas>
+    </div>`;
   }
   h+=`</div>`;
 
@@ -552,16 +555,7 @@ function buildDetail(act){
     h+=`</div>`;
   }
 
-  // Power Curve (compact)
-  if(act.power_curve&&Object.keys(act.power_curve).length){
-    const durs=[5,10,30,60,120,300,600,1200],lbls=['5s','10s','30s','1m','2m','5m','10m','20m'];
-    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#555','#3a3a3a'];
-    const vals=durs.map(d=>act.power_curve[String(d)]||0);
-    const maxV=Math.max(...vals)||1;
-    h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
-    durs.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;const pct=+(v/FTP*100).toFixed(0);h+=`<div class="pcb-w"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbls[i]}</div><div class="pcb-pct">${pct}%</div></div>`;});
-    h+=`</div>`;
-  }
+
 
   // ── 3. VALUES ──
   h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Werte</div><div class="sh-line"></div></div>`;
@@ -759,12 +753,12 @@ async function loadAndDrawAnalysis(act){
     }
   }
 
-  // ── CHART 3: Scatter (square) ──
+  // ── CHART 3: Scatter + Power Curve (side by side, both square) ──
   const c3=document.getElementById('an-sc-'+id);
   const scatter=an.scatter||[];
   if(c3&&scatter.length){
-    // Square: use full available width, set height = width
-    const W0=Math.floor(c3.parentElement.clientWidth-2);
+    // Square: element width determines both width and height
+    const W0=Math.floor(c3.offsetWidth||c3.parentElement.clientWidth/2-8);
     const H=W0;
     const dpr=window.devicePixelRatio||1;
     c3.width=W0*dpr;c3.height=H*dpr;
@@ -810,6 +804,76 @@ async function loadAndDrawAnalysis(act){
     // X axis label
     ctx.fillStyle='rgba(180,180,180,0.4)';ctx.textAlign='center';
     ctx.fillText('Watt',pL+cW/2,H-6);
+  }
+
+  // ── CHART 4: Power Curve MMP (square, next to scatter) ──
+  const c4=document.getElementById('an-pc-'+id);
+  const pcurve=an.power_curve||act.power_curve||{};
+  if(c4&&Object.keys(pcurve).length){
+    const W1=Math.floor(c4.offsetWidth||c4.parentElement.clientWidth/2-8);
+    const H1=W1;
+    const dpr=window.devicePixelRatio||1;
+    c4.width=W1*dpr;c4.height=H1*dpr;
+    c4.style.width=W1+'px';c4.style.height=H1+'px';
+    const ctx=c4.getContext('2d');ctx.scale(dpr,dpr);
+    const pL=42,pR=10,pT=14,pB=30,cW=W1-pL-pR,cH=H1-pT-pB;
+
+    // Durations and watts
+    const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
+    const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
+    if(pts.length>=2){
+      // Log scale X axis
+      const logMin=Math.log10(pts[0].d);
+      const logMax=Math.log10(pts[pts.length-1].d);
+      const wMin=Math.min(...pts.map(p=>p.w))*0.95;
+      const wMax=Math.max(...pts.map(p=>p.w))*1.05;
+
+      function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
+      function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
+
+      // Grid
+      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+      [100,150,200,250,300,400,500].filter(w=>w>=wMin&&w<=wMax).forEach(w=>{
+        ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();
+      });
+      // FTP reference
+      ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
+      ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
+
+      // MMP curve fill
+      ctx.beginPath();
+      pts.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.d),yOf(p.w)):ctx.lineTo(xOf(p.d),yOf(p.w));});
+      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=2;ctx.stroke();
+      ctx.lineTo(xOf(pts[pts.length-1].d),pT+cH);ctx.lineTo(xOf(pts[0].d),pT+cH);ctx.closePath();
+      ctx.fillStyle='rgba(200,200,200,0.07)';ctx.fill();
+
+      // Dots at each measured duration
+      pts.forEach(p=>{
+        ctx.beginPath();ctx.arc(xOf(p.d),yOf(p.w),3,0,Math.PI*2);
+        ctx.fillStyle='rgba(200,200,200,0.7)';ctx.fill();
+        // Label
+        ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='8px monospace';ctx.textAlign='center';
+        ctx.fillText(p.w+'W',xOf(p.d),yOf(p.w)-6);
+      });
+
+      // X axis ticks (log scale)
+      const xTicks=[{d:5,l:'5s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}];
+      ctx.fillStyle='#3a3a3a';ctx.font='8px monospace';ctx.textAlign='center';
+      xTicks.filter(t=>t.d>=pts[0].d&&t.d<=pts[pts.length-1].d).forEach(t=>{
+        ctx.fillText(t.l,xOf(t.d),H1-pB+12);
+        ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
+      });
+
+      // Y axis labels
+      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
+      [100,150,200,250,300,400,500].filter(w=>w>=wMin&&w<=wMax).forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
+
+      // Title
+      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+11);
+      // X axis label
+      ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';ctx.fillText('Dauer (log)',pL+cW/2,H1-pB+24);
+    }
   }
 
   // ── Aerobe Werte ──
