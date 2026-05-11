@@ -229,9 +229,9 @@ const PLAN_WEEKS=[
       {date:'05.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z2 · Basischeck mit Powermeter',done:true},
       {date:'06.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · gleichmäßiges Watt · HR unter 145',done:true},
       {date:'07.05',type:'roll',title:'Commute + 🎯 Rolle',desc:'Kurzer Weg + Rolleneinheit',det:'Morgen kurz Z1 · Abends: 45 min · 10\' Z1 · 25\' Z2 konstant 150–172W · 10\' auslaufen',done:true},
-      {date:'08.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
-      {date:'09.05',type:'aus',title:'🌄 Ausfahrt',desc:'Erste längere Fahrt',det:'60–75 min · reines Z2 · 144–180W · HR unter 145 · Pacing üben'},
-      {date:'10.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · Dehnen · Spazieren',dimmed:true},
+      {date:'08.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende',done:true},
+      {date:'09.05',type:'aus',title:'🌄 Ausfahrt',desc:'Erste längere Fahrt',det:'60–75 min · reines Z2 · 144–180W · HR unter 145 · Pacing üben',done:true},
+      {date:'10.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · Dehnen · Spazieren',done:true,dimmed:true},
     ]
   },
   {
@@ -1019,6 +1019,7 @@ async function loadData(){
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
     renderActivityList();
+    renderPlan();
     renderTodayBanner();
   }catch(e){
     document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
