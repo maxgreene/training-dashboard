@@ -758,7 +758,7 @@ async function loadAndDrawAnalysis(act){
   const scatter=an.scatter||[];
   if(c3&&scatter.length){
     // Square: element width determines both width and height
-    const W0=Math.floor(c3.offsetWidth||c3.parentElement.clientWidth/2-8);
+    const W0=Math.floor((c3.parentElement.clientWidth-8)/2);
     const H=W0;
     const dpr=window.devicePixelRatio||1;
     c3.width=W0*dpr;c3.height=H*dpr;
@@ -810,7 +810,7 @@ async function loadAndDrawAnalysis(act){
   const c4=document.getElementById('an-pc-'+id);
   const pcurve=an.power_curve||act.power_curve||{};
   if(c4&&Object.keys(pcurve).length){
-    const W1=Math.floor(c4.offsetWidth||c4.parentElement.clientWidth/2-8);
+    const W1=Math.floor((c4.parentElement.clientWidth-8)/2);
     const H1=W1;
     const dpr=window.devicePixelRatio||1;
     c4.width=W1*dpr;c4.height=H1*dpr;
