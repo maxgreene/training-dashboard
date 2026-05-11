@@ -109,11 +109,14 @@ main{padding:20px;max-width:1000px;margin:0 auto;}
 
 /* ZONE BARS */
 .zone-dist{display:flex;flex-direction:column;gap:5px;margin:8px 0 12px;}
-.zd-row{display:flex;align-items:center;gap:8px;}
-.zd-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:65px;text-align:right;flex-shrink:0;}
-.zd-bg{flex:1;background:#252525;border-radius:2px;height:6px;}
-.zd-bar{height:6px;border-radius:2px;}
-.zd-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);width:34px;}
+.zd-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.zd-lbl{font-size:10px;color:var(--t3);width:72px;flex-shrink:0;}
+.zd-bounds{font-size:9px;color:var(--t4);width:66px;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.zd-bg{flex:1;background:#252525;border-radius:2px;height:5px;}
+.zd-bar{height:5px;border-radius:2px;}
+.zd-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);width:32px;text-align:right;}
+.zd-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:44px;text-align:right;}
+.pcb-pct{font-size:8px;color:var(--t4);text-align:center;margin-top:1px;}
 
 /* CHART */
 .chart-wrap{position:relative;margin-bottom:14px;}
@@ -450,7 +453,7 @@ function renderActivityList(){
     const panel=document.getElementById('rd-'+selectedRideId);
     if(act&&panel&&!panel.innerHTML){
       panel.innerHTML=buildDetail(act);
-      setTimeout(()=>{drawChart(act);drawAnalysis(act);},50);
+      setTimeout(()=>loadAndDrawAnalysis(act),50);
     }
   }
 }
@@ -477,87 +480,351 @@ function selectRide(id){
   panel.innerHTML=buildDetail(act);
   panel.classList.add('open');
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>{drawChart(act);drawAnalysis(act);},50);
+  setTimeout(()=>loadAndDrawAnalysis(act),50);
 }
 
 // ── DETAIL ──
 function buildDetail(act){
-  const durMin=actDur(act)/60;
+  const dur=actDur(act);
+  const durMin=dur/60;
   const hasAnalysis=durMin>=30&&act.streams?.watts?.length&&act.streams?.hr?.length;
-  const hasStreams=act.streams&&(act.streams.watts?.length||act.streams.hr?.length);
-  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)}</div>`;
-  h+=`<div class="detail-stats">
-    ${act.avg_power?`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div>${act.np?`<div class="ds-sub">NP: ${act.np}W</div>`:''}</div>`:''}
-    ${act.avg_hr?`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div><div class="ds-sub">Max: ${act.max_hr}</div></div>`:''}
-    <div class="ds" style="${!act.gps_ok?'border-color:var(--red)':''}">
-      <div class="ds-label">Distanz${!act.gps_ok?' ⚠️':''}</div>
-      <div class="ds-val">${act.distance_m?fmtDist(act.distance_m):'—'}</div>
-      <div class="ds-sub">${fmtDur(actDur(act))}${act.kilojoules?' · '+act.kilojoules+'kJ':''}</div>
-    </div>
-    ${act.elevation_m?`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`:''}
-    ${act.decoupling_pct!==undefined?`<div class="ds"><div class="ds-label">HR/W Drift</div><div class="ds-val" style="color:${act.decoupling_pct<5?'var(--green)':'var(--red)'}">${act.decoupling_pct}<span>%</span></div><div class="ds-sub">${act.decoupling_pct<5?'gut ✓':'hoch'}</div></div>`:''}
-  </div>`;
-  if(act.power_curve&&Object.keys(act.power_curve).length){
-    const dur=[5,10,30,60,120,300,600,1200],lbl=['5s','10s','30s','1m','2m','5m','10m','20m'];
-    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#777','#555'];
-    const vals=dur.map(d=>act.power_curve[String(d)]||null).filter(Boolean);
-    const maxV=Math.max(...vals);
-    h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
-    dur.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;h+=`<div class="pcb-w"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbl[i]}</div></div>`;});
-    h+=`</div>`;
-  }
-  const zones=act.power_zones?.length?act.power_zones:act.hr_zones?.length?act.hr_zones:null;
-  const zLabel=act.power_zones?.length?`Power-Zonen (FTP ${FTP}W)`:`HR-Zonen (HRmax ${HRMAX})`;
-  if(zones){
-    h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">${zLabel}</div><div class="sh-line"></div></div><div class="zone-dist">`;
-    zones.forEach((p,i)=>{h+=`<div class="zd-row"><div class="zd-lbl">${ZN[i]}</div><div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div><div class="zd-pct">${p}%</div></div>`;});
-    h+=`</div>`;
-  }
-  if(hasStreams&&!hasAnalysis)h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Verlauf</div><div class="sh-line"></div></div><div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="80"></canvas></div>`;
-  if(hasAnalysis){
-    // Compute trimmed stats: skip first 3 min warmup + last 5 min cooldown
-    const ts2=act.streams.time||[],pw2=act.streams.watts||[],hr2=act.streams.hr||[];
-    const totalMin=ts2[ts2.length-1]/60;
-    const trimStart=3, trimEnd=Math.max(totalMin-5,totalMin*0.75);
-    const trimmed=[];
-    for(let i=0;i<ts2.length;i++){
-      const t=ts2[i]/60;
-      if(t>=trimStart&&t<=trimEnd&&pw2[i]>30&&hr2[i]>60) trimmed.push({t,w:pw2[i],hr:hr2[i]});
-    }
-    const half=Math.floor(trimmed.length/2);
-    const t1=trimmed.slice(0,half), t2=trimmed.slice(half);
-    const avgW1=t1.length?t1.reduce((s,p)=>s+p.w,0)/t1.length:0;
-    const avgH1=t1.length?t1.reduce((s,p)=>s+p.hr,0)/t1.length:0;
-    const avgW2=t2.length?t2.reduce((s,p)=>s+p.w,0)/t2.length:0;
-    const avgH2=t2.length?t2.reduce((s,p)=>s+p.hr,0)/t2.length:0;
-    const ef1v=avgH1?avgW1/avgH1:0;
-    const ef2v=avgH2?avgW2/avgH2:0;
-    const drift=ef1v?((ef2v-ef1v)/ef1v*100):0;
-    const driftOk=Math.abs(drift)<5;
-    const efAvg=trimmed.length?(trimmed.reduce((s,p)=>s+p.w,0)/trimmed.length)/(trimmed.reduce((s,p)=>s+p.hr,0)/trimmed.length):0;
 
-    h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Aerobe Analyse · Kern (ohne Warmup/Cooldown)</div><div class="sh-line"></div></div>`;
-    h+=`<div class="detail-stats" style="margin-bottom:10px">
-      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${efAvg.toFixed(2)}<span> W/bpm</span></div><div class="ds-sub">norm. Power / Ø HR</div></div>
-      <div class="ds"><div class="ds-label">EF₁ (1. Hälfte)</div><div class="ds-val">${ef1v.toFixed(2)}<span> W/bpm</span></div><div class="ds-sub">${Math.round(avgW1)}W · ${Math.round(avgH1)} bpm</div></div>
-      <div class="ds"><div class="ds-label">EF₂ (2. Hälfte)</div><div class="ds-val">${ef2v.toFixed(2)}<span> W/bpm</span></div><div class="ds-sub">${Math.round(avgW2)}W · ${Math.round(avgH2)} bpm</div></div>
-      <div class="ds"><div class="ds-label">HR/W Drift</div><div class="ds-val" style="color:${driftOk?'var(--green)':'var(--red)'}">${drift.toFixed(1)}<span>%</span></div><div class="ds-sub">${driftOk?'gut ✓ (<5%)':'hoch (>5%)'}</div></div>
-    </div>`;
-    h+=`<canvas id="an-dual-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:6px"></canvas>`;
-    h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:6px"></canvas>`;
-    h+=`<canvas id="an-sc-${act.id}" style="display:block;width:100%;box-sizing:border-box"></canvas>`;
+  // Derived metrics
+  const IF=act.np?+(act.np/FTP).toFixed(2):null;
+  const TSS=act.np&&IF?Math.round(dur*act.np*IF/(FTP*3600)*100):null;
+  const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(2):null;
+
+  function zTime(pct){
+    const s=Math.round(pct/100*dur);
+    const m=Math.floor(s/60),ss=s%60;
+    return m>60?`${Math.floor(m/60)}h ${m%60}m`:`${m}:${String(ss).padStart(2,'0')}`;
   }
-  h+=`<div class="sh" style="margin-top:12px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
-  if(act.np&&act.np>FTP*1.05)h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für hügelige Strecken.</div>`;
-  if(act.decoupling_pct!==undefined&&act.decoupling_pct<5)h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> HR/Watt-Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
-  if(act.avg_power&&act.avg_power<FTP*0.75)h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — genau richtig für Phase 1.</div>`;
-  if(!act.gps_ok)h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% der Fahrt getrackt. Distanz nicht zuverlässig.</div>`;
+  function secToStr(s){
+    const m=Math.floor(s/60),ss=s%60;
+    return m>60?`${Math.floor(m/60)}h ${m%60}m`:`${m}:${String(ss).padStart(2,'0')}`;
+  }
+
+  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)} · ${act.start_time}</div>`;
+
+  // ── TOP METRICS ROW ──
+  h+=`<div class="detail-stats" style="margin-bottom:14px">`;
+  if(TSS)  h+=`<div class="ds"><div class="ds-label">TSS</div><div class="ds-val">${TSS}</div><div class="ds-sub">Training Stress</div></div>`;
+  if(IF)   h+=`<div class="ds"><div class="ds-label">IF</div><div class="ds-val">${IF}</div><div class="ds-sub">Intensity Factor</div></div>`;
+  if(act.np) h+=`<div class="ds"><div class="ds-label">NP</div><div class="ds-val">${act.np}<span> W</span></div><div class="ds-sub">Normalized Power</div></div>`;
+  if(VI)   h+=`<div class="ds"><div class="ds-label">VI</div><div class="ds-val">${VI}</div><div class="ds-sub">Variability</div></div>`;
+  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Arbeit</div><div class="ds-val">${act.kilojoules}<span> kJ</span></div></div>`;
+  h+=`<div class="ds"><div class="ds-label">Dauer</div><div class="ds-val">${fmtDur(dur)}</div></div>`;
+  if(act.distance_m) h+=`<div class="ds" style="${!act.gps_ok?'border-color:var(--red)':''}"><div class="ds-label">Distanz${!act.gps_ok?' ⚠':''}</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
+  if(act.elevation_m) h+=`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`;
+  h+=`</div>`;
+
+  // ── POWER ──
+  if(act.avg_power){
+    h+=`<div class="sh"><div class="sh-title">Power</div><div class="sh-line"></div></div>`;
+    h+=`<div class="detail-stats" style="margin-bottom:10px">
+      <div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>
+      ${act.max_power?`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`:''}
+      ${act.avg_cadence?`<div class="ds"><div class="ds-label">Ø Kadenz</div><div class="ds-val">${Math.round(act.avg_cadence)}<span> rpm</span></div></div>`:''}
+    </div>`;
+
+    // Power chart
+    if(act.streams?.watts?.length){
+      h+=`<div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="70"></canvas></div>`;
+    }
+
+    // Power curve
+    if(act.power_curve&&Object.keys(act.power_curve).length){
+      const durs=[5,10,30,60,120,300,600,1200],lbls=['5s','10s','30s','1m','2m','5m','10m','20m'];
+      const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#666','#444'];
+      const vals=durs.map(d=>act.power_curve[String(d)]||0);
+      const maxV=Math.max(...vals)||1;
+      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
+      durs.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;const pct=+(v/FTP*100).toFixed(0);h+=`<div class="pcb-w"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbls[i]}</div><div class="pcb-pct">${pct}%</div></div>`;});
+      h+=`</div>`;
+    }
+
+    // Power zones with time
+    if(act.power_zones?.length){
+      const pzNames=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
+      const pzBounds=['<144W','144–180W','180–216W','216–252W','>252W'];
+      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">Power-Zonen · FTP ${FTP}W</div><div class="sh-line"></div></div><div class="zone-dist">`;
+      act.power_zones.forEach((p,i)=>{
+        h+=`<div class="zd-row">
+          <div class="zd-lbl">${pzNames[i]}</div>
+          <div class="zd-bounds">${pzBounds[i]}</div>
+          <div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div>
+          <div class="zd-pct">${p}%</div>
+          <div class="zd-time">${zTime(p)}</div>
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+  }
+
+  // ── HERZFREQUENZ ──
+  if(act.avg_hr){
+    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Herzfrequenz</div><div class="sh-line"></div></div>`;
+    h+=`<div class="detail-stats" style="margin-bottom:10px">
+      <div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>
+      <div class="ds"><div class="ds-label">Max HR</div><div class="ds-val">${act.max_hr}<span> bpm</span></div></div>
+      ${act.kilojoules?`<div class="ds"><div class="ds-label">Kalorien</div><div class="ds-val">${act.kilojoules}<span> kcal</span></div></div>`:''}
+    </div>`;
+
+    // HR chart (if no power chart already shown)
+    if(!act.avg_power&&act.streams?.hr?.length){
+      h+=`<div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="70"></canvas></div>`;
+    }
+
+    // HR zones with time — Wahoo-style labels
+    if(act.hr_zones?.length){
+      const hrZNames=['Easy','Fat Burn','Cardio','Hard','Peak'];
+      const hrZBounds=[`<${Math.round(HRMAX*0.6)}`,`${Math.round(HRMAX*0.6)}–${Math.round(HRMAX*0.7)}`,`${Math.round(HRMAX*0.7)}–${Math.round(HRMAX*0.77)}`,`${Math.round(HRMAX*0.77)}–${Math.round(HRMAX*0.88)}`,`>${Math.round(HRMAX*0.88)}`];
+      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">HR-Zonen · HRmax ${HRMAX} bpm</div><div class="sh-line"></div></div><div class="zone-dist">`;
+      act.hr_zones.forEach((p,i)=>{
+        h+=`<div class="zd-row">
+          <div class="zd-lbl">${hrZNames[i]}</div>
+          <div class="zd-bounds">${hrZBounds[i]}</div>
+          <div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div>
+          <div class="zd-pct">${p}%</div>
+          <div class="zd-time">${zTime(p)}</div>
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+  }
+
+  // ── AEROBE ANALYSE ──
+  const durMin=actDur(act)/60;
+  const hasAnalysis=durMin>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
+  if(hasAnalysis){
+    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse · Kern (ohne Warmup/Cooldown)</div><div class="sh-line"></div></div>`;
+    h+=`<div id="aerob-${act.id}"><div class="insight" style="color:#444">Lade Analyse...</div></div>`;
+  }
+
+  // ── EINSCHÄTZUNG ──
+  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
+  if(TSS)h+=`<div class="insight"><strong>TSS ${TSS}</strong> — ${TSS<50?'leichte Einheit, schnelle Erholung (<24h)':TSS<100?'moderate Belastung, Erholung ~24–36h':TSS<150?'harte Einheit, 2–3 Tage Erholung':'sehr harte Einheit, >3 Tage Erholung'}.</div>`;
+  if(act.np&&act.np>FTP*1.05)h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für Hügel oder Intervalle.</div>`;
+  if(act.decoupling_pct!==undefined&&act.decoupling_pct<5)h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
+  if(act.decoupling_pct!==undefined&&act.decoupling_pct>=5)h+=`<div class="insight warn"><strong>Hoher Drift ${act.decoupling_pct}%:</strong> Aerobe Basis noch im Aufbau — normal für Phase 1.</div>`;
+  if(act.avg_power&&act.avg_power<FTP*0.75)h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — aerobe Grundlage.</div>`;
+  if(!act.gps_ok)h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% getrackt.</div>`;
   return h;
 }
 
 
-// ── ANALYSIS CHARTS (dual timeseries + rolling EF) ──
-function drawAnalysis(act){
+// ── LOAD ANALYSIS + DRAW ALL CHARTS ──
+async function loadAndDrawAnalysis(act){
+  const id=act.id;
+
+  // Show loading on chart canvases
+  ['chart-','an-dual-','an-ef-','an-sc-'].forEach(pfx=>{
+    const c=document.getElementById(pfx+id);
+    if(c){const dpr=window.devicePixelRatio||1,W=Math.floor(c.parentElement.clientWidth),H=parseInt(c.getAttribute('height')||c.style.height)||80;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';const ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#444';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('Lade Analyse...',W/2,H/2);}
+  });
+
+  // Try to load analysis file
+  let an=null;
+  try{
+    const r=await fetch('data/analysis/'+id+'.json?_='+Date.now());
+    if(r.ok) an=await r.json();
+  }catch(e){}
+
+  // Fallback: use mini-chart from activities.json
+  const chart=an?.chart||act.streams||{};
+  const ts=chart.time||[], pw=chart.watts||[], hr=chart.hr||[], alt=chart.altitude||[];
+  const cad=chart.cadence||[], grade=chart.grade||[];
+
+  // ── Fill aerobic kacheln if analysis available ──
+  const aDiv=document.getElementById('aerob-'+id);
+  if(aDiv){
+    if(an?.decoupling){
+      const d=an.decoupling;
+      const ok=Math.abs(d.drift_pct)<5;
+      const efAvg=an.ef_series?.length?+(an.ef_series.reduce((s,p)=>s+p.ef,0)/an.ef_series.length).toFixed(3):null;
+      aDiv.innerHTML=`<div class="detail-stats" style="margin-bottom:10px">
+        ${efAvg?`<div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${efAvg}<span> W/bpm</span></div><div class="ds-sub">NP / Ø HR</div></div>`:''}
+        <div class="ds"><div class="ds-label">EF₁</div><div class="ds-val">${d.ef1}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1}W · ${d.avg_h1} bpm</div></div>
+        <div class="ds"><div class="ds-label">EF₂</div><div class="ds-val">${d.ef2}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2}W · ${d.avg_h2} bpm</div></div>
+        <div class="ds"><div class="ds-label">Drift</div><div class="ds-val" style="color:${ok?'var(--green)':'var(--red)'}">${d.drift_pct}<span>%</span></div><div class="ds-sub">${ok?'gut ✓':'hoch'}</div></div>
+      </div>
+      <canvas id="an-dual-${id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:6px"></canvas>
+      <canvas id="an-ef-${id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:6px"></canvas>
+      <canvas id="an-sc-${id}" style="display:block;width:100%;box-sizing:border-box"></canvas>`;
+    } else if(!an){
+      aDiv.innerHTML='<div class="insight">Analyse noch nicht verfügbar — wird beim nächsten Sync berechnet.</div>';
+    }
+  }
+
+  // ── Helper ──
+  function setupC(c,h){
+    if(!c)return null;
+    const dpr=window.devicePixelRatio||1,W=Math.floor(c.parentElement.clientWidth-2);
+    c.width=W*dpr;c.height=h*dpr;c.style.width=W+'px';c.style.height=h+'px';
+    const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+    return{ctx,W,H:h};
+  }
+
+  // ── MAIN CHART: Power + HR + Altitude ──
+  const c0=document.getElementById('chart-'+id);
+  if(c0&&ts.length){
+    const {ctx,W,H}=setupC(c0,90);
+    const pL=36,pR=8,pT=10,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const maxT=ts[ts.length-1]||1;
+    const maxP=pw.length?Math.max(400,...pw.filter(v=>v<2000)):400;
+    const minHR=80,maxHR=180;
+    function xOf(t){return pL+(t/maxT)*cW;}
+    function yP(p){return pT+cH-(Math.min(p,maxP)/maxP)*cH;}
+    function yH(h){return pT+cH-((h-minHR)/(maxHR-minHR))*cH;}
+
+    // Altitude fill
+    if(alt.length){
+      const altMin=Math.min(...alt)-5,altMax=Math.max(...alt)+5;
+      function yA(a){return pT+cH-(a-altMin)/(altMax-altMin)*cH;}
+      ctx.beginPath();alt.forEach((a,i)=>{i===0?ctx.moveTo(xOf(ts[i]),yA(a)):ctx.lineTo(xOf(ts[i]),yA(a));});
+      ctx.lineTo(xOf(maxT),pT+cH);ctx.lineTo(xOf(0),pT+cH);ctx.closePath();
+      ctx.fillStyle='rgba(100,100,100,0.12)';ctx.fill();
+    }
+
+    // Grid + FTP line
+    ctx.strokeStyle='#222';ctx.lineWidth=1;
+    [100,200,300].forEach(p=>{ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#3a3a3a';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p+'W',pL-2,yP(p)+3);});
+    if(pw.length){ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);}
+
+    // Power
+    if(pw.length){
+      ctx.beginPath();ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+      ctx.strokeStyle='rgba(249,115,22,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();
+      ctx.fillStyle='rgba(249,115,22,0.08)';ctx.fill();
+    }
+
+    // HR
+    if(hr.length){
+      ctx.beginPath();let first=true;ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);});
+      ctx.strokeStyle='rgba(180,180,180,0.65)';ctx.lineWidth=1.5;ctx.stroke();
+    }
+
+    // X ticks
+    ctx.fillStyle='#3a3a3a';ctx.font='8px monospace';ctx.textAlign='center';
+    const ticks=Math.min(6,Math.floor(maxT/60));
+    for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
+  }
+
+  if(!an)return;
+
+  // ── DUAL CHART ──
+  const c1=document.getElementById('an-dual-'+id);
+  if(c1&&ts.length&&pw.length&&hr.length){
+    const {ctx,W,H}=setupC(c1,160);
+    const pL=42,pR=44,pT=18,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const maxT=ts[ts.length-1]||1;
+    const minWv=0,maxWv=Math.max(300,...pw.filter(v=>v<2000));
+    const minHv=Math.max(60,...hr.filter(h=>h>60).map(h=>h-5));
+    const maxHv=Math.min(185,Math.max(...hr)+5);
+    const d=an.decoupling;
+
+    function xOf(t){return pL+(t/maxT)*cW;}
+    function yW(w){return pT+cH-(Math.min(w,maxWv)-minWv)/(maxWv-minWv)*cH;}
+    function yH(h){return pT+cH-(h-minHv)/(maxHv-minHv)*cH;}
+
+    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+    const tks=Math.min(8,Math.floor(maxT/300));
+    for(let i=0;i<=tks;i++){const t=Math.round(i*maxT/tks);ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+
+    if(d){
+      ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,5]);
+      ctx.beginPath();ctx.moveTo(xOf(d.half_t),pT);ctx.lineTo(xOf(d.half_t),pT+cH);ctx.stroke();ctx.setLineDash([]);
+      ctx.font='9px monospace';ctx.textAlign='center';
+      ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillText('EF₁ '+d.ef1,xOf(d.half_t*0.4),pT+12);
+      ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillText('EF₂ '+d.ef2,xOf(d.half_t*1.6<maxT?d.half_t*1.6:maxT*0.8),pT+12);
+      const ok=Math.abs(d.drift_pct)<5;
+      ctx.fillStyle=ok?'#5a8a52':'#a08050';ctx.fillText('Δ '+d.drift_pct+'%',xOf(d.half_t),pT+12);
+    }
+
+    ctx.beginPath();ts.forEach((t,i)=>{i===0?ctx.moveTo(xOf(t),yW(pw[i]||0)):ctx.lineTo(xOf(t),yW(pw[i]||0));});
+    ctx.strokeStyle='rgba(249,115,22,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.lineTo(xOf(maxT),yW(minWv));ctx.lineTo(xOf(0),yW(minWv));ctx.closePath();ctx.fillStyle='rgba(249,115,22,0.07)';ctx.fill();
+
+    ctx.beginPath();let fst=true;ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;fst?(ctx.moveTo(xOf(t),yH(hr[i])),fst=false):ctx.lineTo(xOf(t),yH(hr[i]));});
+    ctx.strokeStyle='rgba(180,180,180,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+
+    ctx.fillStyle='rgba(249,115,22,0.55)';ctx.font='9px monospace';ctx.textAlign='right';
+    [100,200,300].filter(w=>w<maxWv).forEach(w=>ctx.fillText(w+'W',pL-3,yW(w)+3));
+    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.textAlign='left';
+    [Math.round(minHv+5),Math.round((minHv+maxHv)/2),Math.round(maxHv-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
+    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    for(let i=0;i<=tks;i++){const t=Math.round(i*maxT/tks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
+    ctx.fillStyle='rgba(249,115,22,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+24);
+    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.fillText('HR',pL+4,pT+34);
+  }
+
+  // ── ROLLING EF CHART ──
+  const c2=document.getElementById('an-ef-'+id);
+  const efSeries=an.ef_series||[];
+  if(c2&&efSeries.length){
+    const {ctx,W,H}=setupC(c2,120);
+    const pL=42,pR=44,pT=8,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const maxT=efSeries[efSeries.length-1].t||1;
+    const efVals=efSeries.map(p=>p.ef);
+    const minEF=Math.max(0.7,Math.min(...efVals)-0.05),maxEF=Math.max(...efVals)+0.05;
+    const avgEF=efVals.reduce((s,v)=>s+v,0)/efVals.length;
+
+    function xOf(t){return pL+(t/maxT)*cW;}
+    function yEF(e){return pT+cH-(e-minEF)/(maxEF-minEF)*cH;}
+
+    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+    const tks=Math.min(8,Math.floor(maxT/300));
+    for(let i=0;i<=tks;i++){const t=Math.round(i*maxT/tks);ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+
+    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,6]);
+    ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='9px monospace';ctx.textAlign='left';ctx.fillText('Ø '+avgEF.toFixed(2),pL+4,yEF(avgEF)-3);
+    ctx.fillStyle='rgba(90,138,82,0.05)';ctx.fillRect(pL,yEF(maxEF),cW,yEF(avgEF)-yEF(maxEF));
+
+    ctx.beginPath();efSeries.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.t),yEF(p.ef)):ctx.lineTo(xOf(p.t),yEF(p.ef));});
+    ctx.strokeStyle='rgba(96,165,250,0.8)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.lineTo(xOf(maxT),yEF(minEF));ctx.lineTo(xOf(0),yEF(minEF));ctx.closePath();ctx.fillStyle='rgba(96,165,250,0.06)';ctx.fill();
+
+    [0,0.33,0.67,1].map(f=>minEF+f*(maxEF-minEF)).forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.4)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
+    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    for(let i=0;i<=tks;i++){const t=Math.round(i*maxT/tks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
+    ctx.fillStyle='rgba(96,165,250,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('EF (W/bpm)',pL+4,pT+14);
+  }
+
+  // ── SCATTER ──
+  const c3=document.getElementById('an-sc-'+id);
+  const scatter=an.scatter||[];
+  if(c3&&scatter.length){
+    const {ctx,W,H}=setupC(c3,130);
+    const pL=42,pR=14,pT=10,pB=22,cW=W-pL-pR,cH=H-pT-pB;
+    const wVals=scatter.map(p=>p.w),hVals=scatter.map(p=>p.hr);
+    const minW=Math.max(0,Math.min(...wVals)-10),maxW=Math.max(...wVals)+10;
+    const minH=Math.max(60,Math.min(...hVals)-5),maxH=Math.max(...hVals)+5;
+
+    function xOf(w){return pL+(w-minW)/(maxW-minW)*cW;}
+    function yOf(h){return pT+cH-(h-minH)/(maxH-minH)*cH;}
+
+    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+    const wStep=Math.ceil((maxW-minW)/5/10)*10||10;
+    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
+    for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=5){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
+
+    const tMin=scatter[0].t,tMax=scatter[scatter.length-1].t;
+    scatter.forEach(p=>{
+      const tf=(p.t-tMin)/(tMax-tMin);
+      const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
+      ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},0.7)`;ctx.fill();
+    });
+
+    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px monospace';ctx.textAlign='right';
+    for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=5)ctx.fillText(h,pL-3,yOf(h)+3);
+    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-5);
+    ctx.fillStyle='rgba(180,180,180,0.35)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('HR vs Watt · blau früh → orange spät',pL+4,pT+12);
+  }
+}
   if(!act.streams)return;
   const durMin=actDur(act)/60;
   if(durMin<30||!act.streams.watts||!act.streams.hr)return;
