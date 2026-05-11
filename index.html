@@ -156,8 +156,20 @@ canvas.chart{width:100%;display:block;}
 .ride-detail.open{display:block;}
 
 
-@media(max-width:680px){
-  .dow-hdr{display:none;}
+
+/* VERTICAL ZONE BARS */
+.vzones-wrap{display:flex;gap:10px;margin-bottom:14px;}
+.vzones-panel{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;}
+.vzones-title{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.vzones-chart{display:flex;align-items:flex-end;gap:3px;height:110px;}
+.vzbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.vzbar-fill{width:100%;min-height:2px;border-radius:2px 2px 0 0;}
+.vzbar-meta{margin-top:4px;text-align:center;}
+.vzbar-pct{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+.vzbar-time{font-size:7px;color:var(--t4);}
+.vzbar-name{font-size:8px;color:var(--t4);margin-top:1px;}
+
+lay:none;}
   .days-grid{grid-template-columns:1fr 1fr;}
   .stats{flex-wrap:wrap;}
   .stat{min-width:45%;}
@@ -487,126 +499,103 @@ function selectRide(id){
 function buildDetail(act){
   const dur=actDur(act);
   const durMin=dur/60;
-  const hasAnalysis=durMin>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
-
-  // Derived metrics
-  const IF=act.np?+(act.np/FTP).toFixed(2):null;
+  const IF=act.np?+(act.np/FTP).toFixed(3):null;
   const TSS=act.np&&IF?Math.round(dur*act.np*IF/(FTP*3600)*100):null;
-  const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(2):null;
+  const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(3):null;
+  const hasAnalysis=durMin>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
 
   function zTime(pct){
     const s=Math.round(pct/100*dur);
     const m=Math.floor(s/60),ss=s%60;
-    return m>60?`${Math.floor(m/60)}h ${m%60}m`:`${m}:${String(ss).padStart(2,'0')}`;
+    return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+':'+(ss<10?'0':'')+ss;
   }
-  function secToStr(s){
-    const m=Math.floor(s/60),ss=s%60;
-    return m>60?`${Math.floor(m/60)}h ${m%60}m`:`${m}:${String(ss).padStart(2,'0')}`;
+
+  function vzBars(zones,names,title){
+    if(!zones||!zones.length)return '';
+    const maxZ=Math.max(...zones)||1;
+    let h=`<div class="vzones-panel"><div class="vzones-title">${title}</div><div class="vzones-chart">`;
+    zones.forEach((p,i)=>{
+      h+=`<div class="vzbar">
+        <div class="vzbar-fill" style="height:${(p/maxZ*100).toFixed(1)}%;background:${ZC[i]}"></div>
+        <div class="vzbar-meta">
+          <div class="vzbar-pct">${p}%</div>
+          <div class="vzbar-time">${zTime(p)}</div>
+          <div class="vzbar-name">${names[i]}</div>
+        </div>
+      </div>`;
+    });
+    h+=`</div></div>`;
+    return h;
   }
 
   let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)} · ${act.start_time}</div>`;
 
-  // ── TOP METRICS ROW ──
-  h+=`<div class="detail-stats" style="margin-bottom:14px">`;
+  // ── 1. GRAPHS (async, placeholder) ──
+  h+=`<div id="aerob-${act.id}">`;
+  h+=`<canvas id="chart-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
+  if(hasAnalysis){
+    h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
+    h+=`<canvas id="an-sc-${act.id}" style="display:block;box-sizing:border-box;margin-bottom:4px"></canvas>`;
+  }
+  h+=`</div>`;
+
+  // ── 2. ZONE BARS (vertical, from activities.json) ──
+  const pzNames=['Z1','Z2','Z3','Z4','Z5'];
+  const hrNames=['Easy','Fat\u00A0Burn','Cardio','Hard','Peak'];
+  const hasPZ=act.power_zones&&act.power_zones.length;
+  const hasHZ=act.hr_zones&&act.hr_zones.length;
+  if(hasPZ||hasHZ){
+    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Zonen</div><div class="sh-line"></div></div>`;
+    h+=`<div class="vzones-wrap">`;
+    if(hasPZ) h+=vzBars(act.power_zones,pzNames,`Power-Zonen · FTP ${FTP}W`);
+    if(hasHZ)  h+=vzBars(act.hr_zones,hrNames,`HR-Zonen · HRmax ${HRMAX} bpm`);
+    h+=`</div>`;
+  }
+
+  // Power Curve (compact)
+  if(act.power_curve&&Object.keys(act.power_curve).length){
+    const durs=[5,10,30,60,120,300,600,1200],lbls=['5s','10s','30s','1m','2m','5m','10m','20m'];
+    const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#555','#3a3a3a'];
+    const vals=durs.map(d=>act.power_curve[String(d)]||0);
+    const maxV=Math.max(...vals)||1;
+    h+=`<div class="sh" style="margin-top:4px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
+    durs.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;const pct=+(v/FTP*100).toFixed(0);h+=`<div class="pcb-w"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbls[i]}</div><div class="pcb-pct">${pct}%</div></div>`;});
+    h+=`</div>`;
+  }
+
+  // ── 3. VALUES ──
+  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Werte</div><div class="sh-line"></div></div>`;
+  h+=`<div class="detail-stats" style="flex-wrap:wrap">`;
   if(TSS)  h+=`<div class="ds"><div class="ds-label">TSS</div><div class="ds-val">${TSS}</div><div class="ds-sub">Training Stress</div></div>`;
   if(IF)   h+=`<div class="ds"><div class="ds-label">IF</div><div class="ds-val">${IF}</div><div class="ds-sub">Intensity Factor</div></div>`;
   if(act.np) h+=`<div class="ds"><div class="ds-label">NP</div><div class="ds-val">${act.np}<span> W</span></div><div class="ds-sub">Normalized Power</div></div>`;
   if(VI)   h+=`<div class="ds"><div class="ds-label">VI</div><div class="ds-val">${VI}</div><div class="ds-sub">Variability</div></div>`;
+  if(act.avg_power) h+=`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>`;
+  if(act.max_power) h+=`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`;
   if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Arbeit</div><div class="ds-val">${act.kilojoules}<span> kJ</span></div></div>`;
   h+=`<div class="ds"><div class="ds-label">Dauer</div><div class="ds-val">${fmtDur(dur)}</div></div>`;
-  if(act.distance_m) h+=`<div class="ds" style="${!act.gps_ok?'border-color:var(--red)':''}"><div class="ds-label">Distanz${!act.gps_ok?' ⚠':''}</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
+  if(act.distance_m) h+=`<div class="ds"><div class="ds-label">Distanz</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
   if(act.elevation_m) h+=`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`;
+  if(act.avg_hr) h+=`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>`;
+  if(act.max_hr) h+=`<div class="ds"><div class="ds-label">Max HR</div><div class="ds-val">${act.max_hr}<span> bpm</span></div></div>`;
+  if(act.avg_cadence) h+=`<div class="ds"><div class="ds-label">Ø Kadenz</div><div class="ds-val">${Math.round(act.avg_cadence)}<span> rpm</span></div></div>`;
+  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Kalorien</div><div class="ds-val">${act.kilojoules}<span> kcal</span></div></div>`;
   h+=`</div>`;
 
-  // ── POWER ──
-  if(act.avg_power){
-    h+=`<div class="sh"><div class="sh-title">Power</div><div class="sh-line"></div></div>`;
-    h+=`<div class="detail-stats" style="margin-bottom:10px">
-      <div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>
-      ${act.max_power?`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`:''}
-      ${act.avg_cadence?`<div class="ds"><div class="ds-label">Ø Kadenz</div><div class="ds-val">${Math.round(act.avg_cadence)}<span> rpm</span></div></div>`:''}
-    </div>`;
-
-    // Power chart
-    if(act.streams?.watts?.length){
-      h+=`<div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="70"></canvas></div>`;
-    }
-
-    // Power curve
-    if(act.power_curve&&Object.keys(act.power_curve).length){
-      const durs=[5,10,30,60,120,300,600,1200],lbls=['5s','10s','30s','1m','2m','5m','10m','20m'];
-      const cols=['#ef4444','#f97316','#f97316','#fbbf24','#60a5fa','#60a5fa','#666','#444'];
-      const vals=durs.map(d=>act.power_curve[String(d)]||0);
-      const maxV=Math.max(...vals)||1;
-      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">Power Curve</div><div class="sh-line"></div></div><div class="pcurve">`;
-      durs.forEach((d,i)=>{const v=act.power_curve[String(d)];if(!v)return;const pct=+(v/FTP*100).toFixed(0);h+=`<div class="pcb-w"><div class="pcb" style="height:${v/maxV*100}%;background:${cols[i]}"></div><div class="pcb-val">${v}W</div><div class="pcb-lbl">${lbls[i]}</div><div class="pcb-pct">${pct}%</div></div>`;});
-      h+=`</div>`;
-    }
-
-    // Power zones with time
-    if(act.power_zones?.length){
-      const pzNames=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
-      const pzBounds=['<144W','144–180W','180–216W','216–252W','>252W'];
-      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">Power-Zonen · FTP ${FTP}W</div><div class="sh-line"></div></div><div class="zone-dist">`;
-      act.power_zones.forEach((p,i)=>{
-        h+=`<div class="zd-row">
-          <div class="zd-lbl">${pzNames[i]}</div>
-          <div class="zd-bounds">${pzBounds[i]}</div>
-          <div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div>
-          <div class="zd-pct">${p}%</div>
-          <div class="zd-time">${zTime(p)}</div>
-        </div>`;
-      });
-      h+=`</div>`;
-    }
-  }
-
-  // ── HERZFREQUENZ ──
-  if(act.avg_hr){
-    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Herzfrequenz</div><div class="sh-line"></div></div>`;
-    h+=`<div class="detail-stats" style="margin-bottom:10px">
-      <div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>
-      <div class="ds"><div class="ds-label">Max HR</div><div class="ds-val">${act.max_hr}<span> bpm</span></div></div>
-      ${act.kilojoules?`<div class="ds"><div class="ds-label">Kalorien</div><div class="ds-val">${act.kilojoules}<span> kcal</span></div></div>`:''}
-    </div>`;
-
-    // HR chart (if no power chart already shown)
-    if(!act.avg_power&&act.streams?.hr?.length){
-      h+=`<div class="chart-wrap"><canvas class="chart" id="chart-${act.id}" height="70"></canvas></div>`;
-    }
-
-    // HR zones with time — Wahoo-style labels
-    if(act.hr_zones?.length){
-      const hrZNames=['Easy','Fat Burn','Cardio','Hard','Peak'];
-      const hrZBounds=[`<${Math.round(HRMAX*0.6)}`,`${Math.round(HRMAX*0.6)}–${Math.round(HRMAX*0.7)}`,`${Math.round(HRMAX*0.7)}–${Math.round(HRMAX*0.77)}`,`${Math.round(HRMAX*0.77)}–${Math.round(HRMAX*0.88)}`,`>${Math.round(HRMAX*0.88)}`];
-      h+=`<div class="sh" style="margin-top:10px"><div class="sh-title">HR-Zonen · HRmax ${HRMAX} bpm</div><div class="sh-line"></div></div><div class="zone-dist">`;
-      act.hr_zones.forEach((p,i)=>{
-        h+=`<div class="zd-row">
-          <div class="zd-lbl">${hrZNames[i]}</div>
-          <div class="zd-bounds">${hrZBounds[i]}</div>
-          <div class="zd-bg"><div class="zd-bar" style="width:${p}%;background:${ZC[i]}"></div></div>
-          <div class="zd-pct">${p}%</div>
-          <div class="zd-time">${zTime(p)}</div>
-        </div>`;
-      });
-      h+=`</div>`;
-    }
-  }
-
-  // ── AEROBE ANALYSE ──
+  // Aerobe Werte (filled by loadAndDrawAnalysis)
   if(hasAnalysis){
-    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse · Kern (ohne Warmup/Cooldown)</div><div class="sh-line"></div></div>`;
-    h+=`<div id="aerob-${act.id}"><div class="insight" style="color:#444">Lade Analyse...</div></div>`;
+    h+=`<div id="aerob-vals-${act.id}"></div>`;
   }
 
-  // ── EINSCHÄTZUNG ──
+  // Einschätzung
   h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
-  if(TSS)h+=`<div class="insight"><strong>TSS ${TSS}</strong> — ${TSS<50?'leichte Einheit, schnelle Erholung (<24h)':TSS<100?'moderate Belastung, Erholung ~24–36h':TSS<150?'harte Einheit, 2–3 Tage Erholung':'sehr harte Einheit, >3 Tage Erholung'}.</div>`;
-  if(act.np&&act.np>FTP*1.05)h+=`<div class="insight warn"><strong>NP über FTP:</strong> ${act.np}W — intensiver als Z2. Typisch für Hügel oder Intervalle.</div>`;
-  if(act.decoupling_pct!==undefined&&act.decoupling_pct<5)h+=`<div class="insight good"><strong>Gute aerobe Effizienz:</strong> Drift ${act.decoupling_pct}% — unter 5% ist sehr gut.</div>`;
-  if(act.decoupling_pct!==undefined&&act.decoupling_pct>=5)h+=`<div class="insight warn"><strong>Hoher Drift ${act.decoupling_pct}%:</strong> Aerobe Basis noch im Aufbau — normal für Phase 1.</div>`;
-  if(act.avg_power&&act.avg_power<FTP*0.75)h+=`<div class="insight good"><strong>Z2-Einheit:</strong> Ø ${act.avg_power}W — aerobe Grundlage.</div>`;
-  if(!act.gps_ok)h+=`<div class="insight warn"><strong>GPS unvollständig:</strong> ${act.gps_coverage_pct}% getrackt.</div>`;
+  if(TSS) h+=`<div class="insight"><strong>TSS ${TSS}:</strong> ${TSS<50?'leicht, Erholung <24h':TSS<100?'moderat, ~24–36h':TSS<150?'hart, 2–3 Tage':'sehr hart, >3 Tage'}.</div>`;
+  if(!act.gps_ok&&act.gps_coverage_pct) h+=`<div class="insight warn"><strong>GPS:</strong> nur ${act.gps_coverage_pct}% getrackt.</div>`;
+  if(act.decoupling_pct!==null&&act.decoupling_pct!==undefined){
+    const dc=act.decoupling_pct;
+    if(dc<5) h+=`<div class="insight good"><strong>Drift ${dc>0?'+':''}${dc}%</strong> — unter 5%: gute aerobe Effizienz.</div>`;
+    else h+=`<div class="insight warn"><strong>Drift +${dc}%</strong> — über 5%: HR stieg relativ zur Leistung.</div>`;
+  }
   return h;
 }
 
@@ -614,303 +603,230 @@ function buildDetail(act){
 // ── LOAD ANALYSIS + DRAW ALL CHARTS ──
 async function loadAndDrawAnalysis(act){
   const id=act.id;
+  const hasAnalysis=actDur(act)/60>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
 
-  // Draw mini loading state
-  function loadingCanvas(c,h){
-    if(!c)return;
-    const dpr=window.devicePixelRatio||1,W=Math.floor(c.parentElement.clientWidth||600);
-    c.width=W*dpr;c.height=h*dpr;c.style.width=W+'px';c.style.height=h+'px';
-    const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
-    ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fillRect(0,0,W,h);
-    ctx.fillStyle='#333';ctx.font='10px sans-serif';ctx.textAlign='center';
-    ctx.fillText('Lade...',W/2,h/2+4);
-  }
-  const c0=document.getElementById('chart-'+id);
-  if(c0) loadingCanvas(c0,90);
-
-  // Fetch analysis
+  // Fetch analysis.json
   let an=null;
   try{
     const r=await fetch('data/analysis/'+id+'.json?_='+Date.now());
     if(r.ok) an=await r.json();
   }catch(e){}
 
-  const chart=an?.chart||act.streams||{};
-  const ts=chart.time||[],pw=chart.watts||[],hr=chart.hr||[],alt=chart.altitude||[];
+  const ch=an?.chart||act.streams||{};
+  const ts=ch.time||[], pw=ch.watts||[], hr=ch.hr||[], alt=ch.altitude||[];
 
-  // ── SETUP CANVAS helper ──
+  // Rolling average helper
+  function rollingMean(arr, win, minVal){
+    return arr.map((_, i)=>{
+      const slice=arr.slice(Math.max(0,i-win),i+1).filter(v=>v!=null&&v>=(minVal||0));
+      return slice.length?slice.reduce((s,v)=>s+v,0)/slice.length:null;
+    });
+  }
+
+  // Canvas setup
   function SC(c,h){
     if(!c)return null;
-    const dpr=window.devicePixelRatio||1,W=Math.floor(c.parentElement.clientWidth-2);
-    c.width=W*dpr;c.height=h*dpr;c.style.width=W+'px';c.style.height=h+'px';
-    const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+    const dpr=window.devicePixelRatio||1;
+    const W=Math.floor(c.parentElement.clientWidth-2);
+    c.width=W*dpr; c.height=h*dpr;
+    c.style.width=W+'px'; c.style.height=h+'px';
+    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
     return{ctx,W,H:h};
   }
 
-  // ── MAIN CHART: Power + HR + Altitude ──
+  // ── CHART 1: HR + Watt (raw dots + rolling mean) ──
+  const c0=document.getElementById('chart-'+id);
   if(c0&&ts.length){
-    const{ctx,W,H}=SC(c0,100);
-    const pL=42,pR=44,pT=12,pB=24,cW=W-pL-pR,cH=H-pT-pB;
+    const H=130;
+    const r=SC(c0,H); if(!r)return;
+    const{ctx,W}=r;
+    const pL=42,pR=44,pT=16,pB=24,cW=W-pL-pR,cH=H-pT-pB;
     const maxT=ts[ts.length-1]||1;
-    const maxP=pw.length?Math.min(600,Math.max(350,...pw.filter(v=>v<1500))):400;
-    const minHR=70,maxHR=Math.min(185,Math.max(150,...hr.filter(h=>h>60))+5);
+
+    // Power range
+    const pwValid=pw.filter(v=>v>0&&v<1500);
+    const maxP=pwValid.length?Math.min(650,Math.max(300,Math.max(...pwValid)*1.05)):400;
+    // HR range
+    const hrValid=hr.filter(h=>h>50);
+    const minHR=hrValid.length?Math.max(60,Math.min(...hrValid)-5):70;
+    const maxHR=hrValid.length?Math.min(185,Math.max(...hrValid)+5):180;
 
     function xOf(t){return pL+(t/maxT)*cW;}
-    function yP(p){return pT+cH-(Math.min(p,maxP)/maxP)*cH;}
+    function yP(p){return pT+cH-Math.min(1,(p/maxP))*cH;}
     function yH(h){return pT+cH-((Math.max(minHR,Math.min(maxHR,h))-minHR)/(maxHR-minHR))*cH;}
 
-    // Altitude fill
+    // Altitude bg
     if(alt.length>1){
-      const aMin=Math.min(...alt)-5,aMax=Math.max(...alt)+10;
-      function yA(a){return pT+cH-(a-aMin)/(aMax-aMin)*cH;}
+      const aMin=Math.min(...alt),aMax=Math.max(...alt)+1;
       ctx.beginPath();
-      alt.forEach((a,i)=>{i===0?ctx.moveTo(xOf(ts[i]),yA(a)):ctx.lineTo(xOf(ts[i]),yA(a));});
+      alt.forEach((a,i)=>{i===0?ctx.moveTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH)):ctx.lineTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH));});
       ctx.lineTo(xOf(maxT),pT+cH);ctx.lineTo(xOf(0),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(100,100,100,0.15)';ctx.fill();
+      ctx.fillStyle='rgba(90,90,90,0.13)';ctx.fill();
     }
 
-    // Grid W
-    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
-    [100,200,300].forEach(p=>{ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();});
-    // Grid time
+    // Grid
+    ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
     const tks=Math.min(8,Math.floor(maxT/300));
     for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-    // FTP line
+
+    // FTP reference
+    ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-3);
+
+    // Raw power dots
     if(pw.length){
-      ctx.strokeStyle='rgba(249,115,22,0.25)';ctx.setLineDash([4,5]);
-      ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='rgba(249,115,22,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP '+FTP+'W',pL+2,yP(FTP)-3);
-    }
-    // Power fill+line
-    if(pw.length){
-      ctx.beginPath();ts.forEach((t,i)=>{i===0?ctx.moveTo(xOf(t),yP(pw[i]||0)):ctx.lineTo(xOf(t),yP(pw[i]||0));});
-      ctx.strokeStyle='rgba(249,115,22,0.75)';ctx.lineWidth=1.5;ctx.stroke();
-      ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();
-      ctx.fillStyle='rgba(249,115,22,0.07)';ctx.fill();
-    }
-    // HR line
-    if(hr.length){
+      pw.forEach((p,i)=>{if(!p||p<5)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yP(p),1.5,0,Math.PI*2);ctx.fillStyle='rgba(249,115,22,0.2)';ctx.fill();});
+      // Rolling mean line (win=5 pts)
+      const pwSmooth=rollingMean(pw,5,5);
       ctx.beginPath();let fst=true;
-      ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;fst?(ctx.moveTo(xOf(t),yH(hr[i])),fst=false):ctx.lineTo(xOf(t),yH(hr[i]));});
-      ctx.strokeStyle='rgba(200,200,200,0.8)';ctx.lineWidth=1.5;ctx.stroke();
+      pwSmooth.forEach((p,i)=>{if(!p)return;fst?(ctx.moveTo(xOf(ts[i]),yP(p)),fst=false):ctx.lineTo(xOf(ts[i]),yP(p));});
+      ctx.strokeStyle='rgba(249,115,22,0.85)';ctx.lineWidth=1.8;ctx.stroke();
     }
-    // Y labels left (W)
+
+    // Raw HR dots
+    if(hr.length){
+      hr.forEach((h,i)=>{if(!h||h<50)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yH(h),1.5,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.18)';ctx.fill();});
+      // Rolling mean line
+      const hrSmooth=rollingMean(hr,5,50);
+      ctx.beginPath();let fst=true;
+      hrSmooth.forEach((h,i)=>{if(!h)return;fst?(ctx.moveTo(xOf(ts[i]),yH(h)),fst=false):ctx.lineTo(xOf(ts[i]),yH(h));});
+      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=1.8;ctx.stroke();
+    }
+
+    // Y labels
     ctx.fillStyle='rgba(249,115,22,0.6)';ctx.font='9px monospace';ctx.textAlign='right';
-    [100,200,300].filter(p=>p<maxP).forEach(p=>ctx.fillText(p+'W',pL-3,yP(p)+3));
-    // Y labels right (HR)
-    ctx.fillStyle='rgba(200,200,200,0.55)';ctx.textAlign='left';
-    [Math.round(minHR+10),Math.round((minHR+maxHR)/2),Math.round(maxHR-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
-    // X labels
-    ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
+    [100,200,300,400].filter(p=>p<maxP).forEach(p=>ctx.fillText(p+'W',pL-3,yP(p)+3));
+    ctx.fillStyle='rgba(200,200,200,0.5)';ctx.textAlign='left';
+    [Math.round(minHR+5),Math.round((minHR+maxHR)/2),Math.round(maxHR-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
+    ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
     for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-    ctx.fillStyle='rgba(249,115,22,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+13);
-    ctx.fillStyle='rgba(200,200,200,0.5)';ctx.fillText('HR',pL+28,pT+13);
+    // Legend
+    ctx.fillStyle='rgba(249,115,22,0.7)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+11);
+    ctx.fillStyle='rgba(200,200,200,0.6)';ctx.fillText('· HR',pL+32,pT+11);
+    ctx.fillStyle='rgba(130,130,130,0.4)';ctx.fillText('· Punkte = Roh, Linie = 30s Mittel',pL+48,pT+11);
   }
 
   if(!an)return;
 
-  // ── FILL AEROBIC SECTION ──
-  const aDiv=document.getElementById('aerob-'+id);
-  if(aDiv&&an.decoupling){
+  // ── CHART 2: Rolling EF (raw dots + smoothed line) ──
+  const c2=document.getElementById('an-ef-'+id);
+  const efSeries=an.ef_series||[];
+  if(c2&&efSeries.length){
+    const efClean=efSeries.filter(p=>p.ef>0.5&&p.ef<2.8);
+    if(efClean.length){
+      const H=100;
+      const r=SC(c2,H);if(!r){}else{
+        const{ctx,W}=r;
+        const pL=42,pR=44,pT=12,pB=24,cW=W-pL-pR,cH=H-pT-pB;
+        const maxT=efClean[efClean.length-1].t;
+        const efVals=efClean.map(p=>p.ef);
+        const minEF=Math.max(0.6,Math.min(...efVals)-0.05);
+        const maxEF=Math.min(2.5,Math.max(...efVals)+0.05);
+        const avgEF=efVals.reduce((s,v)=>s+v,0)/efVals.length;
+
+        function xOf(t){return pL+(t/maxT)*cW;}
+        function yEF(e){return pT+cH-((Math.max(minEF,Math.min(maxEF,e))-minEF)/(maxEF-minEF))*cH;}
+
+        ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+        const tks=Math.min(8,Math.floor(maxT/300));
+        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+
+        // Avg ref
+        ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,6]);
+        ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px monospace';ctx.textAlign='left';
+        ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
+
+        // Raw dots
+        efClean.forEach(p=>{ctx.beginPath();ctx.arc(xOf(p.t),yEF(p.ef),1.5,0,Math.PI*2);ctx.fillStyle='rgba(96,165,250,0.22)';ctx.fill();});
+
+        // Smoothed line (5-point rolling avg of ef values)
+        const efSmooth=efClean.map((_,i)=>{
+          const sl=efClean.slice(Math.max(0,i-5),i+1).filter(p=>p.ef>0.5&&p.ef<2.8);
+          return sl.length?sl.reduce((s,p)=>s+p.ef,0)/sl.length:null;
+        });
+        ctx.beginPath();let fst=true;
+        efSmooth.forEach((e,i)=>{if(!e)return;fst?(ctx.moveTo(xOf(efClean[i].t),yEF(e)),fst=false):ctx.lineTo(xOf(efClean[i].t),yEF(e));});
+        ctx.strokeStyle='rgba(96,165,250,0.85)';ctx.lineWidth=1.8;ctx.stroke();
+
+        // Labels
+        [minEF,avgEF,maxEF].forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
+        ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
+        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
+        ctx.fillStyle='rgba(96,165,250,0.65)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Rolling EF (W/bpm) · 120s Fenster',pL+4,pT+11);
+      }
+    }
+  }
+
+  // ── CHART 3: Scatter (square) ──
+  const c3=document.getElementById('an-sc-'+id);
+  const scatter=an.scatter||[];
+  if(c3&&scatter.length){
+    // Square: use full available width, set height = width
+    const W0=Math.floor(c3.parentElement.clientWidth-2);
+    const H=W0;
+    const dpr=window.devicePixelRatio||1;
+    c3.width=W0*dpr;c3.height=H*dpr;
+    c3.style.width=W0+'px';c3.style.height=H+'px';
+    const ctx=c3.getContext('2d');ctx.scale(dpr,dpr);
+
+    const pL=42,pR=10,pT=12,pB=34,cW=W0-pL-pR,cH=H-pT-pB;
+    const wVals=[...scatter.map(p=>p.w)].sort((a,b)=>a-b);
+    const hVals=[...scatter.map(p=>p.hr)].sort((a,b)=>a-b);
+    const p3w=wVals[Math.floor(wVals.length*0.03)];
+    const p97w=wVals[Math.floor(wVals.length*0.97)];
+    const p2h=hVals[Math.floor(hVals.length*0.02)];
+    const p98h=hVals[Math.floor(hVals.length*0.98)];
+    const minW=Math.max(0,p3w-10), maxW=p97w+15;
+    const minH=Math.max(60,p2h-3),  maxH=Math.min(185,p98h+3);
+
+    function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
+    function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
+
+    ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+    const wStep=Math.ceil((maxW-minW)/6/10)*10||10;
+    const hStep=Math.ceil((maxH-minH)/6/5)*5||5;
+    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
+    for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
+
+    const tMin=scatter[0].t, tMax=scatter[scatter.length-1].t;
+    scatter.forEach(p=>{
+      if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
+      const tf=(p.t-tMin)/(tMax-tMin);
+      const r2=Math.round(96+tf*(249-96)),g2=Math.round(165+tf*(115-165)),b2=Math.round(250+tf*(22-250));
+      ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
+      ctx.fillStyle='rgba('+r2+','+g2+','+b2+',0.65)';ctx.fill();
+    });
+
+    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
+    for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep*2)ctx.fillText(h,pL-3,yOf(h)+3);
+    ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
+    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-pB+14);
+    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillText('HR vs Watt  (blau=früh, orange=spät)',pL+cW/2,H-pB+26);
+    // Y axis label
+    ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
+    // X axis label
+    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.textAlign='center';
+    ctx.fillText('Watt',pL+cW/2,H-6);
+  }
+
+  // ── Aerobe Werte ──
+  const avDiv=document.getElementById('aerob-vals-'+id);
+  if(avDiv&&an.decoupling){
     const d=an.decoupling;
-    const ok=Math.abs(d.drift_pct)<5;
-    const driftColor=d.drift_pct>0?'var(--red)':'var(--green)'; // positive=bad, negative=improved
-
-    aDiv.innerHTML=`
-    <canvas id="an-dual-${id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>
-    <div style="display:flex;gap:6px;margin-bottom:4px">
-      <canvas id="an-ef-${id}" style="display:block;flex:1;box-sizing:border-box"></canvas>
-      <canvas id="an-sc-${id}" style="display:block;box-sizing:border-box"></canvas>
-    </div>
-    <div class="detail-stats" style="margin-top:8px">
-      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">NP_core / Ø HR_core</div></div>
-      <div class="ds"><div class="ds-label">EF₁ (1. Hälfte)</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">EF₂ (2. Hälfte)</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">Drift</div><div class="ds-val" style="color:${driftColor}">${d.drift_pct>0?'+':''}${d.drift_pct}<span>%</span></div><div class="ds-sub">${d.drift_pct>0?'HR stieg (Drift)':d.drift_pct<0?'EF stieg (Bergprofil?)':'kein Drift'}</div></div>
-      <div class="ds"><div class="ds-label">n Kern-Punkte</div><div class="ds-val">${d.n_core}</div><div class="ds-sub">nach Trim</div></div>
+    const dPos=d.drift_pct>0;
+    avDiv.innerHTML=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse</div><div class="sh-line"></div></div>
+    <div class="detail-stats">
+      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">NP_core / HR_core</div></div>
+      <div class="ds"><div class="ds-label">EF₁</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
+      <div class="ds"><div class="ds-label">EF₂</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
+      <div class="ds"><div class="ds-label">Drift</div><div class="ds-val" style="color:${dPos?'var(--red)':'var(--green)'}">${dPos?'+':''}${d.drift_pct.toFixed(2)}<span>%</span></div><div class="ds-sub">${dPos?'HR stieg':'EF stieg'} · n=${d.n_core}</div></div>
     </div>`;
-
-    // Draw dual chart
-    setTimeout(()=>{
-      drawDualChart(id, an);
-      drawEFChart(id, an);
-      drawScatter(id, an);
-    },20);
-  } else if(aDiv&&!an.decoupling){
-    aDiv.innerHTML=`<div class="insight">Zu kurz oder kein HR+Power — keine Aerobanalyse.</div>`;
   }
 }
 
-function drawDualChart(id, an){
-  const c=document.getElementById('an-dual-'+id);
-  if(!c)return;
-  const ch=an.chart||{};
-  const ts=ch.time||[],pw=ch.watts||[],hr=ch.hr||[];
-  if(!ts.length)return;
-  const{ctx,W,H}=SC2(c,155);
-  const d=an.decoupling;
-  const pL=42,pR=44,pT=20,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-  const maxT=ts[ts.length-1]||1;
-  const minWv=0,maxWv=Math.min(600,Math.max(300,...pw.filter(v=>v<1500)));
-  const hrVals=hr.filter(h=>h>60);
-  const minHv=Math.max(60,Math.min(...hrVals)-5);
-  const maxHv=Math.min(185,Math.max(...hrVals)+5);
-
-  function xOf(t){return pL+(t/maxT)*cW;}
-  function yW(w){return pT+cH-(Math.min(w,maxWv)/maxWv)*cH;}
-  function yH(h){return pT+cH-((Math.max(minHv,Math.min(maxHv,h))-minHv)/(maxHv-minHv))*cH;}
-
-  // Grid
-  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
-  const tks=Math.min(8,Math.floor(maxT/300));
-  for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-  [100,200,300].forEach(p=>{ctx.beginPath();ctx.moveTo(pL,yW(p));ctx.lineTo(pL+cW,yW(p));ctx.stroke();});
-
-  // Half line + annotations
-  if(d){
-    const ht=d.half_t;
-    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.setLineDash([4,5]);
-    ctx.beginPath();ctx.moveTo(xOf(ht),pT);ctx.lineTo(xOf(ht),pT+cH);ctx.stroke();ctx.setLineDash([]);
-    ctx.font='9px monospace';ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.25)';
-    ctx.fillText('EF₁ '+d.ef1.toFixed(3),xOf(ht*0.4),pT+11);
-    ctx.fillText('EF₂ '+d.ef2.toFixed(3),xOf(Math.min(ht*1.6,maxT*0.85)),pT+11);
-    ctx.fillStyle=d.drift_pct>0?'#a08050':'#5a8a52';
-    ctx.fillText((d.drift_pct>0?'+':'')+d.drift_pct+'%',xOf(ht),pT+11);
-  }
-
-  // Power
-  ctx.beginPath();ts.forEach((t,i)=>{i===0?ctx.moveTo(xOf(t),yW(pw[i]||0)):ctx.lineTo(xOf(t),yW(pw[i]||0));});
-  ctx.strokeStyle='rgba(249,115,22,0.7)';ctx.lineWidth=1.5;ctx.stroke();
-  ctx.lineTo(xOf(maxT),yW(0));ctx.lineTo(xOf(0),yW(0));ctx.closePath();ctx.fillStyle='rgba(249,115,22,0.06)';ctx.fill();
-
-  // HR
-  ctx.beginPath();let fst=true;
-  ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;fst?(ctx.moveTo(xOf(t),yH(hr[i])),fst=false):ctx.lineTo(xOf(t),yH(hr[i]));});
-  ctx.strokeStyle='rgba(200,200,200,0.75)';ctx.lineWidth=1.5;ctx.stroke();
-
-  // Labels
-  ctx.fillStyle='rgba(249,115,22,0.6)';ctx.font='9px monospace';ctx.textAlign='right';
-  [100,200,300].filter(p=>p<maxWv).forEach(p=>ctx.fillText(p+'W',pL-3,yW(p)+3));
-  ctx.fillStyle='rgba(200,200,200,0.55)';ctx.textAlign='left';
-  [Math.round(minHv+5),Math.round((minHv+maxHv)/2),Math.round(maxHv-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
-  ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
-  for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-  ctx.fillStyle='rgba(249,115,22,0.55)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+10);
-  ctx.fillStyle='rgba(200,200,200,0.5)';ctx.fillText('HR',pL+28,pT+10);
-}
-
-function drawEFChart(id, an){
-  const c=document.getElementById('an-ef-'+id);
-  if(!c)return;
-  const ef=an.ef_series||[];
-  if(!ef.length)return;
-
-  // Filter outliers: keep ef in [0.6, 2.5]
-  const efClean=ef.filter(p=>p.ef>=0.6&&p.ef<=2.5);
-  if(!efClean.length)return;
-
-  // Set height = 60% of width for reasonable aspect
-  const W0=Math.floor(c.parentElement.clientWidth);
-  const H=Math.round(W0*0.45);
-
-  const{ctx,W}=SC2(c,H);
-  const pL=40,pR=10,pT=10,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-  const maxT=efClean[efClean.length-1].t;
-  const efVals=efClean.map(p=>p.ef);
-  const minEF=Math.max(0.6,Math.min(...efVals)-0.05);
-  const maxEF=Math.min(2.5,Math.max(...efVals)+0.05);
-  const avgEF=efVals.reduce((s,v)=>s+v,0)/efVals.length;
-
-  function xOf(t){return pL+(t/maxT)*cW;}
-  function yEF(e){return pT+cH-(e-minEF)/(maxEF-minEF)*cH;}
-
-  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
-  const tks=Math.min(6,Math.floor(maxT/300));
-  for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-
-  // Avg ref line
-  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.setLineDash([4,6]);
-  ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px monospace';ctx.textAlign='left';
-  ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
-
-  // EF line
-  ctx.beginPath();efClean.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.t),yEF(p.ef)):ctx.lineTo(xOf(p.t),yEF(p.ef));});
-  ctx.strokeStyle='rgba(96,165,250,0.8)';ctx.lineWidth=1.5;ctx.stroke();
-  ctx.lineTo(xOf(maxT),yEF(minEF));ctx.lineTo(xOf(efClean[0].t),yEF(minEF));ctx.closePath();
-  ctx.fillStyle='rgba(96,165,250,0.06)';ctx.fill();
-
-  // Labels
-  [minEF,avgEF,maxEF].forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
-  ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
-  for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-  ctx.fillStyle='rgba(96,165,250,0.6)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Rolling EF (120s)',pL+3,pT+12);
-}
-
-function drawScatter(id, an){
-  const c=document.getElementById('an-sc-'+id);
-  if(!c)return;
-  const sc=an.scatter||[];
-  if(!sc.length)return;
-
-  // Square canvas: height = width of this element
-  const W0=Math.floor(c.offsetWidth||c.parentElement.clientWidth/2);
-  const H=W0; // square!
-  c.style.height=H+'px';
-
-  const{ctx,W}=SC2(c,H);
-  const pL=36,pR=10,pT=10,pB=30,cW=W-pL-pR,cH=H-pT-pB;
-
-  const wVals=sc.map(p=>p.w).sort((a,b)=>a-b);
-  const hVals=sc.map(p=>p.hr).sort((a,b)=>a-b);
-  const p5w=wVals[Math.floor(wVals.length*0.03)];
-  const p95w=wVals[Math.floor(wVals.length*0.97)];
-  const p5h=hVals[Math.floor(hVals.length*0.02)];
-  const p95h=hVals[Math.floor(hVals.length*0.98)];
-  const minW=Math.max(0,p5w-10),maxW=p95w+10;
-  const minH=Math.max(60,p5h-3),maxH=Math.min(185,p95h+3);
-
-  function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
-  function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-
-  // Grid
-  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
-  const wStep=Math.ceil((maxW-minW)/5/10)*10||20;
-  for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
-  const hStep=5;
-  for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
-
-  // Points colored by time
-  const tMin=sc[0].t,tMax=sc[sc.length-1].t;
-  sc.forEach(p=>{
-    if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
-    const tf=(p.t-tMin)/(tMax-tMin);
-    const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
-    ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
-    ctx.fillStyle='rgba('+r+','+g+','+b+',0.72)';ctx.fill();
-  });
-
-  // Axis labels
-  ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-  for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep*2)ctx.fillText(h,pL-3,yOf(h)+3);
-  ctx.fillStyle='#3a3a3a';ctx.textAlign='center';
-  for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-5);
-  ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('HR vs Watt',pL+3,pT+11);
-  ctx.fillStyle='rgba(96,165,250,0.35)';ctx.fillText(' blau→orange = Zeit',pL+56,pT+11);
-
-  // Axis titles
-  ctx.fillStyle='rgba(180,180,180,0.4)';ctx.save();ctx.translate(11,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
-}
-
-function SC2(c,h){
-  const dpr=window.devicePixelRatio||1,W=Math.floor(c.offsetWidth||c.parentElement.clientWidth);
-  c.width=W*dpr;c.height=h*dpr;c.style.width=W+'px';c.style.height=h+'px';
-  const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
-  return{ctx,W,H:h};
-}
-
-// ── CHART ──
 function drawChart(act){
   const canvas=document.getElementById(`chart-${act.id}`);
   if(!canvas||!act.streams)return;
