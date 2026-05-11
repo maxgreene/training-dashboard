@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-11T08:00:35.315511+00:00",
+  "updated_at": "2026-05-11T08:16:55.226753+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -887,7 +887,7 @@
       "max_power": 778,
       "avg_hr": 146.9,
       "max_hr": 162.0,
-      "avg_cadence": 88,
+      "avg_cadence": 87.7,
       "kilojoules": 1498.1,
       "gps_ok": true,
       "gps_coverage_pct": 100,
@@ -899,13 +899,13 @@
         "5": 686,
         "10": 504,
         "30": 336,
-        "60": 296,
+        "60": 298,
         "120": 271,
         "300": 246,
-        "600": 230,
-        "1200": 210,
-        "1800": 210,
-        "3600": 200
+        "600": 234,
+        "1200": 217,
+        "1800": 216,
+        "3600": 207
       },
       "hr_zones": [
         1.2,
@@ -921,7 +921,7 @@
         21.8,
         13.6
       ],
-      "decoupling_pct": -4.1,
+      "decoupling_pct": -2.96,
       "power_duration_sec": 8182,
       "streams": {
         "time": [
@@ -2132,7 +2132,7 @@
       "max_power": 171,
       "avg_hr": 118.5,
       "max_hr": 130.0,
-      "avg_cadence": 89,
+      "avg_cadence": 88.8,
       "kilojoules": 377.4,
       "gps_ok": false,
       "gps_coverage_pct": 100,
@@ -2165,7 +2165,7 @@
         0.0,
         0.0
       ],
-      "decoupling_pct": -6.0,
+      "decoupling_pct": -5.25,
       "power_duration_sec": 2702,
       "streams": {
         "time": [
@@ -2522,7 +2522,7 @@
       "max_power": 502,
       "avg_hr": 108.0,
       "max_hr": 140.0,
-      "avg_cadence": 64,
+      "avg_cadence": 63.7,
       "kilojoules": 80.1,
       "gps_ok": true,
       "gps_coverage_pct": 100,
@@ -2535,9 +2535,8 @@
         "10": 434,
         "30": 342,
         "60": 290,
-        "120": 223,
-        "300": 137,
-        "600": 120
+        "120": 228,
+        "300": 186
       },
       "hr_zones": [
         69.5,
@@ -3023,7 +3022,7 @@
       "max_power": 625,
       "avg_hr": 128.8,
       "max_hr": 153.0,
-      "avg_cadence": 73,
+      "avg_cadence": 72.9,
       "kilojoules": 126.7,
       "gps_ok": true,
       "gps_coverage_pct": 100,
@@ -3036,9 +3035,8 @@
         "10": 453,
         "30": 382,
         "60": 332,
-        "120": 282,
-        "300": 223,
-        "600": 197
+        "120": 293,
+        "300": 265
       },
       "hr_zones": [
         28.5,
@@ -3504,7 +3502,7 @@
       "max_power": 666,
       "avg_hr": null,
       "max_hr": null,
-      "avg_cadence": 83,
+      "avg_cadence": 82.9,
       "kilojoules": 203.2,
       "gps_ok": true,
       "gps_coverage_pct": 100,
@@ -3515,12 +3513,11 @@
       "power_curve": {
         "5": 643,
         "10": 572,
-        "30": 296,
-        "60": 239,
-        "120": 212,
-        "300": 200,
-        "600": 181,
-        "1200": 162
+        "30": 298,
+        "60": 249,
+        "120": 223,
+        "300": 210,
+        "600": 197
       },
       "hr_zones": [],
       "power_zones": [
@@ -3891,7 +3888,7 @@
       "max_power": 686,
       "avg_hr": 143.1,
       "max_hr": 161.0,
-      "avg_cadence": 87,
+      "avg_cadence": 86.8,
       "kilojoules": 252.9,
       "gps_ok": true,
       "gps_coverage_pct": 100,
@@ -3904,10 +3901,9 @@
         "10": 613,
         "30": 520,
         "60": 398,
-        "120": 289,
-        "300": 234,
-        "600": 224,
-        "1200": 199
+        "120": 290,
+        "300": 235,
+        "600": 230
       },
       "hr_zones": [
         3.5,
