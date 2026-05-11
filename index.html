@@ -170,6 +170,21 @@ canvas.chart{width:100%;display:block;}
 .vzbar-time{font-size:7px;color:var(--t4);}
 .vzbar-name{font-size:8px;color:var(--t4);margin-top:1px;}
 
+
+/* TODAY BANNER */
+.today-banner{background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #444;border-radius:3px;padding:14px 16px;margin-bottom:16px;}
+.today-banner.fresh{border-left-color:#5a8a52;}
+.today-banner.normal{border-left-color:#a08840;}
+.today-banner.tired{border-left-color:#a05040;}
+.tb-row1{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;}
+.tb-date{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:1px;}
+.tb-title{font-size:14px;font-weight:600;color:var(--t1);}
+.tb-desc{font-size:11px;color:var(--t3);margin-bottom:6px;}
+.tb-det{font-size:11px;color:var(--t4);line-height:1.5;margin-bottom:8px;}
+.tb-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t3);}
+.tb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.tb-dot.fresh{background:#5a8a52;}.tb-dot.normal{background:#a08840;}.tb-dot.tired{background:#a05040;}
+.tb-tss{font-size:10px;color:var(--t4);margin-left:auto;font-family:'JetBrains Mono',monospace;}
 @media(max-width:680px){
   .days-grid{grid-template-columns:1fr 1fr;}
   .stats{flex-wrap:wrap;}
@@ -219,17 +234,16 @@ const PLAN_WEEKS=[
     ]
   },
   {
-    label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5.5h',
+    label:'WOCHE 2',dates:'11.–17. Mai',vol:'~5h · angepasst',
     days:[
-      {date:'11.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Wochenbeginn mit Volumen'},
-      {date:'12.05',type:'roll',title:'Commute + 🎯 Rolle',desc:'Kurzer Weg + Rolleneinheit',det:'Morgen kurz · Abends: 50 min · 10\' Z1 · 30\' Z2 konstant 150–172W · HR-Drift beobachten · 10\' auslaufen'},
-      {date:'13.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · oberes Z2 · Watt gleichmäßig halten'},
-      {date:'14.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · locker'},
-      {date:'15.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
-      {date:'16.05',type:'aus',title:'🌄 Ausfahrt',desc:'Erste Hügel',det:'75–90 min · Z2 · Hügel erlaubt aber kein Vollgas · Ø HR unter 145'},
-      {date:'17.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad · Beine hoch',dimmed:true},
-    ]
-  },
+      {date:'11.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Wochenbeginn mit Volumen · HR unter 145'},
+      {date:'12.05',type:'roll',title:'Commute + 🎯 Rolle',desc:'Kurzer Weg + Rolleneinheit',det:'Morgen kurz Z1 · Abends: 50 min · 10\' Z1 · 30\' Z2 konstant 150–170W · HR-Drift beobachten · 10\' auslaufen'},
+      {date:'13.05',type:'comm',title:'Commute kurz',desc:'Nur Morgen (Besuch abends)',det:'Morgens kurz Z1 · kein Abendcommute · Besuch'},
+      {date:'14.05',type:'roll',title:'🎯 Rolle lang',desc:'Feiertag · Ersatz Sa-Ausfahrt',det:'75 min · 15\' Z1 · 45\' Z2 konstant 155–170W · 15\' auslaufen · frisch, kein Commute davor'},
+      {date:'15.05',type:'comm',title:'Commute kurz',desc:'Morgens, dann unterwegs',det:'Nur Morgencommute Z1 · danach Abreise'},
+      {date:'16.05',type:'rest',title:'Unterwegs',desc:'Kein Rad',det:'Wochenende unterwegs',dimmed:true},
+      {date:'17.05',type:'rest',title:'Unterwegs',desc:'Kein Rad',det:'Wochenende unterwegs',dimmed:true},
+    ]  },
   {
     label:'WOCHE 3',dates:'18.–24. Mai',vol:'~5.5h · Rampentest Sa',
     days:[
@@ -915,6 +929,69 @@ function drawChart(act){
 
 
 
+
+// ── TODAY BANNER ──
+function renderTodayBanner(){
+  const wrap = document.getElementById('today-banner-wrap');
+  if(!wrap) return;
+
+  // Find today in plan
+  const now = new Date();
+  const todayStr = (now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.';
+  let todayDay = null, todayWeek = null;
+  for(const week of PLAN_WEEKS){
+    if(!week.days) continue;
+    for(const d of week.days){
+      if(d.date === todayStr){ todayDay=d; todayWeek=week; break; }
+    }
+    if(todayDay) break;
+  }
+  if(!todayDay){ wrap.innerHTML=''; return; }
+
+  // Calculate fatigue from recent TSS (last 7 days weighted)
+  const today = new Date(); today.setHours(0,0,0,0);
+  let atl = 0; // Acute Training Load (7-day weighted)
+  allActivities.forEach(a=>{
+    const actDate = new Date(a.date); actDate.setHours(0,0,0,0);
+    const daysAgo = Math.round((today-actDate)/(1000*86400));
+    if(daysAgo<0||daysAgo>7) return;
+    const IF = a.np?+(a.np/FTP).toFixed(3):null;
+    const tss = a.np&&IF?Math.round(actDur(a)*a.np*IF/(FTP*3600)*100):null;
+    if(!tss) return;
+    const weight = Math.exp(-daysAgo/7); // exponential decay
+    atl += tss * weight;
+  });
+
+  // Classify fatigue
+  let status, statusLabel, statusDetail;
+  if(atl < 40){ status='fresh'; statusLabel='Frisch'; statusDetail='Volle Leistung · ambitioniert trainieren'; }
+  else if(atl < 90){ status='normal'; statusLabel='Normal'; statusDetail='Gut erholt · Plan wie vorgesehen fahren'; }
+  else if(atl < 150){ status='normal'; statusLabel='Etwas müde'; statusDetail='Intensität im Zweifel 5–10% reduzieren'; }
+  else { status='tired'; statusLabel='Müde'; statusDetail='Nur lockere Einheiten · bei Zweifel pausieren'; }
+
+  // Day of week
+  const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const dow = days[now.getDay()];
+
+  // Type color
+  const typeColors={comm:'#555',roll:'#60a5fa',aus:'#34d399',test:'#fbbf24',check:'#a78bfa',rest:'#333',goal:'#ef4444'};
+  const accent = typeColors[todayDay.type]||'#555';
+
+  wrap.innerHTML=`<div class="today-banner ${status}" style="border-left-color:${accent}">
+    <div class="tb-row1">
+      <span class="tb-date">Heute · ${dow} ${todayStr.slice(0,5)}</span>
+      <span class="tb-title">${todayDay.title}</span>
+    </div>
+    <div class="tb-desc">${todayDay.desc}</div>
+    <div class="tb-det">${todayDay.det}</div>
+    <div class="tb-status">
+      <div class="tb-dot ${status}"></div>
+      <span class="tb-status-text"><strong>${statusLabel}</strong> — ${statusDetail}</span>
+      <span class="tb-tss">ATL ${atl.toFixed(0)}</span>
+    </div>
+  </div>`;
+}
+
 // ── LOAD ──
 async function loadData(){
   try{
@@ -926,12 +1003,14 @@ async function loadData(){
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
     renderActivityList();
+    renderTodayBanner();
   }catch(e){
     document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
   }
 }
 
 renderPlan();
+renderTodayBanner();
 loadData();
 setInterval(loadData,5*60*1000);
 </script>
