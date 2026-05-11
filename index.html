@@ -535,10 +535,7 @@ function buildDetail(act){
   h+=`<canvas id="chart-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
   if(hasAnalysis){
     h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-    h+=`<div style="display:flex;gap:6px;margin-bottom:4px">
-      <canvas id="an-sc-\${act.id}" style="flex:1;min-width:0;box-sizing:border-box"></canvas>
-      <canvas id="an-pc-\${act.id}" style="flex:1;min-width:0;box-sizing:border-box"></canvas>
-    </div>`;
+    h+=`<div style="display:flex;gap:6px;margin-bottom:4px"><div id="sc-wrap-${act.id}" style="flex:1;min-height:4px"></div><div id="pc-wrap-${act.id}" style="flex:1;min-height:4px"></div></div>`;
   }
   h+=`</div>`;
 
@@ -753,134 +750,114 @@ async function loadAndDrawAnalysis(act){
     }
   }
 
-  // ── CHART 3: Scatter + Power Curve (side by side, both square) ──
-  const c3=document.getElementById('an-sc-'+id);
+  // ── CHART 3+4: Scatter + MMP Power Curve (dynamically created, side by side) ──
   const scatter=an.scatter||[];
-  if(c3&&scatter.length){
-    // Square: element width determines both width and height
-    const rdPanel=document.getElementById('rd-'+id);
-    const panelW=rdPanel?rdPanel.clientWidth-34:Math.floor(window.innerWidth*0.8);
-    const W0=Math.floor((panelW-8)/2);
-    const H=W0;
+  const pcurve=an.power_curve||act.power_curve||{};
+  const scWrap=document.getElementById('sc-wrap-'+id);
+  const pcWrap=document.getElementById('pc-wrap-'+id);
+
+  function drawInWrap(wrap, drawFn){
+    if(!wrap)return;
+    wrap.innerHTML='';
+    // Force layout read AFTER clearing
+    const W=wrap.getBoundingClientRect().width||wrap.offsetWidth||300;
+    const H=W; // square
     const dpr=window.devicePixelRatio||1;
-    c3.width=W0*dpr;c3.height=H*dpr;
-    c3.style.width=W0+'px';c3.style.height=H+'px';
-    const ctx=c3.getContext('2d');ctx.scale(dpr,dpr);
-
-    const pL=42,pR=10,pT=12,pB=34,cW=W0-pL-pR,cH=H-pT-pB;
-    const wVals=[...scatter.map(p=>p.w)].sort((a,b)=>a-b);
-    const hVals=[...scatter.map(p=>p.hr)].sort((a,b)=>a-b);
-    const p3w=wVals[Math.floor(wVals.length*0.03)];
-    const p97w=wVals[Math.floor(wVals.length*0.97)];
-    const p2h=hVals[Math.floor(hVals.length*0.02)];
-    const p98h=hVals[Math.floor(hVals.length*0.98)];
-    const minW=Math.max(0,p3w-10), maxW=p97w+15;
-    const minH=Math.max(60,p2h-3),  maxH=Math.min(185,p98h+3);
-
-    function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
-    function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-
-    ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-    const wStep=Math.ceil((maxW-minW)/6/10)*10||10;
-    const hStep=Math.ceil((maxH-minH)/6/5)*5||5;
-    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
-    for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
-
-    const tMin=scatter[0].t, tMax=scatter[scatter.length-1].t;
-    scatter.forEach(p=>{
-      if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
-      const tf=(p.t-tMin)/(tMax-tMin);
-      const r2=Math.round(96+tf*(249-96)),g2=Math.round(165+tf*(115-165)),b2=Math.round(250+tf*(22-250));
-      ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
-      ctx.fillStyle='rgba('+r2+','+g2+','+b2+',0.65)';ctx.fill();
-    });
-
-    ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-    for(let h=Math.ceil(minH/hStep)*hStep;h<=maxH;h+=hStep*2)ctx.fillText(h,pL-3,yOf(h)+3);
-    ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
-    for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-pB+14);
-    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.textAlign='center';
-    ctx.fillText('HR vs Watt  (blau=früh, orange=spät)',pL+cW/2,H-pB+26);
-    // Y axis label
-    ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
-    // X axis label
-    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.textAlign='center';
-    ctx.fillText('Watt',pL+cW/2,H-6);
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.round(W*dpr);
+    canvas.height=Math.round(H*dpr);
+    canvas.style.width=Math.round(W)+'px';
+    canvas.style.height=Math.round(H)+'px';
+    canvas.style.display='block';
+    wrap.appendChild(canvas);
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    drawFn(ctx, Math.round(W), Math.round(H));
   }
 
-  // ── CHART 4: Power Curve MMP (square, next to scatter) ──
-  const c4=document.getElementById('an-pc-'+id);
-  const pcurve=an.power_curve||act.power_curve||{};
-  if(c4&&Object.keys(pcurve).length){
-    const rdPanel1=document.getElementById('rd-'+id);
-    const panelW1=rdPanel1?rdPanel1.clientWidth-34:Math.floor(window.innerWidth*0.8);
-    const W1=Math.floor((panelW1-8)/2);
-    const H1=W1;
-    const dpr=window.devicePixelRatio||1;
-    c4.width=W1*dpr;c4.height=H1*dpr;
-    c4.style.width=W1+'px';c4.style.height=H1+'px';
-    const ctx=c4.getContext('2d');ctx.scale(dpr,dpr);
-    const pL=42,pR=10,pT=14,pB=30,cW=W1-pL-pR,cH=H1-pT-pB;
-
-    // Durations and watts
-    const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
-    const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
-    if(pts.length>=2){
-      // Log scale X axis
-      const logMin=Math.log10(pts[0].d);
-      const logMax=Math.log10(pts[pts.length-1].d);
-      const wMin=Math.min(...pts.map(p=>p.w))*0.95;
-      const wMax=Math.max(...pts.map(p=>p.w))*1.05;
-
-      function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
-      function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
-
+  if(scWrap&&scatter.length){
+    drawInWrap(scWrap,(ctx,W,H)=>{
+      const pL=38,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
+      const wArr=scatter.map(p=>p.w).sort((a,b)=>a-b);
+      const hArr=scatter.map(p=>p.hr).sort((a,b)=>a-b);
+      const minW=Math.max(0,wArr[Math.floor(wArr.length*0.03)]-10);
+      const maxW=wArr[Math.floor(wArr.length*0.97)]+15;
+      const minH=Math.max(60,hArr[Math.floor(hArr.length*0.02)]-3);
+      const maxH=Math.min(185,hArr[Math.floor(hArr.length*0.98)]+3);
+      function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
+      function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
       // Grid
       ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,400,500].filter(w=>w>=wMin&&w<=wMax).forEach(w=>{
-        ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();
+      const wStep=Math.ceil((maxW-minW)/5/10)*10||10;
+      for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
+      for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=5){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
+      // Points
+      const tMin=scatter[0].t,tMax=scatter[scatter.length-1].t;
+      scatter.forEach(p=>{
+        if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
+        const tf=(p.t-tMin)/Math.max(1,tMax-tMin);
+        const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
+        ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
+        ctx.fillStyle='rgba('+r+','+g+','+b+',0.7)';ctx.fill();
       });
-      // FTP reference
-      ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
-      ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
-
-      // MMP curve fill
-      ctx.beginPath();
-      pts.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.d),yOf(p.w)):ctx.lineTo(xOf(p.d),yOf(p.w));});
-      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=2;ctx.stroke();
-      ctx.lineTo(xOf(pts[pts.length-1].d),pT+cH);ctx.lineTo(xOf(pts[0].d),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(200,200,200,0.07)';ctx.fill();
-
-      // Dots at each measured duration
-      pts.forEach(p=>{
-        ctx.beginPath();ctx.arc(xOf(p.d),yOf(p.w),3,0,Math.PI*2);
-        ctx.fillStyle='rgba(200,200,200,0.7)';ctx.fill();
-        // Label
-        ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='8px monospace';ctx.textAlign='center';
-        ctx.fillText(p.w+'W',xOf(p.d),yOf(p.w)-6);
-      });
-
-      // X axis ticks (log scale)
-      const xTicks=[{d:5,l:'5s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}];
-      ctx.fillStyle='#3a3a3a';ctx.font='8px monospace';ctx.textAlign='center';
-      xTicks.filter(t=>t.d>=pts[0].d&&t.d<=pts[pts.length-1].d).forEach(t=>{
-        ctx.fillText(t.l,xOf(t.d),H1-pB+12);
-        ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
-      });
-
-      // Y axis labels
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [100,150,200,250,300,400,500].filter(w=>w>=wMin&&w<=wMax).forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
-
-      // Title
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+11);
-      // X axis label
-      ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';ctx.fillText('Dauer (log)',pL+cW/2,H1-pB+24);
-    }
+      // Labels
+      ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
+      for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=10)ctx.fillText(h,pL-3,yOf(h)+3);
+      ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
+      for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-pB+14);
+      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';
+      ctx.fillText('HR vs Watt',pL+4,pT+12);
+      ctx.fillStyle='rgba(100,100,100,0.5)';
+      ctx.fillText('blau=früh, orange=spät',pL+4,pT+22);
+      ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
+      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
+    });
   }
 
-  // ── Aerobe Werte ──
+  if(pcWrap&&Object.keys(pcurve).length){
+    drawInWrap(pcWrap,(ctx,W,H)=>{
+      const pL=40,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
+      const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
+      const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
+      if(pts.length<2)return;
+      const logMin=Math.log10(pts[0].d),logMax=Math.log10(pts[pts.length-1].d);
+      const wVals=pts.map(p=>p.w);
+      const wMin=Math.min(...wVals)*0.93,wMax=Math.max(...wVals)*1.07;
+      function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
+      function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
+      // Grid
+      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+      [100,150,200,250,300,400,500,600].filter(w=>w>=wMin&&w<=wMax).forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();});
+      [{d:5,l:'5s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}]
+        .filter(t=>t.d>=pts[0].d&&t.d<=pts[pts.length-1].d)
+        .forEach(t=>{ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
+          ctx.fillStyle='rgba(100,100,100,0.7)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(t.l,xOf(t.d),H-pB+14);});
+      // FTP
+      if(FTP>=wMin&&FTP<=wMax){
+        ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
+        ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='rgba(249,115,22,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
+      }
+      // MMP curve fill
+      ctx.beginPath();pts.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.d),yOf(p.w)):ctx.lineTo(xOf(p.d),yOf(p.w));});
+      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=2;ctx.stroke();
+      ctx.lineTo(xOf(pts[pts.length-1].d),pT+cH);ctx.lineTo(xOf(pts[0].d),pT+cH);ctx.closePath();
+      ctx.fillStyle='rgba(200,200,200,0.06)';ctx.fill();
+      // Dots + labels
+      pts.forEach(p=>{
+        ctx.beginPath();ctx.arc(xOf(p.d),yOf(p.w),3,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.7)';ctx.fill();
+        ctx.fillStyle='rgba(200,200,200,0.55)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(p.w+'W',xOf(p.d),yOf(p.w)-7);
+      });
+      // Y labels
+      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
+      [100,150,200,250,300,400,500,600].filter(w=>w>=wMin&&w<=wMax).forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
+      // Title
+      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+12);
+      ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('log. Zeitskala',pL+4,pT+22);
+    });
+  }
+
+    // ── Aerobe Werte ──
   const avDiv=document.getElementById('aerob-vals-'+id);
   if(avDiv&&an.decoupling){
     const d=an.decoupling;
