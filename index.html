@@ -204,6 +204,7 @@ canvas.chart{width:100%;display:block;}
 </nav>
 <main>
   <div id="loading">Lade Daten…</div>
+  <div id="today-banner-wrap"></div>
   <div class="page active" id="page-plan"></div>
 <div class="page" id="page-rides">
 <div class="stats" id="summary-stats"></div>
@@ -401,13 +402,27 @@ function renderPlan(){
       <div class="days-grid">`;
     week.days.forEach((d,di)=>{
       if(d.empty){html+=`<div class="day-card dimmed" style="min-height:60px;opacity:0.06"></div>`;return;}
-      const tc=d.type==='rest'?'rest':d.type==='test'?'test':d.type==='check'?'check':'';
-      const cls=['day-card',d.past?'past':d.done?'done':d.dimmed?'dimmed':d.today?'today-c':''].filter(Boolean).join(' ');
+      const tc=d.type==='rest'?'rest':d.type==='test'?'test':d.type==='check'?'check':d.type==='goal'?'check':'';
+      // Dynamic date comparison
+      const _now=new Date(); _now.setHours(0,0,0,0);
+      let _isPast=false,_isToday=false,_isDone=d.done||false;
+      if(d.date&&!d.empty){
+        const[_dd,_mm]=d.date.split('.');
+        const _dDate=new Date(2026,parseInt(_mm)-1,parseInt(_dd));
+        _dDate.setHours(0,0,0,0);
+        _isPast=_dDate<_now; _isToday=_dDate.getTime()===_now.getTime();
+        // Mark as done if past AND we have a matching activity
+        if(_isPast&&allActivities.length){
+          const _dateKey='2026-'+_mm+'-'+_dd;
+          if(allActivities.some(a=>a.date===_dateKey)) _isDone=true;
+        }
+      }
+      const cls=['day-card',_isPast&&!_isDone?'past':_isDone?'done':d.dimmed?'dimmed':_isToday?'today-c':''].filter(Boolean).join(' ');
       html+=`<div class="${cls}" onclick="togglePlanDetail(${wi},${di},this)">
         <div class="dc-date">${d.date}</div>
         <div class="dc-type ${tc}">${d.title}</div>
         <div class="dc-detail">${d.desc}</div>
-        ${d.done?'<div class="dc-done">✓ erledigt</div>':''}
+        ${(d.done||_isDone)?'<div class="dc-done">✓ erledigt</div>':''}
       </div>`;
     });
     html+=`</div><div class="week-detail" id="plan-detail-${wi}"></div></div>`;
@@ -937,12 +952,13 @@ function renderTodayBanner(){
 
   // Find today in plan
   const now = new Date();
-  const todayStr = (now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.';
+  const todayStr = (now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.'; // '11.05.'
+  const todayPlan = todayStr.slice(0,5); // '11.05' matches plan dates
   let todayDay = null, todayWeek = null;
   for(const week of PLAN_WEEKS){
     if(!week.days) continue;
     for(const d of week.days){
-      if(d.date === todayStr){ todayDay=d; todayWeek=week; break; }
+      if(d.date === todayPlan){ todayDay=d; todayWeek=week; break; }
     }
     if(todayDay) break;
   }
