@@ -814,19 +814,36 @@ async function loadAndDrawAnalysis(act){
   if(scWrap&&scatter.length){
     drawInWrap(scWrap,(ctx,W,H)=>{
       const pL=38,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      const wArr=scatter.map(p=>p.w).sort((a,b)=>a-b);
-      const hArr=scatter.map(p=>p.hr).sort((a,b)=>a-b);
-      const minW=Math.max(0,wArr[Math.floor(wArr.length*0.03)]-10);
-      const maxW=wArr[Math.floor(wArr.length*0.97)]+15;
-      const minH=Math.max(60,hArr[Math.floor(hArr.length*0.02)]-3);
-      const maxH=Math.min(185,hArr[Math.floor(hArr.length*0.98)]+3);
+      // Fixed axes for cross-ride comparison
+      const minW=50, maxW=400;
+      const minH=80, maxH=175;
+      // Zone boundaries
+      const wZones=[144,180,216,252]; // Z2,Z3,Z4,Z5 starts
+      const hZones=[Math.round(175*0.68),Math.round(175*0.83),Math.round(175*0.88),Math.round(175*0.95)]; // 119,145,154,166
       function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
       function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
       // Grid
+      // Background grid
       ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      const wStep=Math.ceil((maxW-minW)/5/10)*10||10;
-      for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep){ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();}
-      for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=5){ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();}
+      [100,150,200,250,300,350,400].forEach(w=>{ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();});
+      [90,100,110,120,130,140,150,160,170].forEach(h=>{ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();});
+      // Power zone vertical lines
+      const zCols=['#34d399','#60a5fa','#fbbf24','#f97316'];
+      wZones.forEach((w,i)=>{
+        ctx.strokeStyle=zCols[i].replace(')',',0.25)').replace('rgb','rgba')||'rgba(255,255,255,0.1)';
+        ctx.setLineDash([3,4]);
+        ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle=zCols[i];ctx.font='8px monospace';ctx.textAlign='center';
+        ctx.fillText('Z'+(i+2),xOf(w)+12,pT+9);
+      });
+      // HR zone horizontal lines
+      hZones.forEach((h,i)=>{
+        ctx.strokeStyle=zCols[i].replace(')',',0.2)').replace('rgb','rgba')||'rgba(255,255,255,0.08)';
+        ctx.setLineDash([3,4]);
+        ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();
+        ctx.setLineDash([]);
+      });
       // Points
       const tMin=scatter[0].t,tMax=scatter[scatter.length-1].t;
       scatter.forEach(p=>{
@@ -838,9 +855,9 @@ async function loadAndDrawAnalysis(act){
       });
       // Labels
       ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      for(let h=Math.ceil(minH/5)*5;h<=maxH;h+=10)ctx.fillText(h,pL-3,yOf(h)+3);
+      [80,100,120,140,160,175].forEach(h=>ctx.fillText(h,pL-3,yOf(h)+3));
       ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
-      for(let w=Math.ceil(minW/wStep)*wStep;w<=maxW;w+=wStep)ctx.fillText(w+'W',xOf(w),H-pB+14);
+      [100,150,200,250,300,350,400].forEach(w=>ctx.fillText(w+'W',xOf(w),H-pB+14));
       ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';
       ctx.fillText('HR vs Watt',pL+4,pT+12);
       ctx.fillStyle='rgba(100,100,100,0.5)';
@@ -856,20 +873,27 @@ async function loadAndDrawAnalysis(act){
       const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
       const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
       if(pts.length<2)return;
-      const logMin=Math.log10(pts[0].d),logMax=Math.log10(pts[pts.length-1].d);
-      const wVals=pts.map(p=>p.w);
-      const wMin=Math.min(...wVals)*0.93,wMax=Math.max(...wVals)*1.07;
+      // Fixed axes for cross-ride comparison
+      const logMin=Math.log10(5),logMax=Math.log10(3600);
+      const wMin=100, wMax=700;
       function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
       function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
       // Grid
+      // Background grid
       ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,400,500,600].filter(w=>w>=wMin&&w<=wMax).forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();});
-      [{d:5,l:'5s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}]
-        .filter(t=>t.d>=pts[0].d&&t.d<=pts[pts.length-1].d)
+      [100,150,200,250,300,400,500,600,700].forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();});
+      [{d:5,l:'5s'},{d:10,l:'10s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:120,l:'2m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}]
         .forEach(t=>{ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
           ctx.fillStyle='rgba(100,100,100,0.7)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(t.l,xOf(t.d),H-pB+14);});
+      // Power zone horizontal lines
+      const mmpZones=[{w:144,l:'Z2',c:'#60a5fa'},{w:180,l:'Z3',c:'#fbbf24'},{w:216,l:'Z4',c:'#f97316'},{w:252,l:'Z5',c:'#ef4444'}];
+      mmpZones.forEach(z=>{
+        ctx.strokeStyle=z.c+'44';ctx.setLineDash([3,4]);
+        ctx.beginPath();ctx.moveTo(pL,yOf(z.w));ctx.lineTo(pL+cW,yOf(z.w));ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle=z.c;ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText(z.l,pL+2,yOf(z.w)-3);
+      });
       // FTP
-      if(FTP>=wMin&&FTP<=wMax){
+      {
         ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
         ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
         ctx.fillStyle='rgba(249,115,22,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
@@ -886,7 +910,7 @@ async function loadAndDrawAnalysis(act){
       });
       // Y labels
       ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [100,150,200,250,300,400,500,600].filter(w=>w>=wMin&&w<=wMax).forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
+      [100,150,200,250,300,400,500,600,700].forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
       // Title
       ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+12);
       ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('log. Zeitskala',pL+4,pT+22);
