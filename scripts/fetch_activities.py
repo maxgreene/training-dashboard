@@ -174,7 +174,11 @@ def main():
     for act in cycling:
         aid = act['id']
         if aid in existing and os.path.exists(stream_path(aid)) and not force_reprocess:
-            activities.append(existing[aid])
+            cached = existing[aid]
+            # Always update mutable fields from fresh Strava data
+            cached['name'] = act['name']
+            cached['start_time'] = act.get('start_date_local', '')[ 11:16]
+            activities.append(cached)
         else:
             activities.append(process_activity(act, force_fetch=force_reprocess))
     activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
