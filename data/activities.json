@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-20T15:15:34.412092+00:00",
+  "updated_at": "2026-05-20T15:30:29.424125+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -11,7 +11,7 @@
   "summary": {
     "total_activities": 27,
     "recent_count": 27,
-    "recent_hours": 15.0
+    "recent_hours": 15.1
   },
   "activities": [
     {
