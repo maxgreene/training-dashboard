@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-05-21T19:30:27.546519+00:00",
+  "updated_at": "2026-05-21T19:45:00.297209+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
     "name": "Wolf Harmening",
-    "ftp_estimate": 240,
+    "ftp_estimate": 237,
     "hrmax_estimate": 175,
     "weight_kg": 81
   },
