@@ -9,7 +9,7 @@ DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
 ANALYSIS_VERSION = 2
-FTP   = 240
+FTP   = 237
 HRMAX = 175
 MIN_DURATION = 30 * 60
 
