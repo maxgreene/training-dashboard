@@ -214,7 +214,7 @@ canvas.chart{width:100%;display:block;}
 </main>
 
 <script>
-const FTP=240,HRMAX=175;
+const FTP=237,HRMAX=175;
 const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
 const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 let allActivities=[],selectedRideId=null;
@@ -251,7 +251,7 @@ const PLAN_WEEKS=[
       {date:'18.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'Z1–Z2 locker · kein Vollgas · Beine frisch für Do-Test'},
       {date:'19.05',type:'comm',title:'Commute kurz',desc:'Kurzer Weg × 2',det:'Z1 · sehr locker · HR unter 130 · Test Do 21.05!'},
       {date:'20.05',type:'comm',title:'Commute kurz',desc:'Kurzer Weg × 2',det:'Z1 · sehr locker · morgen Rampentest! · keine Extras'},
-      {date:'21.05',type:'test',title:'🧬 Rampentest',desc:'MAP / FTP Messung',det:'15\' Aufwärmen Z1–Z2 · Rampe 175W → +25W/min-Stufen · bis Abbruch · FTP = 75% MAP · Erwartung: 255–265W!'},
+      {date:'21.05',type:'test',title:'🧬 Rampentest',desc:'MAP / FTP Messung ✓',det:'MAP 313W · FTP 237W · Max HR 174 bpm · vollständig ausgepowert',done:true},
       {date:'22.05',type:'rest',title:'Erholung nach Test',desc:'Locker oder Pause',det:'Kein Druck · lockerer Commute wenn OK · Test auswerten',dimmed:true},
       {date:'23.05',type:'aus',title:'🌄 Ausfahrt (opt.)',desc:'Erste Hügel',det:'60–80 min · neue Zonen testen · nur wenn Beine gut'},
       {date:'24.05',type:'rest',title:'Pause',desc:'Erholung nach Test',det:'Kein Rad · Checkpoint morgen',dimmed:true},
@@ -261,29 +261,27 @@ const PLAN_WEEKS=[
   {
     phase:'PHASE 2 · Aufbau',phaseDesc:'Sweetspot-Reize · mehr Volumen · Intensität steigt kontrolliert',
     checkpoint:{label:'CHECKPOINT #1 · 25. Mai',det:'Rampentest-Ergebnis auswerten · Zonen aktualisieren · Plan Phase 2 bestätigen'},
-    label:'WOCHE 4',dates:'25.–31. Mai',vol:'~6h',
+    label:'WOCHE 4',dates:'25.–31. Mai',vol:'~5.5h · Phase 2 Start',
     days:[
-      {date:'25.05',type:'check',title:'📊 Checkpoint #1',desc:'Analyse + Commute kurz',det:'Rampentest-Ergebnis · neue Zonen · danach kurzer Commute Z1'},
-      {date:'26.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · erste Woche Phase 2 · Volumen aufbauen'},
-      {date:'27.05',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 55 min · 10\' Z1 · 2×10\' Sweetspot 185–200W (5\' Pause) · 10\' auslaufen'},
-      {date:'28.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Erholung nach Sweetspot'},
-      {date:'29.05',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
-      {date:'30.05',type:'aus',title:'🌄 Ausfahrt',desc:'Hügel mit Biss',det:'90–100 min · Z2 Basis · Anstiege kurz im Z3 angehen · Pacing üben'},
+      {date:'25.05',type:'check',title:'📊 Checkpoint #1',desc:'Analyse + neue Zonen',det:'FTP 237W · neue Zonen: Z2 130–178W · Z4 206–249W · Commute kurz Z1'},
+      {date:'26.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'Z2 mit neuen Zonen · HR unter 141 bpm'},
+      {date:'27.05',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'50 min · 10\' Z1 · 2×10\' Sweetspot 200–215W · HR 148–158 · 10\' auslaufen'},
+      {date:'28.05',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'Z2 · locker nach Sweetspot'},
+      {date:'29.05',type:'comm',title:'Commute kurz',desc:'Kurzer Weg × 2',det:'Z1–Z2 · frisch für Wochenende'},
+      {date:'30.05',type:'aus',title:'🌄 Ausfahrt Hügel',desc:'Erste echte Bergfahrt',det:'90 min · Z2 Basis · Ansüstiege in Z3–Z4 · neue FTP live erleben'},
       {date:'31.05',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad',dimmed:true},
-    ]
-  },
+    ]  },
   {
-    label:'WOCHE 5',dates:'01.–07. Jun',vol:'~6.5h',
+    label:'WOCHE 5',dates:'01.–07. Jun',vol:'~6h · Sweetspot Aufbau',
     days:[
-      {date:'01.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · Volumen Wochenbeginn'},
-      {date:'02.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1–Z2 · locker'},
-      {date:'03.06',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'Morgen kurz · Abends: 60 min · 10\' Z1 · 2×15\' Sweetspot 190–205W (5\' Pause) · 10\' auslaufen'},
-      {date:'04.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'2× ~30 min · Z2 · aktive Erholung nach Sweetspot'},
-      {date:'05.06',type:'comm',title:'Commute',desc:'Kurzer Weg × 2',det:'2× ~15 min · Z1 · frisch für Wochenende'},
-      {date:'06.06',type:'aus',title:'🌄 Ausfahrt',desc:'Echte Berge',det:'100–120 min · Z2 Basis · gezielte Anstiege · Pacing auf dem Berg üben'},
+      {date:'01.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'Z2 · HR unter 141 · locker starten'},
+      {date:'02.06',type:'roll',title:'Commute + 🎯 Sweetspot',desc:'Kurzer Weg + Rolle',det:'60 min · 10\' Z1 · 2×15\' Sweetspot 205–218W · 5\' Pause · 10\' auslaufen'},
+      {date:'03.06',type:'comm',title:'Commute lang',desc:'Langer Weg × 2',det:'Z2 · locker'},
+      {date:'04.06',type:'roll',title:'Commute lang + 🎯 Sweetspot',desc:'Langer Weg + Rolle',det:'65 min · 10\' Z1 · 3×10\' Sweetspot 205–220W · 5\' Pause je · 10\' auslaufen'},
+      {date:'05.06',type:'comm',title:'Commute kurz',desc:'Kurzer Weg × 2',det:'Z1 · sehr locker'},
+      {date:'06.06',type:'aus',title:'🌄 Ausfahrt lang',desc:'Hügel mit Sweetspot',det:'2h · Z2 Basis · Anstiege in Z3–Z4 · kein Überschreiten'},
       {date:'07.06',type:'rest',title:'Pause',desc:'Aktive Erholung',det:'Kein Rad',dimmed:true},
-    ]
-  },
+    ]  },
   {
     label:'WOCHE 6',dates:'08.–14. Jun',vol:'~5.5h · 4DP-Test Sa',
     days:[
@@ -371,7 +369,7 @@ function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstr
 function renderPlan(){
   const el=document.getElementById('page-plan');
   let html=`<div class="ftp-block">
-    <div class="ftp-title">Trainingszonen · FTP = 240W geschätzt · Rampentest Do 21.05</div>
+    <div class="ftp-title">Trainingszonen · FTP = 237W · Rampentest 21.05 · Checkpoint #2 Sa 13.06</div>
     <div class="ftp-zones">
       <div class="ftp-z"><div class="ftp-zn">Z1 Erholung</div><div class="ftp-zv">&lt;144W · &lt;119 bpm</div></div>
       <div class="ftp-z"><div class="ftp-zn">Z2 Aerob</div><div class="ftp-zv">144–180W · 119–145 bpm</div></div>
