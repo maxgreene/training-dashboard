@@ -11,7 +11,7 @@ ANALYSIS_VERSION = 9
 PLAN_START_DATE  = '2026-05-04'
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 STREAM_KEYS = ['time','latlng','distance','altitude','heartrate','cadence','watts','velocity_smooth','grade_smooth','moving']
-FTP   = 240
+FTP   = 237
 HRMAX = 175
 
 def api(path):
