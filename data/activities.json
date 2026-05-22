@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-22T06:30:28.810381+00:00",
+  "updated_at": "2026-05-22T06:42:59.482040+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -36,7 +36,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 189,
+      "np": 198,
       "power_curve": {
         "5": 647,
         "10": 615,
@@ -61,7 +61,7 @@
         6.8,
         10.0
       ],
-      "decoupling_pct": -1.9,
+      "decoupling_pct": -0.32,
       "power_duration_sec": 1366,
       "streams": {
         "time": [
@@ -524,12 +524,12 @@
       ],
       "power_zones": [
         3.0,
-        68.8,
-        5.4,
-        8.9,
-        13.9
+        68.3,
+        5.3,
+        8.8,
+        14.6
       ],
-      "decoupling_pct": 5.8,
+      "decoupling_pct": 7.36,
       "power_duration_sec": 2063,
       "streams": {
         "time": [
@@ -3576,13 +3576,13 @@
         0.0
       ],
       "power_zones": [
-        20.8,
-        62.0,
-        6.1,
-        11.0,
+        19.6,
+        63.2,
+        4.8,
+        12.4,
         0.0
       ],
-      "decoupling_pct": -4.04,
+      "decoupling_pct": -5.61,
       "power_duration_sec": 5401,
       "streams": {
         "time": [
@@ -4726,13 +4726,13 @@
         0.0
       ],
       "power_zones": [
-        10.9,
-        88.1,
-        1.1,
+        10.2,
+        86.5,
+        3.3,
         0.0,
         0.0
       ],
-      "decoupling_pct": -4.0,
+      "decoupling_pct": -5.06,
       "power_duration_sec": 3417,
       "streams": {
         "time": [
@@ -7092,7 +7092,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 199,
+      "np": 211,
       "power_curve": {
         "5": 686,
         "10": 504,
@@ -7113,13 +7113,13 @@
         0.0
       ],
       "power_zones": [
-        10.9,
-        29.0,
-        24.7,
-        21.8,
-        13.6
+        10.5,
+        27.5,
+        24.8,
+        22.6,
+        14.5
       ],
-      "decoupling_pct": -2.96,
+      "decoupling_pct": -1.3,
       "power_duration_sec": 8182,
       "streams": {
         "time": [
@@ -8357,13 +8357,13 @@
         0.0
       ],
       "power_zones": [
-        43.2,
-        56.8,
+        42.8,
+        57.2,
         0.0,
         0.0,
         0.0
       ],
-      "decoupling_pct": -5.25,
+      "decoupling_pct": -6.33,
       "power_duration_sec": 2702,
       "streams": {
         "time": [
@@ -8727,7 +8727,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 174,
+      "np": 200,
       "power_curve": {
         "5": 487,
         "10": 434,
@@ -8744,13 +8744,13 @@
         0.0
       ],
       "power_zones": [
-        35.9,
-        20.2,
-        16.7,
-        13.7,
-        13.5
+        35.7,
+        19.4,
+        17.3,
+        13.5,
+        14.1
       ],
-      "decoupling_pct": -0.6,
+      "decoupling_pct": -10.15,
       "power_duration_sec": 787,
       "streams": {
         "time": [
@@ -9227,7 +9227,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 236,
+      "np": 261,
       "power_curve": {
         "5": 516,
         "10": 453,
@@ -9245,12 +9245,12 @@
       ],
       "power_zones": [
         19.4,
-        18.1,
-        9.1,
+        17.4,
+        9.3,
         16.1,
-        37.3
+        37.8
       ],
-      "decoupling_pct": 19.2,
+      "decoupling_pct": -13.13,
       "power_duration_sec": 750,
       "streams": {
         "time": [
@@ -9707,7 +9707,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 179,
+      "np": 194,
       "power_curve": {
         "5": 643,
         "10": 572,
@@ -9719,11 +9719,11 @@
       },
       "hr_zones": [],
       "power_zones": [
-        22.6,
-        38.2,
-        18.6,
-        10.7,
-        9.9
+        22.0,
+        37.3,
+        19.4,
+        10.9,
+        10.4
       ],
       "decoupling_pct": null,
       "power_duration_sec": 1322,
@@ -10093,7 +10093,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 238,
+      "np": 247,
       "power_curve": {
         "5": 647,
         "10": 613,
@@ -10111,13 +10111,13 @@
         0.0
       ],
       "power_zones": [
-        10.1,
-        29.1,
-        23.5,
-        18.0,
-        19.3
+        9.7,
+        27.2,
+        24.3,
+        18.9,
+        19.8
       ],
-      "decoupling_pct": 19.3,
+      "decoupling_pct": -14.51,
       "power_duration_sec": 1300,
       "streams": {
         "time": [
