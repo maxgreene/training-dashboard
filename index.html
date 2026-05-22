@@ -530,7 +530,7 @@ function buildDetail(act){
   const IF=act.np?+(act.np/FTP).toFixed(3):null;
   const TSS=act.np&&IF?Math.round(dur*act.np*IF/(FTP*3600)*100):null;
   const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(3):null;
-  const hasAnalysis=durMin>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
+  const hasAnalysis=durMin>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
 
   function zTime(pct){
     const s=Math.round(pct/100*dur);
@@ -628,7 +628,7 @@ function buildDetail(act){
 // ── LOAD ANALYSIS + DRAW ALL CHARTS ──
 async function loadAndDrawAnalysis(act){
   const id=act.id;
-  const hasAnalysis=actDur(act)/60>=30&&(act.has_power||act.power_duration_sec)&&act.has_hr;
+  const hasAnalysis=actDur(act)/60>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
 
   // Fetch analysis.json
   let an=null;
