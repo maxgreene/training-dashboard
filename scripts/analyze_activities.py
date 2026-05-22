@@ -84,8 +84,9 @@ def decoupling_stats(ts_c, pw_c, hr_c):
     if not p1 or not h1 or not p2 or not h2: return None
     aw1=sum(p1)/len(p1); ah1=sum(h1)/len(h1)
     aw2=sum(p2)/len(p2); ah2=sum(h2)/len(h2)
-    if ah1==0 or ah2==0: return None
+    if ah1==0 or ah2==0 or aw1==0 or aw2==0: return None
     ef1=aw1/ah1; ef2=aw2/ah2
+    if ef1==0: return None
     np_c = normalized_power(pw_c)
     avg_hr_c = sum(hr_c)/len(hr_c)
     ef_g = round((np_c/avg_hr_c) if np_c else (sum(pw_c)/len(pw_c)/avg_hr_c),4)
