@@ -316,7 +316,7 @@ const PLAN_WEEKS=[
     phase:'PHASE 2 \xb7 AUFBAU \xb7 SWEETSPOT',
     label:'Yoga & Stretch · 20 min',dates:'25.\u201331. Mai',vol:'~5.5h',
     days:[
-      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint + Commute',desc:'neue Zonen \xb7 Z1\u2013Z2'},
+      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1 \xb7 Pfingstmontag',desc:'FTP 237W \xb7 EF-Trend 1.21\u21921.52 \xb7 dann Kacheljagd!',done:true},
       {date:'26.05',dow:'Di',type:'comm',title:'Commute lang',desc:'Z2 \xb7 HR<141',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
       {date:'27.05',dow:'Mi',type:'roll',title:'Sweetspot 2x10\'',desc:'200\u2013215W \xb7 5\' Pause \xb7 HR 148\u2013158',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.2,.5,.25,0]},
       {date:'28.05',dow:'Do',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
@@ -468,33 +468,61 @@ function renderPlan(){
       const done=isDone(d);
       const dt=dateObj(d.date);
       const isToday=d.date===todayStr;
-      const isPast=dt&&dt<now;
+      const isPast=dt&&dt<now||isToday;
       let cls='pday '+TCLS[d.type||'rest'];
       if(done)cls+=' done';
       else if(isToday)cls+=' today-c';
-      else if(isPast)cls+=' past';
+      else if(isPast&&!done)cls+=' past';
       if(d.dimmed&&!done)cls+=' dimmed';
+
+      // Look up actual activities for this date
+      const mm2=d.date?d.date.split('.')[1]:'';
+      const dd2=d.date?d.date.split('.')[0]:'';
+      const dateKey='2026-'+mm2+'-'+dd2;
+      const acts=allActivities.filter(a=>a.date===dateKey);
+      const showActual=done&&acts.length>0;
 
       const bc=BCLS[d.type||'rest'];
       const icon=ICONS[d.type||'rest']||'💤';
       const num=d.date?d.date.split('.')[0]:'';
       const dow=d.dow||'';
 
+      // Build display content
+      let title=d.title, sub=d.desc, rightEf=d.ef, rightTss=d.tss, rightZs=d.zs;
+      if(showActual){
+        // Show real activity data
+        const names=acts.map(a=>a.name).join(' + ');
+        const totalDurMin=Math.round(acts.reduce((s,a)=>s+actDur(a),0)/60);
+        const mainAct=acts.reduce((best,a)=>actDur(a)>actDur(best)?a:best,acts[0]);
+        title=names.length>40?names.substring(0,38)+'…':names;
+        const parts=[];
+        if(totalDurMin>0)parts.push(totalDurMin>59?Math.floor(totalDurMin/60)+'h'+(totalDurMin%60?String(totalDurMin%60).padStart(2,'0'):''):''+totalDurMin+'min');
+        if(mainAct.np)parts.push('NP '+mainAct.np+'W');
+        else if(mainAct.avg_hr)parts.push('ØHR '+mainAct.avg_hr+'bpm');
+        if(mainAct.elevation_m)parts.push(mainAct.elevation_m+'m');
+        sub=parts.join(' · ');
+        if(mainAct.np&&mainAct.avg_hr){
+          rightEf=(mainAct.np/mainAct.avg_hr).toFixed(2);
+        }
+        const np=mainAct.np,ftp=FTP;
+        if(np){const if_=np/ftp;rightTss=Math.round(actDur(mainAct)*np*if_/(ftp*3600)*100);}
+        rightZs=mainAct.power_zones&&mainAct.power_zones.length?mainAct.power_zones.map(p=>p/100):null;
+      }
+
       h+=`<div class="${cls}" onclick="togglePlanDet(this)">`;
       h+=`<div class="pday-badge ${bc}"><div class="pday-dow">${dow}</div><div class="pday-num">${num}</div></div>`;
       h+=`<div class="pday-check">${done?'<span style="color:#5a8a52">✓</span>':isToday?'<span style="color:#5a8a52">→</span>':''}</div>`;
       h+=`<div class="pday-icon">${icon}</div>`;
-      h+=`<div class="pday-text"><div class="pday-title">${d.title}</div>${d.desc?`<div class="pday-sub">${d.desc}</div>`:''}</div>`;
+      h+=`<div class="pday-text"><div class="pday-title">${title}</div>${sub?`<div class="pday-sub">${sub}</div>`:''}</div>`;
 
-      // Right side: EF / TSS / zone strip
-      const hasRight=d.ef||d.tss||d.zs;
+      const hasRight=rightEf||rightTss||rightZs;
       if(hasRight){
         h+=`<div class="pday-right">`;
-        if(d.ef)h+=`<div class="pday-ef">${d.ef}</div>`;
-        if(d.tss)h+=`<div class="pday-tss">TSS ${d.tss}</div>`;
-        if(d.zs){
+        if(rightEf)h+=`<div class="pday-ef">EF ${rightEf}</div>`;
+        if(rightTss)h+=`<div class="pday-tss">TSS ${rightTss}</div>`;
+        if(rightZs){
           h+=`<div class="pday-zs">`;
-          d.zs.forEach((v,i)=>h+=`<div style="flex:${v||0.01};background:${v>0.05?ZC[i]:'#252525'}"></div>`);
+          rightZs.forEach((v,i)=>h+=`<div style="flex:${v||0.01};background:${v>0.05?ZC[i]:'#252525'}"></div>`);
           h+=`</div>`;
         }
         h+=`</div>`;
