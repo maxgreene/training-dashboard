@@ -275,133 +275,125 @@ const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 let allActivities=[],selectedRideId=null;
 
 const PLAN_WEEKS=[
-  {
-    label:'Yoga & Stretch · 20 min',dates:'04.\u201310. Mai',vol:'7.7h',
+  {lbl:"WOCHE 1",dates:"04.–10. Mai",vol:"7.7h",
     days:[
-      {date:'04.05',dow:'Mo',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1\u2013Z2',done:true},
-      {date:'05.05',dow:'Di',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1\u2013Z2',done:true},
-      {date:'06.05',dow:'Mi',type:'comm',title:'Commute lang',desc:'\xd72 \xb7 Z2',done:true},
-      {date:'07.05',dow:'Do',type:'roll',title:'Commute + Rolle Z2',desc:'45min \xb7 NP 143W \xb7 EF 1.21',done:true,ef:'1.21'},
-      {date:'08.05',dow:'Fr',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1',done:true},
-      {date:'09.05',dow:'Sa',type:'aus',title:'Ausfahrt Z2',desc:'2h16 \xb7 NP 199W',done:true,tss:'156'},
-      {date:'10.05',dow:'So',type:'rest',title:'Pause',desc:'Erholung',done:true,dimmed:true},
+      {date:"04.05",dow:"Mo",type:"comm",title:"Commute kurz",desc:"×2 · Z1–Z2",done:true},
+      {date:"05.05",dow:"Di",type:"comm",title:"Commute kurz",desc:"×2 · Z1–Z2",done:true},
+      {date:"06.05",dow:"Mi",type:"comm",title:"Commute lang",desc:"×2 · Z2",done:true},
+      {date:"07.05",dow:"Do",type:"roll",title:"Commute + Rolle Z2",desc:"45min · NP 143W · EF 1.21",done:true,ef:"1.21"},
+      {date:"08.05",dow:"Fr",type:"comm",title:"Commute kurz",desc:"×2 · Z1",done:true},
+      {date:"09.05",dow:"Sa",type:"aus",title:"Ausfahrt Z2",desc:"2h16 · NP 199W",done:true,tss:"156"},
+      {date:"10.05",dow:"So",type:"rest",title:"Pause",desc:"Erholung",done:true,dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'11.\u201317. Mai',vol:'5.1h',
+  {lbl:"WOCHE 2",dates:"11.–17. Mai",vol:"5.1h",
     days:[
-      {date:'11.05',dow:'Mo',type:'comm',title:'Commute lang',desc:'\xd72 \xb7 Z2',done:true},
-      {date:'12.05',dow:'Di',type:'roll',title:'Commute + Rolle Z2',desc:'57min \xb7 NP 162W \xb7 EF 1.31',done:true,ef:'1.31'},
-      {date:'13.05',dow:'Mi',type:'comm',title:'Commute kurz',desc:'nur morgens',done:true},
-      {date:'14.05',dow:'Do',type:'roll',title:'Rolle 90min + 3x5min',desc:'NP 163W \xb7 EF 1.34',done:true,ef:'1.34',tss:'69'},
-      {date:'15.05',dow:'Fr',type:'comm',title:'Commute morgens',desc:'dann Abreise',done:true},
-      {date:'16.05',dow:'Sa',type:'rest',title:'Unterwegs',desc:'kein Rad',done:true,dimmed:true},
-      {date:'17.05',dow:'So',type:'rest',title:'Unterwegs',desc:'kein Rad',done:true,dimmed:true},
+      {date:"11.05",dow:"Mo",type:"comm",title:"Commute lang",desc:"×2 · Z2",done:true},
+      {date:"12.05",dow:"Di",type:"roll",title:"Commute + Rolle Z2",desc:"57min · NP 162W · EF 1.31",done:true,ef:"1.31",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"13.05",dow:"Mi",type:"comm",title:"Commute kurz",desc:"nur morgens",done:true},
+      {date:"14.05",dow:"Do",type:"roll",title:"Rolle 90min + 3×5min",desc:"NP 163W · EF 1.34",done:true,ef:"1.34",tss:"69",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"15.05",dow:"Fr",type:"comm",title:"Commute morgens",desc:"dann Abreise",done:true},
+      {date:"16.05",dow:"Sa",type:"rest",title:"Unterwegs",desc:"kein Rad",done:true,dimmed:true},
+      {date:"17.05",dow:"So",type:"rest",title:"Unterwegs",desc:"kein Rad",done:true,dimmed:true},
     ]
   },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'18.\u201324. Mai',vol:'Taper',
+  {lbl:"WOCHE 3",dates:"18.–24. Mai",vol:"Taper",
     days:[
-      {date:'18.05',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 locker',done:true},
-      {date:'19.05',dow:'Di',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker',done:true},
-      {date:'20.05',dow:'Mi',type:'comm',title:'Commute kurz',desc:'Z1 \xb7 morgen Test!',done:true},
-      {date:'21.05',dow:'Do',type:'test',title:'Rampentest',desc:'FTP 237W \xb7 MAP 313W',done:true,ef:'FTP 237W'},
-      {date:'22.05',dow:'Fr',type:'rest',title:'Erholung',desc:'locker oder Pause',done:true,dimmed:true},
-      {date:'23.05',dow:'Sa',type:'aus',title:'Ausfahrt opt.',desc:'neue Zonen testen',done:true},
-      {date:'24.05',dow:'So',type:'rest',title:'Pause',desc:'Phase 2 startet Mo',done:true,dimmed:true},
+      {date:"18.05",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker",done:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"19.05",dow:"Di",type:"comm",title:"Commute kurz",desc:"Z1 sehr locker",done:true},
+      {date:"20.05",dow:"Mi",type:"comm",title:"Commute kurz",desc:"Z1 morgen Test!",done:true},
+      {date:"21.05",dow:"Do",type:"test",title:"Rampentest",desc:"FTP 237W · MAP 313W",done:true,ef:"FTP 237W"},
+      {date:"22.05",dow:"Fr",type:"rest",title:"Erholung",desc:"Pause",done:true,dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"23.05",dow:"Sa",type:"aus",title:"Ausfahrt opt.",desc:"neue Zonen testen",done:true},
+      {date:"24.05",dow:"So",type:"rest",title:"Pause",desc:"Phase 2 startet Mo",done:true,dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    checkpoint:{label:'Yoga & Stretch · 20 min',desc:'FTP 237W \xb7 neue Zonen \xb7 Phase 2 Start'},
-    phase:'PHASE 2 \xb7 AUFBAU \xb7 SWEETSPOT',
-    label:'Yoga & Stretch · 20 min',dates:'25.\u201331. Mai',vol:'~5.5h',
+  {cp:{lbl:"CHECKPOINT #1 · 25. MAI",desc:"FTP 237W · EF +26% · 2.93 W/kg"},
+    phase:"PHASE 2 · AUFBAU · SWEETSPOT",
+    lbl:"WOCHE 4",dates:"25.–31. Mai",vol:"~5.5h",
     days:[
-      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1 \xb7 Pfingstmontag',desc:'FTP 237W \xb7 EF-Trend 1.21\u21921.52 \xb7 dann Kacheljagd!',done:true},
-      {date:'26.05',dow:'Di',type:'comm',title:'Commute lang',desc:'Z2 \xb7 HR<141',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'27.05',dow:'Mi',type:'roll',title:'Sweetspot 2x10\'',desc:'200\u2013215W \xb7 5\' Pause \xb7 HR 148\u2013158',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.2,.5,.25,0]},
-      {date:'28.05',dow:'Do',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'29.05',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1\u2013Z2 frisch fuer Sa'},
-      {date:'30.05',dow:'Sa',type:'aus',title:'Ausfahrt Huegel',desc:'90min \xb7 Z2+Z3 Anstiege'},
-      {date:'31.05',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"25.05",dow:"Mo",type:"check",title:"Checkpoint + Commute",desc:"neue Zonen · Z1–Z2"},
+      {date:"26.05",dow:"Di",type:"comm",title:"Commute lang",desc:"Z2 · HR unter 141",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"27.05",dow:"Mi",type:"roll",title:"Sweetspot 2×10min",desc:"200–215W · 5min Pause · HR 148–158",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.2,.5,.25,0]},
+      {date:"28.05",dow:"Do",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"29.05",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1–Z2"},
+      {date:"30.05",dow:"Sa",type:"aus",title:"Ausfahrt Hügel",desc:"90min · Z2+Z3 Anstiege"},
+      {date:"31.05",dow:"So",type:"rest",title:"Pause",desc:"Erholung",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'01.\u201307. Jun',vol:'~6h',
+  {lbl:"WOCHE 5",dates:"01.–07. Jun",vol:"~6h",
     days:[
-      {date:'01.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'02.06',dow:'Di',type:'roll',title:'Sweetspot 2x15\'',desc:'205\u2013218W \xb7 5\' Pause \xb7 HR 150\u2013158',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.15,.55,.25,.05]},
-      {date:'03.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'04.06',dow:'Do',type:'roll',title:'Sweetspot 3x10\'',desc:'205\u2013220W \xb7 5\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.1,.55,.3,.05]},
-      {date:'05.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker'},
-      {date:'06.06',dow:'Sa',type:'aus',title:'Ausfahrt 2h Huegel',desc:'Z2+Z3-Z4 Anstiege'},
-      {date:'07.06',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"01.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"02.06",dow:"Di",type:"roll",title:"Sweetspot 2×15min",desc:"205–218W · 5min Pause · HR 150–158",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.15,.55,.25,.05]},
+      {date:"03.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"04.06",dow:"Do",type:"roll",title:"Sweetspot 3×10min",desc:"205–220W · 5min Pause",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.1,.55,.3,.05]},
+      {date:"05.06",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1 sehr locker"},
+      {date:"06.06",dow:"Sa",type:"aus",title:"Ausfahrt 2h Hügel",desc:"Z2+Z3–Z4 Anstiege"},
+      {date:"07.06",dow:"So",type:"rest",title:"Pause",desc:"Erholung",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    checkpoint:{label:'Yoga & Stretch · 20 min'},
-    label:'Yoga & Stretch · 20 min',dates:'08.\u201314. Jun',vol:'~6h',
+  {cp:{lbl:"CHECKPOINT #2 · SA 13.06"},
+    lbl:"WOCHE 6",dates:"08.–14. Jun",vol:"~6h",
     days:[
-      {date:'08.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'09.06',dow:'Di',type:'roll',title:'Threshold 3x8\'',desc:'218\u2013235W \xb7 3\' Pause \xb7 HR 155\u2013165',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.3,.5,.15]},
-      {date:'10.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'11.06',dow:'Do',type:'roll',title:'Threshold 2x12\'',desc:'218\u2013232W \xb7 4\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.25,.55,.15]},
-      {date:'12.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 frisch fuer Test'},
-      {date:'13.06',dow:'Sa',type:'test',title:'20min-Test outdoor',desc:'FTP = 95% vom 20min-Mittel'},
-      {date:'14.06',dow:'So',type:'rest',title:'Erholung',desc:'nach Test',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"08.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"09.06",dow:"Di",type:"roll",title:"Threshold 3×8min",desc:"218–235W · 3min Pause · HR 155–165",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.05,.3,.5,.15]},
+      {date:"10.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"11.06",dow:"Do",type:"roll",title:"Threshold 2×12min",desc:"218–232W · 4min Pause",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.05,.25,.55,.15]},
+      {date:"12.06",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1 frisch für Test"},
+      {date:"13.06",dow:"Sa",type:"test",title:"20min-Test outdoor",desc:"FTP = 95% vom 20min-Mittel"},
+      {date:"14.06",dow:"So",type:"rest",title:"Erholung",desc:"nach Test",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    phase:'PHASE 3 \xb7 FORM & PEAK',
-    label:'Yoga & Stretch · 20 min',dates:'15.\u201321. Jun',vol:'~6h',
+  {phase:"PHASE 3 · FORM & PEAK",
+    lbl:"WOCHE 7",dates:"15.–21. Jun",vol:"~6h",
     days:[
-      {date:'15.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'16.06',dow:'Di',type:'roll',title:'VO2max 5x3\'',desc:'255\u2013270W \xb7 2\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,0,.1,.3,.6]},
-      {date:'17.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 Erholung',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'18.06',dow:'Do',type:'roll',title:'VO2max 4x4\'',desc:'252\u2013265W \xb7 3\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,0,.1,.3,.6]},
-      {date:'19.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker'},
-      {date:'20.06',dow:'Sa',type:'aus',title:'Ausfahrt 2.5h Berg',desc:'echte Anstiege \xb7 WE-Simulation'},
-      {date:'21.06',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"15.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"16.06",dow:"Di",type:"roll",title:"VO2max 5×3min",desc:"255–270W · 2min Pause",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,0,.1,.3,.6]},
+      {date:"17.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z1–Z2 Erholung",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"18.06",dow:"Do",type:"roll",title:"VO2max 4×4min",desc:"252–265W · 3min Pause",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,0,.1,.3,.6]},
+      {date:"19.06",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1 sehr locker"},
+      {date:"20.06",dow:"Sa",type:"aus",title:"Ausfahrt 2.5h Berg",desc:"echte Anstiege"},
+      {date:"21.06",dow:"So",type:"rest",title:"Pause",desc:"Erholung",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'22.\u201328. Jun',vol:'~6.5h Peak',
+  {lbl:"WOCHE 8",dates:"22.–28. Jun",vol:"~6.5h Peak",
     days:[
-      {date:'22.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'23.06',dow:'Di',type:'roll',title:'Sweetspot 3x12\'',desc:'205\u2013220W',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.1,.6,.25,.05]},
-      {date:'24.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'25.06',dow:'Do',type:'roll',title:'Threshold 2x15\'',desc:'218\u2013232W',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.2,.6,.15]},
-      {date:'26.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1\u2013Z2'},
-      {date:'27.06',dow:'Sa',type:'aus',title:'Berg-WE-Simulation',desc:'3h \xb7 1500m+ \xb7 Passtempo'},
-      {date:'28.06',dow:'So',type:'rest',title:'Erholung',desc:'Beine hoch',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"22.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"23.06",dow:"Di",type:"roll",title:"Sweetspot 3×12min",desc:"205–220W",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.1,.6,.25,.05]},
+      {date:"24.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z2 locker",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"25.06",dow:"Do",type:"roll",title:"Threshold 2×15min",desc:"218–232W",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"},zs:[0,.05,.2,.6,.15]},
+      {date:"26.06",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1–Z2"},
+      {date:"27.06",dow:"Sa",type:"aus",title:"Berg-WE-Simulation",desc:"3h · 1500m+ · Passtempo"},
+      {date:"28.06",dow:"So",type:"rest",title:"Erholung",desc:"Beine hoch",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'29. Jun\u201305. Jul',vol:'~4h Taper',
+  {lbl:"WOCHE 9",dates:"29. Jun–05. Jul",vol:"~4h Taper",
     days:[
-      {date:'29.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 locker'},
-      {date:'30.06',dow:'Di',type:'roll',title:'Sweetspot 2x8\' locker',desc:'200\u2013210W \xb7 Aktivierung',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'01.07',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2'},
-      {date:'02.07',dow:'Do',type:'roll',title:'Aktivierung 2x5\'',desc:'195\u2013210W \xb7 frisch bleiben',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'03.07',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1'},
-      {date:'04.07',dow:'Sa',type:'aus',title:'Ausfahrt locker',desc:'90min \xb7 Z2 \xb7 kurze Intensitaet'},
-      {date:'05.07',dow:'So',type:'rest',title:'Pause',desc:'Abreise vorbereiten',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
+      {date:"29.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker"},
+      {date:"30.06",dow:"Di",type:"roll",title:"Sweetspot 2×8min locker",desc:"200–210W",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"01.07",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z1–Z2"},
+      {date:"02.07",dow:"Do",type:"roll",title:"Aktivierung 2×5min",desc:"195–210W",yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
+      {date:"03.07",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1"},
+      {date:"04.07",dow:"Sa",type:"aus",title:"Ausfahrt locker",desc:"90min · Z2"},
+      {date:"05.07",dow:"So",type:"rest",title:"Pause",desc:"",dimmed:true,yoga:{url:"https://youtu.be/vmHe7CN4QkE",lbl:"Yoga & Stretch · 20 min"}},
     ]
   },
-  {
-    phase:'ZIEL \xb7 BERG-WE FR\u2013SO 10.\u201312. JULI',
-    checkpoint:{label:'BERG-WE 10.\u201312. JULI \xb7 FR\u2013SO',desc:'Ziel: 3.0\u20133.1 W/kg \xb7 zweites Juli-WE',goal:true},
-    label:'WOCHE 10',dates:'06.\u201312. Jul',vol:'Berg-WE \U0001f3d4\ufe0f',
+  {phase:"ZIEL · BERG-WE FR–SO 10.–12. JULI",
+    cp:{lbl:"BERG-WE 10.–12. JULI · FR–SO",desc:"Ziel: 3.0–3.1 W/kg",goal:true},
+    lbl:"WOCHE 10",dates:"06.–12. Jul",vol:"Berg-WE",
     days:[
-      {date:'06.07',dow:'Mo',type:'comm',title:'Kurze Aktivierung',desc:'lockere Beine \xb7 kein Stress'},
-      {date:'07.07',dow:'Di',type:'rest',title:'Pause',desc:'erholen \xb7 packen',dimmed:true},
-      {date:'08.07',dow:'Mi',type:'rest',title:'Pause',desc:'erholen',dimmed:true},
-      {date:'09.07',dow:'Do',type:'rest',title:'Anreise',desc:'fr\xfch anreisen \xb7 Beine hoch',dimmed:true},
-      {date:'10.07',dow:'Fr',type:'aus',title:'\U0001f3d4\ufe0f Berg-WE Tag 1',desc:'ankommen \xb7 warm fahren \xb7 erste H\xfcgel'},
-      {date:'11.07',dow:'Sa',type:'aus',title:'\U0001f3d4\ufe0f Berg-WE Tag 2',desc:'Haupt-Tag \xb7 alles geben \xb7 Ziel 3.0+ W/kg'},
-      {date:'12.07',dow:'So',type:'aus',title:'\U0001f3d4\ufe0f Berg-WE Tag 3',desc:'locker ausfahren \xb7 genie\xdfen'},
+      {date:"06.07",dow:"Mo",type:"comm",title:"Kurze Aktivierung",desc:"lockere Beine"},
+      {date:"07.07",dow:"Di",type:"rest",title:"Pause",desc:"erholen",dimmed:true},
+      {date:"08.07",dow:"Mi",type:"rest",title:"Pause",desc:"erholen",dimmed:true},
+      {date:"09.07",dow:"Do",type:"rest",title:"Anreise",desc:"Beine hoch",dimmed:true},
+      {date:"10.07",dow:"Fr",type:"aus",title:"Berg-WE Tag 1",desc:"ankommen · warm fahren"},
+      {date:"11.07",dow:"Sa",type:"aus",title:"Berg-WE Tag 2",desc:"Haupt-Tag · alles geben"},
+      {date:"12.07",dow:"So",type:"aus",title:"Berg-WE Tag 3",desc:"locker ausfahren · genießen"},
     ]
   },
 ];
+
+
 
 
 
@@ -455,14 +447,14 @@ function renderPlan(){
       h+=`<div class="plan-phase"><div class="plan-phase-line"></div><div class="plan-phase-label">${week.phase}</div><div class="plan-phase-line"></div></div>`;
     }
     // Checkpoint
-    if(week.checkpoint){
-      const cp=week.checkpoint;
+    if(week.cp){
+      const cp=week.cp;
       const icon=cp.goal?'🏔️':'📊';
-      h+=`<div class="plan-cp"><div class="plan-cp-icon">${icon}</div><div><div class="plan-cp-label">${cp.label}</div>${cp.desc?`<div class="plan-cp-desc">${cp.desc}</div>`:''}</div></div>`;
+      h+=`<div class="plan-cp"><div class="plan-cp-icon">${icon}</div><div><div class="plan-cp-label">${cp.lbl}</div>${cp.desc?`<div class="plan-cp-desc">${cp.desc}</div>`:''}</div></div>`;
     }
 
     h+=`<div class="wcard">`;
-    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.label}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}</span></div>`;
+    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.lbl}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}</span></div>`;
 
     if(week.days) week.days.forEach((d,di)=>{
       const done=isDone(d);
@@ -536,7 +528,7 @@ function renderPlan(){
 
       // Yoga row
       if(d.yoga){
-        h+=`<div class="pday-yoga"><span>🧘</span><a href="${d.yoga.url}" target="_blank">${d.yoga.label}</a></div>`;
+        h+=`<div class="pday-yoga"><span>🧘</span><a href="${d.yoga.url}" target="_blank">${d.yoga.lbl}</a></div>`;
       }
     });
 
@@ -804,1160 +796,6 @@ async function loadAndDrawAnalysis(act){
     const{ctx,W}=r;
     const pL=42,pR=44,pT=16,pB=24,cW=W-pL-pR,cH=H-pT-pB;
     const maxT=ts[ts.length-1]||1; // elapsed time from stream
-
-    // Power range
-    const pwValid=pw.filter(v=>v>0&&v<1500);
-    const maxP=pwValid.length?Math.min(650,Math.max(300,Math.max(...pwValid)*1.05)):400;
-    // HR range
-    const hrValid=hr.filter(h=>h>50);
-    const minHR=hrValid.length?Math.max(60,Math.min(...hrValid)-5):70;
-    const maxHR=hrValid.length?Math.min(185,Math.max(...hrValid)+5):180;
-
-    function xOf(t){return pL+(t/maxT)*cW;}
-    function yP(p){return pT+cH-Math.min(1,(p/maxP))*cH;}
-    function yH(h){return pT+cH-((Math.max(minHR,Math.min(maxHR,h))-minHR)/(maxHR-minHR))*cH;}
-
-    // Altitude bg
-    if(alt.length>1){
-      const aMin=Math.min(...alt),aMax=Math.max(...alt)+1;
-      ctx.beginPath();
-      alt.forEach((a,i)=>{i===0?ctx.moveTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH)):ctx.lineTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH));});
-      ctx.lineTo(xOf(maxT),pT+cH);ctx.lineTo(xOf(0),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(90,90,90,0.13)';ctx.fill();
-    }
-
-    // Grid
-    ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-    const tks=Math.min(8,Math.floor(maxT/300));
-    for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-
-    // FTP reference
-    ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
-    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-3);
-
-    // Raw power dots
-    if(pw.length){
-      pw.forEach((p,i)=>{if(!p||p<5)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yP(p),1.5,0,Math.PI*2);ctx.fillStyle='rgba(249,115,22,0.2)';ctx.fill();});
-      // Rolling mean line (win=5 pts)
-      const pwSmooth=rollingMean(pw,5,5);
-      ctx.beginPath();let fst=true;
-      pwSmooth.forEach((p,i)=>{if(!p)return;fst?(ctx.moveTo(xOf(ts[i]),yP(p)),fst=false):ctx.lineTo(xOf(ts[i]),yP(p));});
-      ctx.strokeStyle='rgba(249,115,22,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-    }
-
-    // Raw HR dots
-    if(hr.length){
-      hr.forEach((h,i)=>{if(!h||h<50)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yH(h),1.5,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.18)';ctx.fill();});
-      // Rolling mean line
-      const hrSmooth=rollingMean(hr,5,50);
-      ctx.beginPath();let fst=true;
-      hrSmooth.forEach((h,i)=>{if(!h)return;fst?(ctx.moveTo(xOf(ts[i]),yH(h)),fst=false):ctx.lineTo(xOf(ts[i]),yH(h));});
-      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-    }
-
-    // Y labels
-    ctx.fillStyle='rgba(249,115,22,0.6)';ctx.font='9px monospace';ctx.textAlign='right';
-    [100,200,300,400].filter(p=>p<maxP).forEach(p=>ctx.fillText(p+'W',pL-3,yP(p)+3));
-    ctx.fillStyle='rgba(200,200,200,0.5)';ctx.textAlign='left';
-    [Math.round(minHR+5),Math.round((minHR+maxHR)/2),Math.round(maxHR-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
-    ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
-    for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-    // Legend
-    ctx.fillStyle='rgba(249,115,22,0.7)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+11);
-    ctx.fillStyle='rgba(200,200,200,0.6)';ctx.fillText('· HR',pL+32,pT+11);
-    ctx.fillStyle='rgba(130,130,130,0.4)';ctx.fillText('· Punkte = Roh, Linie = 30s Mittel',pL+48,pT+11);
-  }
-
-  if(!an)return;
-
-  // ── CHART 2: Rolling EF (raw dots + smoothed line) ──
-  const c2=document.getElementById('an-ef-'+id);
-  const efSeries=an.ef_series||[];
-  if(c2&&efSeries.length){
-    const efClean=efSeries.filter(p=>p.ef>0.5&&p.ef<2.8);
-    if(efClean.length){
-      const H=100;
-      const r=SC(c2,H);if(!r){}else{
-        const{ctx,W}=r;
-        const pL=42,pR=44,pT=12,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-        const maxT=efClean[efClean.length-1].t;
-        const efVals=efClean.map(p=>p.ef);
-        const minEF=Math.max(0.6,Math.min(...efVals)-0.05);
-        const maxEF=Math.min(2.5,Math.max(...efVals)+0.05);
-        const avgEF=efVals.reduce((s,v)=>s+v,0)/efVals.length;
-
-        function xOf(t){return pL+(t/maxT)*cW;}
-        function yEF(e){return pT+cH-((Math.max(minEF,Math.min(maxEF,e))-minEF)/(maxEF-minEF))*cH;}
-
-        ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-        const tks=Math.min(8,Math.floor(maxT/300));
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-
-        // Avg ref
-        ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,6]);
-        ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px monospace';ctx.textAlign='left';
-        ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
-
-        // Raw dots
-        efClean.forEach(p=>{ctx.beginPath();ctx.arc(xOf(p.t),yEF(p.ef),1.5,0,Math.PI*2);ctx.fillStyle='rgba(96,165,250,0.22)';ctx.fill();});
-
-        // Smoothed line (5-point rolling avg of ef values)
-        const efSmooth=efClean.map((_,i)=>{
-          const sl=efClean.slice(Math.max(0,i-5),i+1).filter(p=>p.ef>0.5&&p.ef<2.8);
-          return sl.length?sl.reduce((s,p)=>s+p.ef,0)/sl.length:null;
-        });
-        ctx.beginPath();let fst=true;
-        efSmooth.forEach((e,i)=>{if(!e)return;fst?(ctx.moveTo(xOf(efClean[i].t),yEF(e)),fst=false):ctx.lineTo(xOf(efClean[i].t),yEF(e));});
-        ctx.strokeStyle='rgba(96,165,250,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-
-        // Labels
-        [minEF,avgEF,maxEF].forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
-        ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-        ctx.fillStyle='rgba(96,165,250,0.65)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Rolling EF (W/bpm) · 120s Fenster',pL+4,pT+11);
-      }
-    }
-  }
-
-  // ── CHART 3+4: Scatter + MMP Power Curve (dynamically created, side by side) ──
-  const scatter=an.scatter||[];
-  const pcurve=an.power_curve||act.power_curve||{};
-  const scWrap=document.getElementById('sc-wrap-'+id);
-  const pcWrap=document.getElementById('pc-wrap-'+id);
-
-  function drawInWrap(wrap, drawFn){
-    if(!wrap)return;
-    wrap.innerHTML='';
-    // Force layout read AFTER clearing
-    const W=wrap.getBoundingClientRect().width||wrap.offsetWidth||300;
-    const H=W; // square
-    const dpr=window.devicePixelRatio||1;
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.round(W*dpr);
-    canvas.height=Math.round(H*dpr);
-    canvas.style.width=Math.round(W)+'px';
-    canvas.style.height=Math.round(H)+'px';
-    canvas.style.display='block';
-    wrap.appendChild(canvas);
-    const ctx=canvas.getContext('2d');
-    ctx.scale(dpr,dpr);
-    drawFn(ctx, Math.round(W), Math.round(H));
-  }
-
-  if(scWrap&&scatter.length){
-    drawInWrap(scWrap,(ctx,W,H)=>{
-      const pL=38,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      // Fixed axes for cross-ride comparison
-      const minW=50, maxW=400;
-      const minH=80, maxH=175;
-      // Zone boundaries
-      const wZones=[144,180,216,252]; // Z2,Z3,Z4,Z5 starts
-      const hZones=[Math.round(175*0.68),Math.round(175*0.83),Math.round(175*0.88),Math.round(175*0.95)]; // 119,145,154,166
-      function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
-      function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-      // Grid
-      // Background grid
-      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,350,400].forEach(w=>{ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();});
-      [90,100,110,120,130,140,150,160,170].forEach(h=>{ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();});
-      // Power zone vertical lines
-      const zCols=['#34d399','#60a5fa','#fbbf24','#f97316'];
-      wZones.forEach((w,i)=>{
-        ctx.strokeStyle=zCols[i].replace(')',',0.25)').replace('rgb','rgba')||'rgba(255,255,255,0.1)';
-        ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle=zCols[i];ctx.font='8px monospace';ctx.textAlign='center';
-        ctx.fillText('Z'+(i+2),xOf(w)+12,pT+9);
-      });
-      // HR zone horizontal lines
-      hZones.forEach((h,i)=>{
-        ctx.strokeStyle=zCols[i].replace(')',',0.2)').replace('rgb','rgba')||'rgba(255,255,255,0.08)';
-        ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();
-        ctx.setLineDash([]);
-      });
-      // Points
-      const tMin=scatter[0].t,tMax=scatter[scatter.length-1].t;
-      scatter.forEach(p=>{
-        if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
-        const tf=(p.t-tMin)/Math.max(1,tMax-tMin);
-        const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
-        ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
-        ctx.fillStyle='rgba('+r+','+g+','+b+',0.7)';ctx.fill();
-      });
-      // Labels
-      ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [80,100,120,140,160,175].forEach(h=>ctx.fillText(h,pL-3,yOf(h)+3));
-      ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
-      [100,150,200,250,300,350,400].forEach(w=>ctx.fillText(w+'W',xOf(w),H-pB+14));
-      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';
-      ctx.fillText('HR vs Watt',pL+4,pT+12);
-      ctx.fillStyle='rgba(100,100,100,0.5)';
-      ctx.fillText('blau=früh, orange=spät',pL+4,pT+22);
-      ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
-      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
-    });
-  }
-
-  if(pcWrap&&Object.keys(pcurve).length){
-    drawInWrap(pcWrap,(ctx,W,H)=>{
-      const pL=40,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
-      const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
-      if(pts.length<2)return;
-      // Fixed axes for cross-ride comparison
-      const logMin=Math.log10(5),logMax=Math.log10(3600);
-      const wMin=100, wMax=700;
-      function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
-      function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
-      // Grid
-      // Background grid
-      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,400,500,600,700].forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();});
-      [{d:5,l:'5s'},{d:10,l:'10s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:120,l:'2m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}]
-        .forEach(t=>{ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
-          ctx.fillStyle='rgba(100,100,100,0.7)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(t.l,xOf(t.d),H-pB+14);});
-      // Power zone horizontal lines
-      const mmpZones=[{w:144,l:'Z2',c:'#60a5fa'},{w:180,l:'Z3',c:'#fbbf24'},{w:216,l:'Z4',c:'#f97316'},{w:252,l:'Z5',c:'#ef4444'}];
-      mmpZones.forEach(z=>{
-        ctx.strokeStyle=z.c+'44';ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(z.w));ctx.lineTo(pL+cW,yOf(z.w));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle=z.c;ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText(z.l,pL+2,yOf(z.w)-3);
-      });
-      // FTP
-      {
-        ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='rgba(249,115,22,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
-      }
-      // MMP curve fill
-      ctx.beginPath();pts.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.d),yOf(p.w)):ctx.lineTo(xOf(p.d),yOf(p.w));});
-      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=2;ctx.stroke();
-      ctx.lineTo(xOf(pts[pts.length-1].d),pT+cH);ctx.lineTo(xOf(pts[0].d),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(200,200,200,0.06)';ctx.fill();
-      // Dots + labels
-      pts.forEach(p=>{
-        ctx.beginPath();ctx.arc(xOf(p.d),yOf(p.w),3,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.7)';ctx.fill();
-        ctx.fillStyle='rgba(200,200,200,0.55)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(p.w+'W',xOf(p.d),yOf(p.w)-7);
-      });
-      // Y labels
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [100,150,200,250,300,400,500,600,700].forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
-      // Title
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+12);
-      ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('log. Zeitskala',pL+4,pT+22);
-    });
-  }
-
-    // ── Aerobe Werte ──
-  const avDiv=document.getElementById('aerob-vals-'+id);
-  if(avDiv&&an.decoupling){
-    const d=an.decoupling;
-    const dPos=d.drift_pct>0;
-    avDiv.innerHTML=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse</div><div class="sh-line"></div></div>
-    <div class="detail-stats">
-      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">NP_core / HR_core</div></div>
-      <div class="ds"><div class="ds-label">EF₁</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">EF₂</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">Drift</div><div class="ds-val" style="color:${dPos?'var(--red)':'var(--green)'}">${dPos?'+':''}${d.drift_pct.toFixed(2)}<span>%</span></div><div class="ds-sub">${dPos?'HR stieg':'EF stieg'} · n=${d.n_core}</div></div>
-    </div>`;
-  }
-}
-
-function drawChart(act){
-  const canvas=document.getElementById(`chart-${act.id}`);
-  if(!canvas||!act.streams)return;
-  const ts=act.streams.time||[],pw=act.streams.watts||[],hr=act.streams.hr||[];
-  if(!ts.length)return;
-  const dpr=window.devicePixelRatio||1,W=canvas.parentElement.offsetWidth,H=90;
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+'px';canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
-  const pL=36,pR=8,pT=10,pB=22,cW=W-pL-pR,cH=H-pT-pB;
-  const maxT=ts[ts.length-1]||1,maxP=pw.length?Math.max(600,...pw):600,minH=80,maxH=175;
-  function xOf(t){return pL+(t/maxT)*cW;}
-  function yP(p){return pT+cH-(p/maxP)*cH;}
-  function yH(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-  ctx.strokeStyle='#333';ctx.lineWidth=1;
-  [100,200,300,400,500].forEach(p=>{if(!pw.length)return;ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p,pL-3,yP(p)+3);});
-  if(pw.length){
-    ctx.strokeStyle='rgba(180,180,180,0.25)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
-    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);
-    ctx.fillStyle='rgba(176,176,176,0.1)';ctx.strokeStyle='rgba(176,176,176,0.7)';ctx.lineWidth=1.5;ctx.beginPath();
-    ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-    ctx.stroke();ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();ctx.fill();
-  }
-  if(hr.length){
-    ctx.strokeStyle='rgba(136,136,136,0.6)';ctx.lineWidth=1.5;ctx.beginPath();
-    ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-    ctx.stroke();
-  }
-  ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='center';
-  const ticks=Math.min(6,Math.floor(maxT/60));
-  for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-}
-
-
-
-
-// ── TODAY BANNER ──
-function renderTodayBanner(){
-  const wrap = document.getElementById('today-banner-wrap');
-  if(!wrap) return;
-
-  // Find today in plan
-  const now = new Date();
-  const todayStr = (now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.'; // '11.05.'
-  const todayPlan = todayStr.slice(0,5); // '11.05' matches plan dates
-  let todayDay = null, todayWeek = null;
-  for(const week of PLAN_WEEKS){
-    if(!week.days) continue;
-    for(const d of week.days){
-      if(d.date === todayPlan){ todayDay=d; todayWeek=week; break; }
-    }
-    if(todayDay) break;
-  }
-  if(!todayDay){ wrap.innerHTML=''; return; }
-
-  // Calculate fatigue from recent TSS (last 7 days weighted)
-  const today = new Date(); today.setHours(0,0,0,0);
-  let atl = 0; // Acute Training Load (7-day weighted)
-  allActivities.forEach(a=>{
-    const actDate = new Date(a.date); actDate.setHours(0,0,0,0);
-    const daysAgo = Math.round((today-actDate)/(1000*86400));
-    if(daysAgo<0||daysAgo>7) return;
-    const IF = a.np?+(a.np/FTP).toFixed(3):null;
-    const tss = a.np&&IF?Math.round(actDur(a)*a.np*IF/(FTP*3600)*100):null;
-    if(!tss) return;
-    const weight = Math.exp(-daysAgo/7); // exponential decay
-    atl += tss * weight;
-  });
-
-  // Classify fatigue
-  let status, statusLabel, statusDetail;
-  if(atl < 40){ status='fresh'; statusLabel='Frisch'; statusDetail='Volle Leistung · ambitioniert trainieren'; }
-  else if(atl < 90){ status='normal'; statusLabel='Normal'; statusDetail='Gut erholt · Plan wie vorgesehen fahren'; }
-  else if(atl < 150){ status='normal'; statusLabel='Etwas müde'; statusDetail='Intensität im Zweifel 5–10% reduzieren'; }
-  else { status='tired'; statusLabel='Müde'; statusDetail='Nur lockere Einheiten · bei Zweifel pausieren'; }
-
-  // Day of week
-  const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
-  const dow = days[now.getDay()];
-
-  // Type color
-  const typeColors={comm:'#555',roll:'#60a5fa',aus:'#34d399',test:'#fbbf24',check:'#a78bfa',rest:'#333',goal:'#ef4444'};
-  const accent = typeColors[todayDay.type]||'#555';
-
-  wrap.innerHTML=`<div class="today-banner ${status}" style="border-left-color:${accent}">
-    <div class="tb-row1">
-      <span class="tb-date">Heute · ${dow} ${todayStr.slice(0,5)}</span>
-      <span class="tb-title">${todayDay.title}</span>
-    </div>
-    <div class="tb-desc">${todayDay.desc}</div>
-    <div class="tb-det">${todayDay.det}</div>
-    <div class="tb-status">
-      <div class="tb-dot ${status}"></div>
-      <span class="tb-status-text"><strong>${statusLabel}</strong> — ${statusDetail}</span>
-      <span class="tb-tss">ATL ${atl.toFixed(0)}</span>
-    </div>
-  </div>`;
-}
-
-// ── LOAD ──
-async function loadData(){
-  try{
-    const r=await fetch('data/activities.json?_='+Date.now());
-    const data=await r.json();
-    document.getElementById('loading').style.display='none';
-    allActivities=data.activities||[];
-    const upd=new Date(data.updated_at);
-    document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-    renderSummary();
-    renderActivityList();
-    renderPlan();
-    renderTodayBanner();
-  }catch(e){
-    document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
-  }
-}
-
-renderPlan();
-renderTodayBanner();
-loadData();
-setInterval(loadData,5*60*1000);
-</script>
-</body>
-</html>.stat-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
-.stat-val{font-size:23px;font-weight:700;color:var(--t1);line-height:1;}
-.stat-val span{font-size:13px;font-weight:400;color:var(--t5);margin-left:2px;}
-.stat-sub{font-size:11px;color:var(--t5);margin-top:4px;}
-
-/* SECTION HEADER */
-.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;margin-top:20px;}
-.sh-title{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
-.sh-meta{font-size:12px;color:var(--t4);}
-.sh-line{flex:1;height:1px;background:#252525;}
-
-/* ACTIVITY LIST */
-.act-list{display:flex;flex-direction:column;gap:2px;margin-bottom:24px;}
-.act-row{background:var(--bg2);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.15s;}
-.act-row:hover{border-color:#444;}
-.act-row.selected{border-color:#666;}
-.act-main{padding:12px 16px;display:flex;align-items:center;gap:16px;}
-.act-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);width:104px;flex-shrink:0;}
-.act-name{font-size:13px;font-weight:500;color:var(--t1);flex:1;}
-.act-metrics{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.am{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);white-space:nowrap;}
-.am .u{color:var(--t5);font-size:11px;}
-.asep{color:#333;font-size:12px;}
-.act-badge{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--t5);background:#252525;border:1px solid #2e2e2e;padding:2px 7px;border-radius:2px;white-space:nowrap;}
-.zstrip{height:2px;display:flex;gap:1px;border-radius:0 0 2px 2px;overflow:hidden;}
-.zs{border-radius:1px;}
-
-/* CALENDAR */
-/* PLAN WOCHENKARTEN */
-.plan-wrap{padding:0 0 20px}
-.plan-phase{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
-.plan-phase-line{flex:1;height:1px;background:#252525}
-.plan-phase-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1.4px;white-space:nowrap;padding:0 4px}
-.wcard{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;margin-bottom:10px;overflow:hidden}
-.wcard-hdr{display:flex;align-items:baseline;gap:10px;padding:9px 14px;background:#1f1f1f;border-bottom:1px solid #262626}
-.wcard-label{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px}
-.wcard-dates{font-size:13px;color:#666}
-.wcard-vol{margin-left:auto;font-size:12px;color:#555;font-family:'JetBrains Mono',monospace}
-.pday{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid #1e1e1e;cursor:pointer;transition:background .12s;border-left:4px solid transparent}
-.pday:last-child{border-bottom:none}
-.pday:hover{background:#202020}
-.pday.done{background:#161616}
-.pday.done .pday-title{color:#555}
-.pday.done .pday-sub{color:#3a3a3a}
-.pday.today-c{background:#111d11;border-left-color:#5a8a52!important}
-.pday.past:not(.done){opacity:.35}
-.pday.dimmed{opacity:.25}
-.pday-badge{width:38px;height:38px;border-radius:5px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-right:12px}
-.pday-dow{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.85}
-.pday-num{font-size:17px;font-weight:700;line-height:1.1}
-.pday-check{width:18px;text-align:center;font-size:13px;flex-shrink:0;margin-right:8px}
-.pday-icon{font-size:15px;flex-shrink:0;margin-right:10px;width:20px;text-align:center}
-.pday-text{flex:1;min-width:0}
-.pday-title{font-size:14px;font-weight:600;color:#d8d8d8;line-height:1.25}
-.pday-sub{font-size:12px;color:#666;margin-top:2px}
-.pday-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;margin-left:10px;flex-shrink:0}
-.pday-ef{font-size:11px;font-family:'JetBrains Mono',monospace;color:#5a8a52;font-weight:700}
-.pday-tss{font-size:11px;font-family:'JetBrains Mono',monospace;color:#a08050}
-.pday-zs{display:flex;height:5px;width:54px;border-radius:3px;overflow:hidden;gap:1px}
-.pday-zs div{flex:1;border-radius:1px}
-.b-comm{background:#222;color:#666}
-.b-roll{background:#0f1e35;color:#60a5fa}
-.b-aus{background:#0a1f12;color:#34d399}
-.b-test{background:#1e1500;color:#fbbf24}
-.b-check{background:#160f2a;color:#a78bfa}
-.b-rest{background:#181818;color:#444}
-.t-comm{border-left-color:#383838!important}
-.t-roll{border-left-color:#2563b0!important}
-.t-aus{border-left-color:#1a7a4a!important}
-.t-test{border-left-color:#a0860a!important}
-.t-check{border-left-color:#6d3fb5!important}
-.t-rest{border-left-color:#222!important}
-.pday-yoga{display:flex;align-items:center;gap:10px;padding:5px 14px 5px 74px;border-bottom:1px solid #1a1a1a;background:#160f0f}
-.pday-yoga a{font-size:12px;color:#f87171;text-decoration:none;font-weight:500;display:flex;align-items:center;gap:5px}
-.pday-yoga a:hover{text-decoration:underline}
-.pday-yoga-dur{font-size:10px;color:#4a2a2a}
-.plan-cp{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:#160f2a;border:1px solid #2d1f5a;border-radius:6px;border-left:4px solid #a78bfa}
-.plan-cp-icon{font-size:18px}
-.plan-cp-label{font-size:14px;font-weight:700;color:#c4a8ff}
-.plan-cp-desc{font-size:12px;color:#7a6090;margin-top:2px}
-.pday-det{padding:10px 14px 12px 74px;background:#141414;border-bottom:1px solid #1e1e1e;font-size:12px;color:#666;line-height:1.6;display:none}
-.pday-det.open{display:block}
-
-.cal-week{margin-bottom:16px;}
-.cal-week-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;}
-.cwl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;}
-.cwd{font-size:12px;color:var(--t4);}
-.cwv{font-size:12px;color:var(--t4);margin-left:auto;}
-.cwline{flex:1;height:1px;background:#252525;}
-.dow-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
-.dow-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t4);text-align:center;padding:2px 0;}
-.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.day-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;min-height:96px;cursor:pointer;transition:border-color 0.15s;position:relative;}
-.day-card:hover{border-color:#444;}
-.day-card.done{background:#1a1e1a;border-color:#263026;}
-.day-card.dimmed{opacity:0.25;cursor:default;}
-.day-card.past{opacity:0.15;cursor:default;}
-.day-card.today-c{border-color:var(--t3);}
-.day-card.sel{border-color:#666;border-width:2px;}
-.dc-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);margin-bottom:6px;}
-.dc-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3);margin-bottom:5px;}
-.dc-type.rest{color:var(--t5);font-weight:500;}
-.dc-type.test{color:var(--red);}
-.dc-type.check{color:var(--t3);}
-.dc-title{font-size:12px;font-weight:500;color:var(--t2);line-height:1.35;}
-.dc-detail{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.35;}
-.dc-done{font-size:10px;font-weight:600;color:var(--green);margin-top:5px;}
-
-/* WEEK DETAIL */
-.week-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:6px;display:none;}
-.week-detail.open{display:block;}
-.wd-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:12px;}
-
-/* DETAIL STATS */
-.detail-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
-.ds{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;flex:1;min-width:80px;}
-.ds-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
-.ds-val{font-size:18px;font-weight:700;color:var(--t1);}
-.ds-val span{font-size:12px;font-weight:400;color:var(--t4);}
-.ds-sub{font-size:11px;color:var(--t5);margin-top:3px;}
-
-/* POWER CURVE */
-.pcurve{display:flex;align-items:flex-end;gap:4px;height:70px;margin:8px 0 12px;}
-.pcb-w{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.pcb{width:100%;border-radius:2px 2px 0 0;opacity:0.85;}
-.pcb-val{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t1);text-align:center;}
-.pcb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);text-align:center;}
-
-/* ZONE BARS */
-.zone-dist{display:flex;flex-direction:column;gap:5px;margin:8px 0 12px;}
-.zd-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
-.zd-lbl{font-size:10px;color:var(--t3);width:72px;flex-shrink:0;}
-.zd-bounds{font-size:9px;color:var(--t4);width:66px;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
-.zd-bg{flex:1;background:#252525;border-radius:2px;height:5px;}
-.zd-bar{height:5px;border-radius:2px;}
-.zd-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);width:32px;text-align:right;}
-.zd-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:44px;text-align:right;}
-.pcb-pct{font-size:8px;color:var(--t4);text-align:center;margin-top:1px;}
-
-/* CHART */
-.chart-wrap{position:relative;margin-bottom:14px;}
-canvas.chart{width:100%;display:block;}
-
-/* INSIGHTS */
-.insight{border-left:2px solid #333;border-radius:3px;padding:9px 12px;font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:5px;background:var(--bg2);}
-.insight.good{border-color:var(--green);}
-.insight.warn{border-color:var(--red);}
-.insight.info{border-color:#555;}
-.insight strong{color:var(--t1);}
-
-/* FTP BLOCK */
-.ftp-block{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;margin-bottom:20px;}
-.ftp-title{font-size:10px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
-.ftp-zones{display:flex;gap:6px;flex-wrap:wrap;}
-.ftp-z{background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:5px 9px;}
-.ftp-zn{font-size:10px;color:var(--t4);}
-.ftp-zv{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace;font-weight:500;}
-
-/* PHASE HEADER */
-.phase-header{display:flex;align-items:baseline;gap:14px;padding:20px 0 10px;border-top:1px solid #2a2a2a;margin-top:8px;}
-.phase-header:first-child{border-top:none;padding-top:0;}
-.phase-label{font-size:11px;font-weight:700;color:#c0c0c0;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
-.phase-desc{font-size:11px;color:#555;}
-
-/* CHECKPOINT SEPARATOR */
-.checkpoint-sep{display:flex;align-items:center;gap:14px;background:#1a1a1a;border:1px solid #333;border-radius:3px;padding:12px 16px;margin:12px 0;cursor:pointer;transition:border-color 0.15s;}
-.checkpoint-sep:hover{border-color:#555;}
-.checkpoint-sep.sel{border-color:#666;}
-.cp-left{display:flex;align-items:baseline;gap:10px;}
-.cp-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;}
-.cp-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;}
-.cp-arrow{color:#333;font-size:14px;}
-.cp-next{font-size:12px;color:#777;}
-.ride-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:2px;margin-bottom:4px;display:none;}
-.ride-detail.open{display:block;}
-
-
-
-/* VERTICAL ZONE BARS */
-.vzones-wrap{display:flex;gap:10px;margin-bottom:14px;}
-.vzones-panel{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;}
-.vzones-title{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
-.vzones-chart{display:flex;align-items:flex-end;gap:3px;}
-.vzbar{flex:1;}
-.vzbar-fill{width:100%;border-radius:2px 2px 0 0;}
-.vzones-labels{display:flex;gap:3px;margin-top:4px;}
-.vzbar-lbl-col{flex:1;text-align:center;}
-.vzbar-pct{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
-.vzbar-time{font-size:7px;color:var(--t4);}
-.vzbar-name{font-size:8px;color:var(--t4);margin-top:1px;}
-
-
-/* TODAY BANNER */
-.today-banner{background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #444;border-radius:3px;padding:14px 16px;margin-bottom:16px;}
-.today-banner.fresh{border-left-color:#5a8a52;}
-.today-banner.normal{border-left-color:#a08840;}
-.today-banner.tired{border-left-color:#a05040;}
-.tb-row1{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;}
-.tb-date{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:1px;}
-.tb-title{font-size:14px;font-weight:600;color:var(--t1);}
-.tb-desc{font-size:11px;color:var(--t3);margin-bottom:6px;}
-.tb-det{font-size:11px;color:var(--t4);line-height:1.5;margin-bottom:8px;}
-.tb-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t3);}
-.tb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.tb-dot.fresh{background:#5a8a52;}.tb-dot.normal{background:#a08840;}.tb-dot.tired{background:#a05040;}
-.tb-tss{font-size:10px;color:var(--t4);margin-left:auto;font-family:'JetBrains Mono',monospace;}
-@media(max-width:680px){
-  .days-grid{grid-template-columns:1fr 1fr;}
-  .stats{flex-wrap:wrap;}
-  .stat{min-width:45%;}
-  .act-metrics{display:none;}
-}
-</style>
-</head>
-<body>
-<nav>
-  <div class="nav-brand">Wolf · Training</div>
-  <div class="nav-tabs">
-    <button class="tab active" onclick="showPage('plan',this)">Plan</button>
-    <button class="tab" onclick="showPage('rides',this)">Rides</button>
-  </div>
-  <div class="nav-meta" id="updated-at"></div>
-</nav>
-<main>
-  <div id="loading">Lade Daten…</div>
-  <div id="today-banner-wrap"></div>
-  <div class="page active" id="page-plan"></div>
-<div class="page" id="page-rides">
-<div class="stats" id="summary-stats"></div>
-    <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
-    <div class="act-list" id="activity-list"></div>
-  </div>
-</main>
-
-<script>
-const FTP=237,HRMAX=175;
-const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
-const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
-let allActivities=[],selectedRideId=null;
-
-const PLAN_WEEKS=[
-  {
-    label:'Yoga & Stretch · 20 min',dates:'04.\u201310. Mai',vol:'7.7h',
-    days:[
-      {date:'04.05',dow:'Mo',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1\u2013Z2',done:true},
-      {date:'05.05',dow:'Di',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1\u2013Z2',done:true},
-      {date:'06.05',dow:'Mi',type:'comm',title:'Commute lang',desc:'\xd72 \xb7 Z2',done:true},
-      {date:'07.05',dow:'Do',type:'roll',title:'Commute + Rolle Z2',desc:'45min \xb7 NP 143W \xb7 EF 1.21',done:true,ef:'1.21'},
-      {date:'08.05',dow:'Fr',type:'comm',title:'Commute kurz',desc:'\xd72 \xb7 Z1',done:true},
-      {date:'09.05',dow:'Sa',type:'aus',title:'Ausfahrt Z2',desc:'2h16 \xb7 NP 199W',done:true,tss:'156'},
-      {date:'10.05',dow:'So',type:'rest',title:'Pause',desc:'Erholung',done:true,dimmed:true},
-    ]
-  },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'11.\u201317. Mai',vol:'5.1h',
-    days:[
-      {date:'11.05',dow:'Mo',type:'comm',title:'Commute lang',desc:'\xd72 \xb7 Z2',done:true},
-      {date:'12.05',dow:'Di',type:'roll',title:'Commute + Rolle Z2',desc:'57min \xb7 NP 162W \xb7 EF 1.31',done:true,ef:'1.31'},
-      {date:'13.05',dow:'Mi',type:'comm',title:'Commute kurz',desc:'nur morgens',done:true},
-      {date:'14.05',dow:'Do',type:'roll',title:'Rolle 90min + 3x5min',desc:'NP 163W \xb7 EF 1.34',done:true,ef:'1.34',tss:'69'},
-      {date:'15.05',dow:'Fr',type:'comm',title:'Commute morgens',desc:'dann Abreise',done:true},
-      {date:'16.05',dow:'Sa',type:'rest',title:'Unterwegs',desc:'kein Rad',done:true,dimmed:true},
-      {date:'17.05',dow:'So',type:'rest',title:'Unterwegs',desc:'kein Rad',done:true,dimmed:true},
-    ]
-  },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'18.\u201324. Mai',vol:'Taper',
-    days:[
-      {date:'18.05',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 locker',done:true},
-      {date:'19.05',dow:'Di',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker',done:true},
-      {date:'20.05',dow:'Mi',type:'comm',title:'Commute kurz',desc:'Z1 \xb7 morgen Test!',done:true},
-      {date:'21.05',dow:'Do',type:'test',title:'Rampentest',desc:'FTP 237W \xb7 MAP 313W',done:true,ef:'FTP 237W'},
-      {date:'22.05',dow:'Fr',type:'rest',title:'Erholung',desc:'locker oder Pause',done:true,dimmed:true},
-      {date:'23.05',dow:'Sa',type:'aus',title:'Ausfahrt opt.',desc:'neue Zonen testen',done:true},
-      {date:'24.05',dow:'So',type:'rest',title:'Pause',desc:'Phase 2 startet Mo',done:true,dimmed:true},
-    ]
-  },
-  {
-    checkpoint:{label:'Yoga & Stretch · 20 min',desc:'FTP 237W \xb7 neue Zonen \xb7 Phase 2 Start'},
-    phase:'PHASE 2 \xb7 AUFBAU \xb7 SWEETSPOT',
-    label:'Yoga & Stretch · 20 min',dates:'25.\u201331. Mai',vol:'~5.5h',
-    days:[
-      {date:'25.05',dow:'Mo',type:'check',title:'Checkpoint #1 \xb7 Pfingstmontag',desc:'FTP 237W \xb7 EF-Trend 1.21\u21921.52 \xb7 dann Kacheljagd!',done:true},
-      {date:'26.05',dow:'Di',type:'comm',title:'Commute lang',desc:'Z2 \xb7 HR<141',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'27.05',dow:'Mi',type:'roll',title:'Sweetspot 2x10\'',desc:'200\u2013215W \xb7 5\' Pause \xb7 HR 148\u2013158',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.2,.5,.25,0]},
-      {date:'28.05',dow:'Do',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'29.05',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1\u2013Z2 frisch fuer Sa'},
-      {date:'30.05',dow:'Sa',type:'aus',title:'Ausfahrt Huegel',desc:'90min \xb7 Z2+Z3 Anstiege'},
-      {date:'31.05',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'01.\u201307. Jun',vol:'~6h',
-    days:[
-      {date:'01.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'02.06',dow:'Di',type:'roll',title:'Sweetspot 2x15\'',desc:'205\u2013218W \xb7 5\' Pause \xb7 HR 150\u2013158',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.15,.55,.25,.05]},
-      {date:'03.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'04.06',dow:'Do',type:'roll',title:'Sweetspot 3x10\'',desc:'205\u2013220W \xb7 5\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.1,.55,.3,.05]},
-      {date:'05.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker'},
-      {date:'06.06',dow:'Sa',type:'aus',title:'Ausfahrt 2h Huegel',desc:'Z2+Z3-Z4 Anstiege'},
-      {date:'07.06',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    checkpoint:{label:'Yoga & Stretch · 20 min'},
-    label:'Yoga & Stretch · 20 min',dates:'08.\u201314. Jun',vol:'~6h',
-    days:[
-      {date:'08.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'09.06',dow:'Di',type:'roll',title:'Threshold 3x8\'',desc:'218\u2013235W \xb7 3\' Pause \xb7 HR 155\u2013165',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.3,.5,.15]},
-      {date:'10.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'11.06',dow:'Do',type:'roll',title:'Threshold 2x12\'',desc:'218\u2013232W \xb7 4\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.25,.55,.15]},
-      {date:'12.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 frisch fuer Test'},
-      {date:'13.06',dow:'Sa',type:'test',title:'20min-Test outdoor',desc:'FTP = 95% vom 20min-Mittel'},
-      {date:'14.06',dow:'So',type:'rest',title:'Erholung',desc:'nach Test',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    phase:'PHASE 3 \xb7 FORM & PEAK',
-    label:'Yoga & Stretch · 20 min',dates:'15.\u201321. Jun',vol:'~6h',
-    days:[
-      {date:'15.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'16.06',dow:'Di',type:'roll',title:'VO2max 5x3\'',desc:'255\u2013270W \xb7 2\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,0,.1,.3,.6]},
-      {date:'17.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 Erholung',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'18.06',dow:'Do',type:'roll',title:'VO2max 4x4\'',desc:'252\u2013265W \xb7 3\' Pause',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,0,.1,.3,.6]},
-      {date:'19.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1 sehr locker'},
-      {date:'20.06',dow:'Sa',type:'aus',title:'Ausfahrt 2.5h Berg',desc:'echte Anstiege \xb7 WE-Simulation'},
-      {date:'21.06',dow:'So',type:'rest',title:'Pause',desc:'Erholung',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'22.\u201328. Jun',vol:'~6.5h Peak',
-    days:[
-      {date:'22.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z2',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'23.06',dow:'Di',type:'roll',title:'Sweetspot 3x12\'',desc:'205\u2013220W',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.1,.6,.25,.05]},
-      {date:'24.06',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z2 locker',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'25.06',dow:'Do',type:'roll',title:'Threshold 2x15\'',desc:'218\u2013232W',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'},zs:[0,.05,.2,.6,.15]},
-      {date:'26.06',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1\u2013Z2'},
-      {date:'27.06',dow:'Sa',type:'aus',title:'Berg-WE-Simulation',desc:'3h \xb7 1500m+ \xb7 Passtempo'},
-      {date:'28.06',dow:'So',type:'rest',title:'Erholung',desc:'Beine hoch',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    label:'Yoga & Stretch · 20 min',dates:'29. Jun\u201305. Jul',vol:'~4h Taper',
-    days:[
-      {date:'29.06',dow:'Mo',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2 locker'},
-      {date:'30.06',dow:'Di',type:'roll',title:'Sweetspot 2x8\' locker',desc:'200\u2013210W \xb7 Aktivierung',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'01.07',dow:'Mi',type:'comm',title:'Commute lang',desc:'Z1\u2013Z2'},
-      {date:'02.07',dow:'Do',type:'roll',title:'Aktivierung 2x5\'',desc:'195\u2013210W \xb7 frisch bleiben',yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-      {date:'03.07',dow:'Fr',type:'comm',title:'Commute kurz',desc:'Z1'},
-      {date:'04.07',dow:'Sa',type:'aus',title:'Ausfahrt locker',desc:'90min \xb7 Z2 \xb7 kurze Intensitaet'},
-      {date:'05.07',dow:'So',type:'rest',title:'Pause',desc:'Abreise vorbereiten',dimmed:true,yoga:{url:'https://youtu.be/vmHe7CN4QkE',label:'Yoga & Stretch · 20 min'}},
-    ]
-  },
-  {
-    phase:'ZIEL \xb7 BERG-WE 10. JULI 2026',
-    checkpoint:{label:'Yoga & Stretch · 20 min',desc:'Ziel: 3.0\u20133.1 W/kg',goal:true},
-    label:'Yoga & Stretch · 20 min',dates:'06.\u201312. Jul',vol:'Berg-WE',
-    days:[
-      {date:'06.07',dow:'Mo',type:'rest',title:'Anreise',desc:'Beine schonen',dimmed:true},
-      {date:'07.07',dow:'Di',type:'aus',title:'Berg-WE Tag 1',desc:'warm fahren \xb7 erste Huegel'},
-      {date:'08.07',dow:'Mi',type:'aus',title:'Berg-WE Tag 2',desc:'Haupt-Tag'},
-      {date:'09.07',dow:'Do',type:'aus',title:'Berg-WE Tag 3',desc:'locker ausfahren'},
-      {date:'10.07',dow:'Fr',type:'rest',title:'Abreise',desc:'',dimmed:true},
-      {date:'11.07',dow:'Sa',type:'rest',title:'Erholung',desc:'',dimmed:true},
-      {date:'12.07',dow:'So',type:'rest',title:'Erholung',desc:'',dimmed:true},
-    ]
-  },
-];
-
-
-
-
-function showPage(name,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  btn.classList.add('active');
-}
-
-function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
-function fmtDist(m){return(m/1000).toFixed(1)+' km';}
-function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
-function actDur(a){return a.power_duration_sec||a.duration_sec;}
-function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
-
-// ── PLAN ──
-// -- PLAN --
-function renderPlan(){
-  const el=document.getElementById('page-plan');
-  if(!el)return;
-  const now=new Date(); now.setHours(0,0,0,0);
-  const todayStr=(now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.';
-
-  const ICONS={comm:'🚴',roll:'🎯',aus:'🌄',test:'🧬',check:'📊',rest:'💤',goal:'🏔️'};
-  const BCLS={comm:'b-comm',roll:'b-roll',aus:'b-aus',test:'b-test',check:'b-check',rest:'b-rest',goal:'b-aus'};
-  const TCLS={comm:'t-comm',roll:'t-roll',aus:'t-aus',test:'t-test',check:'t-check',rest:'t-rest',goal:'t-aus'};
-  const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
-
-  function dateObj(ds){
-    if(!ds)return null;
-    const[dd,mm]=ds.split('.');
-    const d=new Date(2026,parseInt(mm)-1,parseInt(dd));
-    d.setHours(0,0,0,0);return d;
-  }
-
-  function isDone(d){
-    if(d.done)return true;
-    const dt=dateObj(d.date);
-    if(!dt||dt>=now)return false;
-    const key='2026-'+(d.date.split('.')[1])+'-'+(d.date.split('.')[0]);
-    return allActivities.some(a=>a.date===key);
-  }
-
-  let h='<div class="plan-wrap">';
-
-  PLAN_WEEKS.forEach((week)=>{
-    // Phase header
-    if(week.phase){
-      h+=`<div class="plan-phase"><div class="plan-phase-line"></div><div class="plan-phase-label">${week.phase}</div><div class="plan-phase-line"></div></div>`;
-    }
-    // Checkpoint
-    if(week.checkpoint){
-      const cp=week.checkpoint;
-      const icon=cp.goal?'🏔️':'📊';
-      h+=`<div class="plan-cp"><div class="plan-cp-icon">${icon}</div><div><div class="plan-cp-label">${cp.label}</div>${cp.desc?`<div class="plan-cp-desc">${cp.desc}</div>`:''}</div></div>`;
-    }
-
-    h+=`<div class="wcard">`;
-    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.label}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}</span></div>`;
-
-    if(week.days) week.days.forEach((d,di)=>{
-      const done=isDone(d);
-      const dt=dateObj(d.date);
-      const isToday=d.date===todayStr;
-      const isPast=dt&&dt<now||isToday;
-      let cls='pday '+TCLS[d.type||'rest'];
-      if(done)cls+=' done';
-      else if(isToday)cls+=' today-c';
-      else if(isPast&&!done)cls+=' past';
-      if(d.dimmed&&!done)cls+=' dimmed';
-
-      // Look up actual activities for this date
-      const mm2=d.date?d.date.split('.')[1]:'';
-      const dd2=d.date?d.date.split('.')[0]:'';
-      const dateKey='2026-'+mm2+'-'+dd2;
-      const acts=allActivities.filter(a=>a.date===dateKey);
-      const showActual=done&&acts.length>0;
-
-      const bc=BCLS[d.type||'rest'];
-      const icon=ICONS[d.type||'rest']||'💤';
-      const num=d.date?d.date.split('.')[0]:'';
-      const dow=d.dow||'';
-
-      // Build display content
-      let title=d.title, sub=d.desc, rightEf=d.ef, rightTss=d.tss, rightZs=d.zs;
-      if(showActual){
-        // Show real activity data
-        const names=acts.map(a=>a.name).join(' + ');
-        const totalDurMin=Math.round(acts.reduce((s,a)=>s+actDur(a),0)/60);
-        const mainAct=acts.reduce((best,a)=>actDur(a)>actDur(best)?a:best,acts[0]);
-        title=names.length>40?names.substring(0,38)+'…':names;
-        const parts=[];
-        if(totalDurMin>0)parts.push(totalDurMin>59?Math.floor(totalDurMin/60)+'h'+(totalDurMin%60?String(totalDurMin%60).padStart(2,'0'):''):''+totalDurMin+'min');
-        if(mainAct.np)parts.push('NP '+mainAct.np+'W');
-        else if(mainAct.avg_hr)parts.push('ØHR '+mainAct.avg_hr+'bpm');
-        if(mainAct.elevation_m)parts.push(mainAct.elevation_m+'m');
-        sub=parts.join(' · ');
-        if(mainAct.np&&mainAct.avg_hr){
-          rightEf=(mainAct.np/mainAct.avg_hr).toFixed(2);
-        }
-        const np=mainAct.np,ftp=FTP;
-        if(np){const if_=np/ftp;rightTss=Math.round(actDur(mainAct)*np*if_/(ftp*3600)*100);}
-        rightZs=mainAct.power_zones&&mainAct.power_zones.length?mainAct.power_zones.map(p=>p/100):null;
-      }
-
-      h+=`<div class="${cls}" onclick="togglePlanDet(this)">`;
-      h+=`<div class="pday-badge ${bc}"><div class="pday-dow">${dow}</div><div class="pday-num">${num}</div></div>`;
-      h+=`<div class="pday-check">${done?'<span style="color:#5a8a52">✓</span>':isToday?'<span style="color:#5a8a52">→</span>':''}</div>`;
-      h+=`<div class="pday-icon">${icon}</div>`;
-      h+=`<div class="pday-text"><div class="pday-title">${title}</div>${sub?`<div class="pday-sub">${sub}</div>`:''}</div>`;
-
-      const hasRight=rightEf||rightTss||rightZs;
-      if(hasRight){
-        h+=`<div class="pday-right">`;
-        if(rightEf)h+=`<div class="pday-ef">EF ${rightEf}</div>`;
-        if(rightTss)h+=`<div class="pday-tss">TSS ${rightTss}</div>`;
-        if(rightZs){
-          h+=`<div class="pday-zs">`;
-          rightZs.forEach((v,i)=>h+=`<div style="flex:${v||0.01};background:${v>0.05?ZC[i]:'#252525'}"></div>`);
-          h+=`</div>`;
-        }
-        h+=`</div>`;
-      }
-      h+=`</div>`;
-
-      // Detail row (hidden, shown on click)
-      if(d.det){
-        h+=`<div class="pday-det">${d.det}</div>`;
-      }
-
-      // Yoga row
-      if(d.yoga){
-        h+=`<div class="pday-yoga"><span>🧘</span><a href="${d.yoga.url}" target="_blank">${d.yoga.label}</a></div>`;
-      }
-    });
-
-    h+=`</div>`;
-  });
-
-  h+='</div>';
-  el.innerHTML=h;
-  // Scroll to today or last done day
-  requestAnimationFrame(()=>{
-    const today=el.querySelector('.today-c');
-    const lastDone=[...el.querySelectorAll('.pday.done')].pop();
-    const target=today||lastDone;
-    if(target) target.scrollIntoView({behavior:'smooth',block:'center'});
-  });
-}
-
-function togglePlanDet(row){
-  const det=row.nextElementSibling;
-  if(det&&det.classList.contains('pday-det')){
-    det.classList.toggle('open');
-  }
-}
-
-
-function togglePlanDetail(wi,di,cardEl){
-  const panel=document.getElementById(`plan-detail-${wi}`);
-  const week=PLAN_WEEKS[wi];
-  const d=week.days?.[di];
-  if(!d||d.empty||d.dimmed)return;
-  const allCards=cardEl.parentElement.querySelectorAll('.day-card');
-  const was=cardEl.classList.contains('sel');
-  allCards.forEach(c=>c.classList.remove('sel'));
-  if(was){panel.classList.remove('open');panel.innerHTML='';return;}
-  cardEl.classList.add('sel');
-  const[day,mon]=d.date.split('.');
-  const act=allActivities.find(a=>a.date===`2026-${mon}-${day}`);
-  let html=`<div class="wd-title">${d.title} · ${d.date}</div>`;
-  html+=`<div class="insight info"><strong>Geplant:</strong> ${d.det}</div>`;
-  if(act)html+=`<div class="insight good"><strong>Gefahren:</strong> ${act.avg_power?`Ø ${act.avg_power}W · NP ${act.np||'—'}W · `:''}${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}</div>`;
-  else html+=`<div class="insight">Noch nicht gefahren.</div>`;
-  panel.innerHTML=html;
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-// ── HISTORY ──
-// ── RIDES ──
-function renderSummary(){
-  const recent=allActivities.filter(a=>a.date>='2026-05-05');
-  const hours=recent.reduce((s,a)=>s+actDur(a),0)/3600;
-  const pw=recent.filter(a=>a.avg_power);
-  const avgP=pw.length?pw.reduce((s,a)=>s+a.avg_power,0)/pw.length:0;
-  const maxNP=Math.max(0,...recent.filter(a=>a.np).map(a=>a.np));
-  document.getElementById('summary-stats').innerHTML=`
-    <div class="stat"><div class="stat-label">Rides Phase 1</div><div class="stat-val">${recent.length}<span> rides</span></div><div class="stat-sub">seit 05.05</div></div>
-    <div class="stat"><div class="stat-label">Stunden</div><div class="stat-val">${hours.toFixed(1)}<span> h</span></div><div class="stat-sub">Gesamtvolumen</div></div>
-    <div class="stat"><div class="stat-label">Ø Watt</div><div class="stat-val">${avgP?Math.round(avgP):'—'}<span> W</span></div><div class="stat-sub">mit Powermeter</div></div>
-    <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP||'—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
-    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>`;
-}
-
-function renderActivityList(){
-  document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>{
-    const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
-    const sel=selectedRideId===a.id;
-    return`<div class="act-item">
-      <div class="act-row${sel?' selected':''}" onclick="selectRide(${a.id})">
-        <div class="act-main">
-          <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
-          <div class="act-name">${a.name}</div>
-          <div class="act-metrics">
-            ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
-            <div class="am">${fmtDur(actDur(a))}</div>
-            ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
-            ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
-            ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
-          </div>
-          <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
-        </div>
-        ${zstrip(zones)}
-      </div>
-      <div class="ride-detail${sel?' open':''}" id="rd-${a.id}"></div>
-    </div>`;
-  }).join('');
-  if(selectedRideId){
-    const act=allActivities.find(a=>a.id===selectedRideId);
-    const panel=document.getElementById('rd-'+selectedRideId);
-    if(act&&panel&&!panel.innerHTML){
-      panel.innerHTML=buildDetail(act);
-      setTimeout(()=>loadAndDrawAnalysis(act),50);
-    }
-  }
-}
-
-function selectRide(id){
-  if(selectedRideId&&selectedRideId!==id){
-    const prev=document.getElementById('rd-'+selectedRideId);
-    if(prev){prev.classList.remove('open');prev.innerHTML='';}
-  }
-  selectedRideId=(selectedRideId===id)?null:id;
-  if(!selectedRideId){
-    const prev=document.getElementById('rd-'+id);
-    if(prev){prev.classList.remove('open');prev.innerHTML='';}
-    document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
-    return;
-  }
-  const act=allActivities.find(a=>a.id===id);
-  if(!act)return;
-  document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
-  const clickedRow=document.querySelector(`#rd-${id}`)?.previousElementSibling;
-  if(clickedRow)clickedRow.classList.add('selected');
-  const panel=document.getElementById('rd-'+id);
-  if(!panel)return;
-  panel.innerHTML=buildDetail(act);
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>loadAndDrawAnalysis(act),50);
-}
-
-// ── DETAIL ──
-function buildDetail(act){
-  const dur=actDur(act);
-  const durMin=dur/60;
-  const IF=act.np?+(act.np/FTP).toFixed(3):null;
-  const TSS=act.np&&IF?Math.round(dur*act.np*IF/(FTP*3600)*100):null;
-  const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(3):null;
-  const hasAnalysis=durMin>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
-
-  function zTime(pct){
-    const s=Math.round(pct/100*dur);
-    const m=Math.floor(s/60),ss=s%60;
-    return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+':'+(ss<10?'0':'')+ss;
-  }
-
-  function vzBars(zones,names,title){
-    if(!zones||!zones.length)return '';
-    const maxZ=Math.max(...zones)||1;
-    const CHART_H=90; // fixed chart area height px
-    let h=`<div class="vzones-panel"><div class="vzones-title">${title}</div>`;
-    h+=`<div class="vzones-chart" style="height:${CHART_H}px">`;
-    zones.forEach((p,i)=>{
-      const barH=Math.max(2,Math.round(p/maxZ*CHART_H));
-      h+=`<div class="vzbar">
-        <div class="vzbar-fill" style="height:${barH}px;background:${ZC[i]}"></div>
-      </div>`;
-    });
-    h+=`</div><div class="vzones-labels">`;
-    zones.forEach((p,i)=>{
-      h+=`<div class="vzbar-lbl-col">
-        <div class="vzbar-pct">${p}%</div>
-        <div class="vzbar-time">${zTime(p)}</div>
-        <div class="vzbar-name">${names[i]}</div>
-      </div>`;
-    });
-    h+=`</div></div>`;
-    return h;
-  }
-
-  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)} · ${act.start_time}</div>`;
-
-  // ── 1. GRAPHS (async, placeholder) ──
-  h+=`<div id="aerob-${act.id}">`;
-  h+=`<canvas id="chart-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-  if(hasAnalysis){
-    h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-    h+=`<div style="display:flex;gap:6px;margin-bottom:4px"><div id="sc-wrap-${act.id}" style="flex:1;min-height:4px"></div><div id="pc-wrap-${act.id}" style="flex:1;min-height:4px"></div></div>`;
-  }
-  h+=`</div>`;
-
-  // ── 2. ZONE BARS (vertical, from activities.json) ──
-  const pzNames=['Z1','Z2','Z3','Z4','Z5'];
-  const hrNames=['Easy','Fat\u00A0Burn','Cardio','Hard','Peak'];
-  const hasPZ=act.power_zones&&act.power_zones.length;
-  const hasHZ=act.hr_zones&&act.hr_zones.length;
-  if(hasPZ||hasHZ){
-    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Zonen</div><div class="sh-line"></div></div>`;
-    h+=`<div class="vzones-wrap">`;
-    if(hasPZ) h+=vzBars(act.power_zones,pzNames,`Power-Zonen · FTP ${FTP}W`);
-    if(hasHZ)  h+=vzBars(act.hr_zones,hrNames,`HR-Zonen · HRmax ${HRMAX} bpm`);
-    h+=`</div>`;
-  }
-
-
-
-  // ── 3. VALUES ──
-  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Werte</div><div class="sh-line"></div></div>`;
-  h+=`<div class="detail-stats" style="flex-wrap:wrap">`;
-  if(TSS)  h+=`<div class="ds"><div class="ds-label">TSS</div><div class="ds-val">${TSS}</div><div class="ds-sub">Training Stress</div></div>`;
-  if(IF)   h+=`<div class="ds"><div class="ds-label">IF</div><div class="ds-val">${IF}</div><div class="ds-sub">Intensity Factor</div></div>`;
-  if(act.np) h+=`<div class="ds"><div class="ds-label">NP</div><div class="ds-val">${act.np}<span> W</span></div><div class="ds-sub">Normalized Power</div></div>`;
-  if(VI)   h+=`<div class="ds"><div class="ds-label">VI</div><div class="ds-val">${VI}</div><div class="ds-sub">Variability</div></div>`;
-  if(act.avg_power) h+=`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>`;
-  if(act.max_power) h+=`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`;
-  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Arbeit</div><div class="ds-val">${act.kilojoules}<span> kJ</span></div></div>`;
-  h+=`<div class="ds"><div class="ds-label">Dauer</div><div class="ds-val">${fmtDur(dur)}</div></div>`;
-  if(act.distance_m) h+=`<div class="ds"><div class="ds-label">Distanz</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
-  if(act.elevation_m) h+=`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`;
-  if(act.avg_hr) h+=`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>`;
-  if(act.max_hr) h+=`<div class="ds"><div class="ds-label">Max HR</div><div class="ds-val">${act.max_hr}<span> bpm</span></div></div>`;
-  if(act.avg_cadence) h+=`<div class="ds"><div class="ds-label">Ø Kadenz</div><div class="ds-val">${Math.round(act.avg_cadence)}<span> rpm</span></div></div>`;
-  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Kalorien</div><div class="ds-val">${act.kilojoules}<span> kcal</span></div></div>`;
-  h+=`</div>`;
-
-  // Aerobe Werte (filled by loadAndDrawAnalysis)
-  if(hasAnalysis){
-    h+=`<div id="aerob-vals-${act.id}"></div>`;
-  }
-
-  // Einschätzung
-  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
-  if(TSS) h+=`<div class="insight"><strong>TSS ${TSS}:</strong> ${TSS<50?'leicht, Erholung <24h':TSS<100?'moderat, ~24–36h':TSS<150?'hart, 2–3 Tage':'sehr hart, >3 Tage'}.</div>`;
-  if(!act.gps_ok&&act.gps_coverage_pct) h+=`<div class="insight warn"><strong>GPS:</strong> nur ${act.gps_coverage_pct}% getrackt.</div>`;
-  if(act.decoupling_pct!==null&&act.decoupling_pct!==undefined){
-    const dc=act.decoupling_pct;
-    if(dc<5) h+=`<div class="insight good"><strong>Drift ${dc>0?'+':''}${dc}%</strong> — unter 5%: gute aerobe Effizienz.</div>`;
-    else h+=`<div class="insight warn"><strong>Drift +${dc}%</strong> — über 5%: HR stieg relativ zur Leistung.</div>`;
-  }
-  return h;
-}
-
-
-// ── LOAD ANALYSIS + DRAW ALL CHARTS ──
-async function loadAndDrawAnalysis(act){
-  const id=act.id;
-  const hasAnalysis=actDur(act)/60>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
-
-  // Fetch analysis.json
-  let an=null;
-  try{
-    const r=await fetch('data/analysis/'+id+'.json?_='+Date.now());
-    if(r.ok) an=await r.json();
-  }catch(e){}
-
-  const ch=an?.chart||act.streams||{};
-  const ts=ch.time||[], pw=ch.watts||[], hr=ch.hr||[], alt=ch.altitude||[];
-
-  // Rolling average helper
-  function rollingMean(arr, win, minVal){
-    return arr.map((_, i)=>{
-      const slice=arr.slice(Math.max(0,i-win),i+1).filter(v=>v!=null&&v>=(minVal||0));
-      return slice.length?slice.reduce((s,v)=>s+v,0)/slice.length:null;
-    });
-  }
-
-  // Canvas setup
-  function SC(c,h){
-    if(!c)return null;
-    const dpr=window.devicePixelRatio||1;
-    const W=Math.floor(c.parentElement.clientWidth-2);
-    c.width=W*dpr; c.height=h*dpr;
-    c.style.width=W+'px'; c.style.height=h+'px';
-    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
-    return{ctx,W,H:h};
-  }
-
-  // ── CHART 1: HR + Watt (raw dots + rolling mean) ──
-  const c0=document.getElementById('chart-'+id);
-  if(c0&&ts.length){
-    const H=130;
-    const r=SC(c0,H); if(!r)return;
-    const{ctx,W}=r;
-    const pL=42,pR=44,pT=16,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-    const maxT=ts[ts.length-1]||1;
 
     // Power range
     const pwValid=pw.filter(v=>v>0&&v<1500);
