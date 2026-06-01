@@ -167,13 +167,21 @@ def main():
     print('Existing: ' + str(len(existing)))
     force_reprocess = existing_version < ANALYSIS_VERSION
     if force_reprocess: print('Version bump: reprocessing all')
-    strava_acts = api('/athlete/activities?per_page=60&after=' + str(PLAN_START_EPOCH))
-    # Log all found types for debugging
-    for a in strava_acts:
-        print(f"  Activity: {a.get('start_date_local','')[:10]} {a.get('name','')} | sport_type={a.get('sport_type')} type={a.get('type')}")
+    # Paginate through all activities since plan start (Strava returns oldest-first with 'after')
     CYCLING_TYPES = {'Ride','GravelRide','MountainBikeRide','VirtualRide','EBikeRide','Cycling','Handcycle','Velomobile','BMX'}
+    strava_acts = []
+    page = 1
+    while True:
+        batch = api(f'/athlete/activities?per_page=100&after={PLAN_START_EPOCH}&page={page}')
+        if not batch:
+            break
+        strava_acts.extend(batch)
+        print(f"  Page {page}: {len(batch)} activities (total so far: {len(strava_acts)})")
+        if len(batch) < 100:
+            break
+        page += 1
     cycling = [a for a in strava_acts if a.get('sport_type') in CYCLING_TYPES or a.get('type') == 'Ride']
-    print(f"Found {len(strava_acts)} total, {len(cycling)} cycling activities")
+    print(f"Fetched {len(strava_acts)} total, {len(cycling)} cycling")
     print('Found ' + str(len(cycling)) + ' cycling activities')
     activities = []
     for act in cycling:
