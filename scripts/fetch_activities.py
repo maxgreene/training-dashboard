@@ -21,13 +21,16 @@ def wahoo_refresh_token():
     if not rt:
         print('  No WAHOO_REFRESH_TOKEN — skipping Wahoo fetch')
         return None, None
-    r = requests.post(f'{WAHOO_BASE}/oauth/token', data={
+    import urllib.parse
+    payload = urllib.parse.urlencode({
         'client_id':     WAHOO_CLIENT_ID,
         'client_secret': WAHOO_CLIENT_SECRET,
         'refresh_token': rt,
         'grant_type':    'refresh_token',
-    })
-    data = r.json()
+    }).encode()
+    req = urllib.request.Request(f'{WAHOO_BASE}/oauth/token', data=payload, method='POST')
+    with urllib.request.urlopen(req) as resp:
+        data = json.loads(resp.read())
     new_rt = data.get('refresh_token', rt)
     at     = data.get('access_token', '')
     # Update secret in GitHub Actions if running in CI
@@ -36,9 +39,14 @@ def wahoo_refresh_token():
     return at, new_rt
 
 def wahoo_api(path, token):
-    r = requests.get(f'{WAHOO_BASE}{path}',
-                     headers={'Authorization': f'Bearer {token}'})
-    return r.json() if r.ok else None
+    req = urllib.request.Request(f'{WAHOO_BASE}{path}',
+                                 headers={'Authorization': f'Bearer {token}'})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read())
+    except Exception as e:
+        print(f'    Wahoo API error {path}: {e}')
+        return None
 
 def fetch_wahoo_workouts(token):
     """Fetch all workouts since plan start, return list of processed activities."""
