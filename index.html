@@ -577,7 +577,7 @@ function renderSummary(){
 }
 
 function renderActivityList(){
-  document.getElementById('activity-list').innerHTML=allActivities.slice(0,30).map(a=>{
+  document.getElementById('activity-list').innerHTML=allActivities.map(a=>{
     const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
     const sel=selectedRideId===a.id;
     return`<div class="act-item">
