@@ -182,7 +182,69 @@ def main():
         page += 1
     cycling = [a for a in strava_acts if a.get('sport_type') in CYCLING_TYPES or a.get('type') == 'Ride']
     print(f"Fetched {len(strava_acts)} total, {len(cycling)} cycling")
-    print('Found ' + str(len(cycling)) + ' cycling activities')
+
+    # Recover activities whose stream files exist but are missing from API response
+    # Reconstruct directly from stream files — no Strava API needed
+    import glob
+    api_ids = {a['id'] for a in cycling}
+    stream_files = glob.glob(os.path.join(STREAMS_DIR, '*.json'))
+    stream_ids = {int(os.path.basename(f).replace('.json','')) for f in stream_files}
+    missing_ids = stream_ids - api_ids
+    if missing_ids:
+        print(f"Recovering {len(missing_ids)} activities from stream files (no API needed)...")
+        for sf in stream_files:
+            aid = int(os.path.basename(sf).replace('.json',''))
+            if aid not in missing_ids:
+                continue
+            try:
+                with open(sf) as f2:
+                    sd = json.load(f2)
+                streams = sd.get('streams', {})
+                t_arr  = streams.get('time', [])
+                w_arr  = streams.get('watts', [])
+                h_arr  = streams.get('heartrate', [])
+                d_arr  = streams.get('distance', [])
+                alt    = streams.get('altitude', [])
+                ll     = streams.get('latlng', [])
+                dur    = t_arr[-1] if t_arr else 0
+                dist   = d_arr[-1] if d_arr else 0
+                # Elevation gain from altitude stream
+                elev = 0
+                for i in range(1, len(alt)):
+                    diff = alt[i] - alt[i-1]
+                    if diff > 0:
+                        elev += diff
+                w_pos = [w for w in w_arr if w and w > 0]
+                h_pos = [h for h in h_arr if h and h > 50]
+                avg_w = round(sum(w_pos)/len(w_pos), 1) if w_pos else None
+                max_w = max(w_pos) if w_pos else None
+                avg_h = round(sum(h_pos)/len(h_pos), 1) if h_pos else None
+                max_h = max(h_pos) if h_pos else None
+                date_str = sd.get('date', '')
+                name     = sd.get('name', 'Ride')
+                fake_act = {
+                    'id':             aid,
+                    'name':           name,
+                    'start_date_local': date_str + 'T00:00:00Z',
+                    'sport_type':     'Ride',
+                    'type':           'Ride',
+                    'moving_time':    dur,
+                    'elapsed_time':   dur,
+                    'distance':       dist,
+                    'total_elevation_gain': round(elev, 1),
+                    'average_watts':  avg_w,
+                    'max_watts':      max_w,
+                    'average_heartrate': avg_h,
+                    'max_heartrate':  max_h,
+                    'has_heartrate':  bool(h_pos),
+                    'device_watts':   bool(w_pos),
+                }
+                cycling.append(fake_act)
+                print(f"  + {date_str} {name} ({dur//60}min)")
+            except Exception as e:
+                print(f"  ! skip {aid}: {e}")
+    cycling.sort(key=lambda a: a.get('start_date_local',''), reverse=True)
+    print('Found ' + str(len(cycling)) + ' cycling activities total')
     activities = []
     for act in cycling:
         aid = act['id']
@@ -195,6 +257,19 @@ def main():
         else:
             activities.append(process_activity(act, force_fetch=force_reprocess))
     activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+
+    # Add back any existing activities not covered by the Strava fetch or stream recovery
+    # This ensures old activities are NEVER lost — merge, don't rebuild
+    processed_ids = {a['id'] for a in activities}
+    recovered = 0
+    for aid, old_act in existing.items():
+        if aid not in processed_ids:
+            activities.append(old_act)
+            recovered += 1
+    if recovered:
+        print(f'Kept {recovered} existing activities not in current fetch')
+        activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+
     recent = [a for a in activities if a['date'] >= PLAN_START_DATE]
     output = {
         'updated_at': datetime.now(timezone.utc).isoformat(),
