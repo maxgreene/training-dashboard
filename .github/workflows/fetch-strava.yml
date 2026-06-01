@@ -1,19 +1,15 @@
 name: Fetch Strava Activities
-
 on:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
-
 jobs:
   fetch:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Refresh Strava Token
         id: token
         run: |
@@ -26,20 +22,17 @@ jobs:
           NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
           echo "access_token=$ACCESS" >> $GITHUB_OUTPUT
           echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
-
       - name: Update Refresh Token Secret
         run: gh secret set STRAVA_REFRESH_TOKEN --body "$NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
-
       - name: Fetch Activities
         run: python3 scripts/fetch_activities.py
         env:
           STRAVA_ACCESS_TOKEN: ${{ steps.token.outputs.access_token }}
-
+          WAHOO_REFRESH_TOKEN: ${{ secrets.WAHOO_REFRESH_TOKEN }}
       - name: Analyze Activities
         run: python3 scripts/analyze_activities.py
-
       - name: Commit data
         run: |
           git config user.name "github-actions[bot]"
