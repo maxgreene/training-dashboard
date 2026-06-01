@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: ["Fetch Strava Activities"]
+    workflows: ["Fetch Training Data"]
     types: [completed]
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main        # always deploy latest main, not the triggering commit
+          ref: main
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
