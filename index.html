@@ -858,53 +858,65 @@ async function loadAndDrawAnalysis(act){
 
   if(!an)return;
 
-  // ── CHART 2: Rolling EF (raw dots + smoothed line) ──
+  // ── CHART 2: EF — raw instant + 60s + 120s rolling ──
   const c2=document.getElementById('an-ef-'+id);
-  const efSeries=an.ef_series||[];
-  if(c2&&efSeries.length){
-    const efClean=efSeries.filter(p=>p.ef>0.5&&p.ef<2.8);
-    if(efClean.length){
-      const H=100;
-      const r=SC(c2,H);if(!r){}else{
-        const{ctx,W}=r;
-        const pL=42,pR=44,pT=12,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-        const maxT=efClean[efClean.length-1].t;
-        const efVals=efClean.map(p=>p.ef);
-        const minEF=Math.max(0.6,Math.min(...efVals)-0.05);
-        const maxEF=Math.min(2.5,Math.max(...efVals)+0.05);
-        const avgEF=efVals.reduce((s,v)=>s+v,0)/efVals.length;
-
-        function xOf(t){return pL+(t/maxT)*cW;}
-        function yEF(e){return pT+cH-((Math.max(minEF,Math.min(maxEF,e))-minEF)/(maxEF-minEF))*cH;}
-
-        ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-        const tks=Math.min(8,Math.floor(maxT/300));
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-
-        // Avg ref
-        ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.setLineDash([4,6]);
-        ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px monospace';ctx.textAlign='left';
-        ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
-
-        // Raw dots
-        efClean.forEach(p=>{ctx.beginPath();ctx.arc(xOf(p.t),yEF(p.ef),1.5,0,Math.PI*2);ctx.fillStyle='rgba(96,165,250,0.22)';ctx.fill();});
-
-        // Smoothed line (5-point rolling avg of ef values)
-        const efSmooth=efClean.map((_,i)=>{
-          const sl=efClean.slice(Math.max(0,i-5),i+1).filter(p=>p.ef>0.5&&p.ef<2.8);
-          return sl.length?sl.reduce((s,p)=>s+p.ef,0)/sl.length:null;
-        });
-        ctx.beginPath();let fst=true;
-        efSmooth.forEach((e,i)=>{if(!e)return;fst?(ctx.moveTo(xOf(efClean[i].t),yEF(e)),fst=false):ctx.lineTo(xOf(efClean[i].t),yEF(e));});
-        ctx.strokeStyle='rgba(96,165,250,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-
-        // Labels
-        [minEF,avgEF,maxEF].forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
-        ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-        ctx.fillStyle='rgba(96,165,250,0.65)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Rolling EF (W/bpm) · 120s Fenster',pL+4,pT+11);
-      }
+  const cT=an.chart.time||[], cW2=an.chart.watts||[], cH2=an.chart.hr||[];
+  if(c2&&cT.length&&cW2.length&&cH2.length){
+    // Compute instant EF per chart point
+    const efRaw=cT.map((t,i)=>{const w=cW2[i],h=cH2[i];return(w>10&&h>50)?Math.min(w/h,3.2):null;});
+    // Rolling EF helper (time-based window)
+    function rolEF(ts,ws,hs,win){
+      return ts.map((t,i)=>{
+        const pw=[],ph=[];
+        for(let j=i-1;j>=0;j--){if(ts[j]<t-win)break;if(ws[j]>10)pw.push(ws[j]);if(hs[j]>50)ph.push(hs[j]);}
+        return(pw.length>=3&&ph.length>=3)?Math.min(3.2,(pw.reduce((a,b)=>a+b,0)/pw.length)/(ph.reduce((a,b)=>a+b,0)/ph.length)):null;
+      });
+    }
+    const ef60=rolEF(cT,cW2,cH2,60);
+    const ef120=rolEF(cT,cW2,cH2,120);
+    // Determine y-axis range from ef120 (ignore extremes)
+    const v120=ef120.filter(Boolean);
+    const v60=ef60.filter(Boolean);
+    const allV=[...v120,...v60].filter(Boolean);
+    const minEF=allV.length?Math.max(0.6,Math.min(...allV)-0.05):0.6;
+    const maxEF=allV.length?Math.min(3.2,Math.max(...allV)+0.1):2.5;
+    const avgEF=v120.length?v120.reduce((s,v)=>s+v,0)/v120.length:1.5;
+    const maxT=cT[cT.length-1]||1;
+    const H2=130;
+    const r=SC(c2,H2);if(r){
+      const{ctx,W}=r;
+      const pL=40,pR=12,pT=14,pB=22,cW=W-pL-pR,cH=H2-pT-pB;
+      function xOf(t){return pL+(t/maxT)*cW;}
+      function yEF(e){return pT+cH-((Math.max(minEF,Math.min(maxEF,e))-minEF)/(maxEF-minEF))*cH;}
+      // Grid
+      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
+      const tks=Math.min(8,Math.floor(maxT/180));
+      for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
+      // Avg line
+      ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.setLineDash([4,6]);
+      ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='9px monospace';ctx.textAlign='left';
+      ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
+      // Raw dots (instant, sehr transparent)
+      efRaw.forEach((e,i)=>{if(!e)return;ctx.beginPath();ctx.arc(xOf(cT[i]),yEF(e),1.5,0,Math.PI*2);ctx.fillStyle='rgba(96,165,250,0.18)';ctx.fill();});
+      // 60s rolling line (blau)
+      ctx.beginPath();let f60=true;
+      ef60.forEach((e,i)=>{if(!e)return;f60?(ctx.moveTo(xOf(cT[i]),yEF(e)),f60=false):ctx.lineTo(xOf(cT[i]),yEF(e));});
+      ctx.strokeStyle='rgba(96,165,250,0.75)';ctx.lineWidth=1.5;ctx.stroke();
+      // 120s rolling line (orange, dicker)
+      ctx.beginPath();let f120=true;
+      ef120.forEach((e,i)=>{if(!e)return;f120?(ctx.moveTo(xOf(cT[i]),yEF(e)),f120=false):ctx.lineTo(xOf(cT[i]),yEF(e));});
+      ctx.strokeStyle='rgba(249,115,22,0.9)';ctx.lineWidth=2.5;ctx.stroke();
+      // Y-axis labels
+      [minEF,avgEF,maxEF].forEach(e=>{ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);});
+      // X-axis labels
+      ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
+      for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H2-4);}
+      // Legend
+      ctx.font='9px sans-serif';ctx.textAlign='left';
+      ctx.fillStyle='rgba(96,165,250,0.5)';ctx.fillText('EF instant',pL+4,pT+10);
+      ctx.fillStyle='rgba(96,165,250,0.85)';ctx.fillText('60s',pL+60,pT+10);
+      ctx.fillStyle='rgba(249,115,22,0.9)';ctx.fillText('120s',pL+82,pT+10);
     }
   }
 
