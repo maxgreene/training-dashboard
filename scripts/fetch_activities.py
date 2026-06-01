@@ -59,15 +59,23 @@ def fetch_wahoo_workouts(token):
     while True:
         data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
         if not data:
+            print('  Wahoo API returned no data')
             break
         items = data.get('workouts', []) if isinstance(data, dict) else data
         if not items:
+            print(f'  Wahoo page {page}: empty')
             break
+        print(f'  Wahoo page {page}: {len(items)} workouts')
+        # Show first few to diagnose types and dates
+        for w in items[:3]:
+            wt = (w.get('workout_type') or {}).get('name', 'unknown')
+            print(f'    sample: {w.get("starts","")[:10]} type={wt!r} name={w.get("name","")!r}')
         for w in items:
             wt = (w.get('workout_type') or {}).get('name', '').lower().replace(' ', '_')
             starts = w.get('starts', '')[:10]
+            # Filter by date (don't early-return — Wahoo order may vary)
             if starts < PLAN_START_DATE:
-                return acts  # sorted newest-first, stop when too old
+                continue
             if wt not in CYCLING_TYPES and 'cycl' not in wt and 'bik' not in wt:
                 continue
             # Download FIT file for streams
