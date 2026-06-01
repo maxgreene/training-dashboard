@@ -12,8 +12,8 @@ PLAN_START_DATE  = '2026-05-04'
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 
 # ── WAHOO API ──────────────────────────────────────────────────────────────
-WAHOO_CLIENT_ID     = 'jR5oItVqyxIjWV3yTftjB_PYSmHOWKJ4ZLS4US0JwwM'
-WAHOO_CLIENT_SECRET = 'PlcfVt25FXVG6c7nREaolCQpEkUie697mRy7KS8MDnA'
+WAHOO_CLIENT_ID     = 'Dyxm-b7rOkV4VZtxrba512mnIhx70WqlzW4xSoEadQQ'
+WAHOO_CLIENT_SECRET = 'eCwM2BdsNZxhoXzHzzobQv8T0BiaGEk9x1jw8rl0krY'
 WAHOO_BASE          = 'https://api.wahooligan.com'
 
 def wahoo_refresh_token():
