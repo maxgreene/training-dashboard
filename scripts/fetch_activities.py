@@ -29,9 +29,14 @@ def wahoo_refresh_token():
         'grant_type':    'refresh_token',
     }).encode()
     req = urllib.request.Request(f'{WAHOO_BASE}/oauth/token', data=payload, method='POST')
+    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
     try:
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        print(f'  Wahoo token refresh failed: {e.code} {body}')
+        return None, rt
     except Exception as e:
         print(f'  Wahoo token refresh failed: {e}')
         return None, rt
