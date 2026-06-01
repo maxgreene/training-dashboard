@@ -29,13 +29,22 @@ def wahoo_refresh_token():
         'grant_type':    'refresh_token',
     }).encode()
     req = urllib.request.Request(f'{WAHOO_BASE}/oauth/token', data=payload, method='POST')
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        print(f'  Wahoo token refresh failed: {e}')
+        return None, rt
     new_rt = data.get('refresh_token', rt)
     at     = data.get('access_token', '')
-    # Update secret in GitHub Actions if running in CI
-    if os.environ.get('GITHUB_ACTIONS') and new_rt != rt:
-        os.system(f'gh secret set WAHOO_REFRESH_TOKEN --body "{new_rt}"')
+    if not at:
+        print(f'  Wahoo token error: {data}')
+        return None, rt
+    # Write new refresh token to file so workflow can save it as secret
+    if new_rt != rt:
+        with open('wahoo_new_refresh_token.txt', 'w') as f:
+            f.write(new_rt)
+        print(f'  Wahoo: new refresh token saved to file')
     return at, new_rt
 
 def wahoo_api(path, token):
@@ -347,20 +356,22 @@ def main():
                 print(f"  ! skip {aid}: {e}")
     cycling.sort(key=lambda a: a.get('start_date_local',''), reverse=True)
 
-    # ── WAHOO fetch (parallel, for comparison) ──
-    wahoo_token, _ = wahoo_refresh_token()
-    wahoo_acts = []
-    if wahoo_token:
-        wahoo_acts = fetch_wahoo_workouts(wahoo_token)
-        print(f'Wahoo: {len(wahoo_acts)} cycling workouts since plan start')
-        # Merge: add Wahoo activities not already covered by Strava (match by date+duration)
-        strava_dates = {a.get('start_date_local','')[:10] for a in cycling}
-        for wa in wahoo_acts:
-            if wa['date'] not in strava_dates:
-                cycling.append({**wa,
-                    'start_date_local': wa['date'] + 'T' + wa['start_time'] + ':00',
-                })
-                print(f"  + Wahoo-only: {wa['date']} {wa['name']}")
+    # ── WAHOO fetch (prepared, activates once credentials are set) ──
+    try:
+        wahoo_token, _ = wahoo_refresh_token()
+        wahoo_acts = []
+        if wahoo_token:
+            wahoo_acts = fetch_wahoo_workouts(wahoo_token)
+            print(f'Wahoo: {len(wahoo_acts)} cycling workouts since plan start')
+            strava_dates = {a.get('start_date_local','')[:10] for a in cycling}
+            for wa in wahoo_acts:
+                if wa['date'] not in strava_dates:
+                    cycling.append({**wa,
+                        'start_date_local': wa['date'] + 'T' + wa['start_time'] + ':00',
+                    })
+                    print(f"  + Wahoo-only: {wa['date']} {wa['name']}")
+    except Exception as e:
+        print(f'  Wahoo skipped: {e}')
 
     print('Found ' + str(len(cycling)) + ' cycling activities total')
     activities = []
