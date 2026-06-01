@@ -90,7 +90,14 @@ def fetch_wahoo_workouts(token):
             # Filter by date (don't early-return — Wahoo order may vary)
             if starts < PLAN_START_DATE:
                 continue
-            if wt not in CYCLING_TYPES and 'cycl' not in wt and 'bik' not in wt:
+            # Filter: name-based since workout_type is unreliable
+            name_lower = w.get('name','').lower()
+            is_cycling = (wt in CYCLING_TYPES or 'cycl' in wt or 'bik' in wt
+                         or 'radfahren' in name_lower or 'cycling' in name_lower
+                         or 'commute' in name_lower or 'ride' in name_lower
+                         or 'morning' in name_lower or 'afternoon' in name_lower
+                         or 'interval' in name_lower or 'rolle' in name_lower)
+            if not is_cycling:
                 continue
             # Download FIT file for streams
             fit_url = w.get('workout_summary', {}).get('file', {}).get('url')
