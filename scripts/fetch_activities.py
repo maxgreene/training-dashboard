@@ -10,6 +10,92 @@ STREAMS_DIR = 'data/streams'
 ANALYSIS_VERSION = 9
 PLAN_START_DATE  = '2026-05-04'
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
+
+# ── WAHOO API ──────────────────────────────────────────────────────────────
+WAHOO_CLIENT_ID     = 'jR5oItVqyxIjWV3yTftjB_PYSmHOWKJ4ZLS4US0JwwM'
+WAHOO_CLIENT_SECRET = 'PlcfVt25FXVG6c7nREaolCQpEkUie697mRy7KS8MDnA'
+WAHOO_BASE          = 'https://api.wahooligan.com'
+
+def wahoo_refresh_token():
+    rt = os.environ.get('WAHOO_REFRESH_TOKEN', '')
+    if not rt:
+        print('  No WAHOO_REFRESH_TOKEN — skipping Wahoo fetch')
+        return None, None
+    r = requests.post(f'{WAHOO_BASE}/oauth/token', data={
+        'client_id':     WAHOO_CLIENT_ID,
+        'client_secret': WAHOO_CLIENT_SECRET,
+        'refresh_token': rt,
+        'grant_type':    'refresh_token',
+    })
+    data = r.json()
+    new_rt = data.get('refresh_token', rt)
+    at     = data.get('access_token', '')
+    # Update secret in GitHub Actions if running in CI
+    if os.environ.get('GITHUB_ACTIONS') and new_rt != rt:
+        os.system(f'gh secret set WAHOO_REFRESH_TOKEN --body "{new_rt}"')
+    return at, new_rt
+
+def wahoo_api(path, token):
+    r = requests.get(f'{WAHOO_BASE}{path}',
+                     headers={'Authorization': f'Bearer {token}'})
+    return r.json() if r.ok else None
+
+def fetch_wahoo_workouts(token):
+    """Fetch all workouts since plan start, return list of processed activities."""
+    CYCLING_TYPES = {
+        'cycling', 'indoor_cycling', 'mountain_biking', 'gravel_cycling',
+        'virtual_cycling', 'road_cycling'
+    }
+    acts = []
+    page = 1
+    while True:
+        data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
+        if not data:
+            break
+        items = data.get('workouts', []) if isinstance(data, dict) else data
+        if not items:
+            break
+        for w in items:
+            wt = (w.get('workout_type') or {}).get('name', '').lower().replace(' ', '_')
+            starts = w.get('starts', '')[:10]
+            if starts < PLAN_START_DATE:
+                return acts  # sorted newest-first, stop when too old
+            if wt not in CYCLING_TYPES and 'cycl' not in wt and 'bik' not in wt:
+                continue
+            # Download FIT file for streams
+            fit_url = w.get('workout_summary', {}).get('file', {}).get('url')
+            acts.append({
+                '_wahoo': True,
+                'id':           f"wahoo_{w['id']}",
+                'wahoo_id':     w['id'],
+                'name':         w.get('name') or 'Wahoo Ride',
+                'date':         starts,
+                'start_time':   w.get('starts', '')[11:16],
+                'type':         'Ride',
+                'duration_sec': int(w.get('minutes', 0) or 0) * 60,
+                'elapsed_sec':  int(w.get('minutes', 0) or 0) * 60,
+                'distance_m':   round(float(w.get('workout_summary', {}).get('distance_accum', 0) or 0)),
+                'elevation_m':  round(float(w.get('workout_summary', {}).get('ascent_accum', 0) or 0)),
+                'avg_power':    w.get('workout_summary', {}).get('power_avg'),
+                'max_power':    w.get('workout_summary', {}).get('power_max'),
+                'avg_hr':       w.get('workout_summary', {}).get('heart_rate_avg'),
+                'max_hr':       w.get('workout_summary', {}).get('heart_rate_max'),
+                'avg_cadence':  w.get('workout_summary', {}).get('cadence_avg'),
+                'kilojoules':   None,
+                'gps_ok':       False,
+                'has_power':    bool(w.get('workout_summary', {}).get('power_avg')),
+                'has_hr':       bool(w.get('workout_summary', {}).get('heart_rate_avg')),
+                'has_latlng':   False,
+                'np': None, 'power_curve': {}, 'hr_zones': [], 'power_zones': [],
+                'decoupling_pct': None,
+                'streams': {},
+                '_fit_url': fit_url,
+            })
+        if len(items) < 100:
+            break
+        page += 1
+    return acts
+
 STREAM_KEYS = ['time','latlng','distance','altitude','heartrate','cadence','watts','velocity_smooth','grade_smooth','moving']
 FTP   = 237
 HRMAX = 175
@@ -244,6 +330,22 @@ def main():
             except Exception as e:
                 print(f"  ! skip {aid}: {e}")
     cycling.sort(key=lambda a: a.get('start_date_local',''), reverse=True)
+
+    # ── WAHOO fetch (parallel, for comparison) ──
+    wahoo_token, _ = wahoo_refresh_token()
+    wahoo_acts = []
+    if wahoo_token:
+        wahoo_acts = fetch_wahoo_workouts(wahoo_token)
+        print(f'Wahoo: {len(wahoo_acts)} cycling workouts since plan start')
+        # Merge: add Wahoo activities not already covered by Strava (match by date+duration)
+        strava_dates = {a.get('start_date_local','')[:10] for a in cycling}
+        for wa in wahoo_acts:
+            if wa['date'] not in strava_dates:
+                cycling.append({**wa,
+                    'start_date_local': wa['date'] + 'T' + wa['start_time'] + ':00',
+                })
+                print(f"  + Wahoo-only: {wa['date']} {wa['name']}")
+
     print('Found ' + str(len(cycling)) + ' cycling activities total')
     activities = []
     for act in cycling:
