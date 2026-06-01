@@ -1,4 +1,4 @@
-name: Fetch Strava Activities
+name: Fetch Training Data
 on:
   schedule:
     - cron: '0 * * * *'
@@ -22,7 +22,7 @@ jobs:
           NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
           echo "access_token=$ACCESS" >> $GITHUB_OUTPUT
           echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
-      - name: Update Refresh Token Secret
+      - name: Update Strava Refresh Token
         run: gh secret set STRAVA_REFRESH_TOKEN --body "$NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -38,6 +38,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
-          git diff --staged --quiet || git commit -m "update strava data $(date -u +%Y-%m-%dT%H:%M)"
+          git diff --staged --quiet || git commit -m "update training data $(date -u +%Y-%m-%dT%H:%M)"
           git pull --rebase origin main
           git push
