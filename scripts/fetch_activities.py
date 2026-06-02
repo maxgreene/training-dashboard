@@ -17,40 +17,12 @@ WAHOO_CLIENT_SECRET = 'eCwM2BdsNZxhoXzHzzobQv8T0BiaGEk9x1jw8rl0krY'
 WAHOO_BASE          = 'https://api.wahooligan.com'
 
 def wahoo_refresh_token():
-    rt = os.environ.get('WAHOO_REFRESH_TOKEN', '')
-    if not rt:
-        print('  No WAHOO_REFRESH_TOKEN — skipping Wahoo fetch')
-        return None, None
-    import urllib.parse
-    payload = urllib.parse.urlencode({
-        'client_id':     WAHOO_CLIENT_ID,
-        'client_secret': WAHOO_CLIENT_SECRET,
-        'refresh_token': rt,
-        'grant_type':    'refresh_token',
-    }).encode()
-    req = urllib.request.Request(f'{WAHOO_BASE}/oauth/token', data=payload, method='POST')
-    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-    try:
-        with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8', errors='replace')
-        print(f'  Wahoo token refresh failed: {e.code} {body}')
-        return None, rt
-    except Exception as e:
-        print(f'  Wahoo token refresh failed: {e}')
-        return None, rt
-    new_rt = data.get('refresh_token', rt)
-    at     = data.get('access_token', '')
+    # Access token is now refreshed by the workflow (like Strava)
+    at = os.environ.get('WAHOO_ACCESS_TOKEN', '')
     if not at:
-        print(f'  Wahoo token error: {data}')
-        return None, rt
-    # Write new refresh token to file so workflow can save it as secret
-    if new_rt != rt:
-        with open('wahoo_new_refresh_token.txt', 'w') as f:
-            f.write(new_rt)
-        print(f'  Wahoo: new refresh token saved to file')
-    return at, new_rt
+        print('  No WAHOO_ACCESS_TOKEN — skipping Wahoo fetch')
+        return None, None
+    return at, None
 
 def wahoo_api(path, token):
     req = urllib.request.Request(f'{WAHOO_BASE}{path}',
@@ -370,7 +342,7 @@ def main():
 
     # ── WAHOO fetch (prepared, activates once credentials are set) ──
     try:
-        wahoo_token, _ = wahoo_refresh_token()
+        wahoo_token, _ = wahoo_refresh_token()  # token refreshed by workflow
         wahoo_acts = []
         if wahoo_token:
             wahoo_acts = fetch_wahoo_workouts(wahoo_token)
