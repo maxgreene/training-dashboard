@@ -63,42 +63,55 @@ def fetch_wahoo_workouts(token):
             if starts < PLAN_START_DATE:
                 continue
             # Filter: name-based since workout_type is unreliable
+            # workout_type_id: 0=cycling, others=running/strength/etc.
+            # Also filter by name for safety
             name_lower = w.get('name','').lower()
-            is_cycling = (wt in CYCLING_TYPES or 'cycl' in wt or 'bik' in wt
+            type_id = w.get('workout_type_id', -1)
+            CYCLING_IDS = {0, 1, 2}  # 0=cycling, expand if needed
+            is_cycling = (type_id in CYCLING_IDS
                          or 'radfahren' in name_lower or 'cycling' in name_lower
                          or 'commute' in name_lower or 'ride' in name_lower
                          or 'morning' in name_lower or 'afternoon' in name_lower
-                         or 'interval' in name_lower or 'rolle' in name_lower)
+                         or 'interval' in name_lower or 'rolle' in name_lower
+                         or 'tour' in name_lower)
             if not is_cycling:
                 continue
-            # Download FIT file for streams
-            fit_url = w.get('workout_summary', {}).get('file', {}).get('url')
+            # Parse summary — Wahoo returns strings for numeric values!
+            def f(d, k): 
+                v = d.get(k)
+                return round(float(v), 1) if v is not None else None
+            s = w.get('workout_summary') or {}
+            fit_url = (s.get('file') or {}).get('url')
+            # Local time from starts (UTC)
+            starts_raw = w.get('starts','')
             acts.append({
-                '_wahoo': True,
+                '_wahoo':       True,
                 'id':           f"wahoo_{w['id']}",
                 'wahoo_id':     w['id'],
                 'name':         w.get('name') or 'Wahoo Ride',
                 'date':         starts,
-                'start_time':   w.get('starts', '')[11:16],
+                'start_time':   starts_raw[11:16],
                 'type':         'Ride',
-                'duration_sec': int(w.get('minutes', 0) or 0) * 60,
-                'elapsed_sec':  int(w.get('minutes', 0) or 0) * 60,
-                'distance_m':   round(float(w.get('workout_summary', {}).get('distance_accum', 0) or 0)),
-                'elevation_m':  round(float(w.get('workout_summary', {}).get('ascent_accum', 0) or 0)),
-                'avg_power':    w.get('workout_summary', {}).get('power_avg'),
-                'max_power':    w.get('workout_summary', {}).get('power_max'),
-                'avg_hr':       w.get('workout_summary', {}).get('heart_rate_avg'),
-                'max_hr':       w.get('workout_summary', {}).get('heart_rate_max'),
-                'avg_cadence':  w.get('workout_summary', {}).get('cadence_avg'),
-                'kilojoules':   None,
+                'duration_sec': int(float(s.get('duration_active_accum') or w.get('minutes',0)*60 or 0)),
+                'elapsed_sec':  int(float(s.get('duration_total_accum')  or w.get('minutes',0)*60 or 0)),
+                'distance_m':   round(float(s.get('distance_accum') or 0)),
+                'elevation_m':  round(float(s.get('ascent_accum')   or 0)),
+                'avg_power':    f(s,'power_avg'),
+                'max_power':    None,
+                'np':           f(s,'power_bike_np_last'),
+                'avg_hr':       f(s,'heart_rate_avg'),
+                'max_hr':       None,
+                'avg_cadence':  f(s,'cadence_avg'),
+                'kilojoules':   round(float(s.get('work_accum') or 0)/1000, 1) if s.get('work_accum') else None,
+                'tss':          f(s,'power_bike_tss_last'),
                 'gps_ok':       False,
-                'has_power':    bool(w.get('workout_summary', {}).get('power_avg')),
-                'has_hr':       bool(w.get('workout_summary', {}).get('heart_rate_avg')),
+                'has_power':    bool(s.get('power_avg')),
+                'has_hr':       bool(s.get('heart_rate_avg')),
                 'has_latlng':   False,
-                'np': None, 'power_curve': {}, 'hr_zones': [], 'power_zones': [],
+                'power_curve':  {}, 'hr_zones': [], 'power_zones': [],
                 'decoupling_pct': None,
-                'streams': {},
-                '_fit_url': fit_url,
+                'streams':      {},
+                '_fit_url':     fit_url,
             })
         if len(items) < 100:
             break
@@ -186,6 +199,12 @@ def stream_path(aid):
     return os.path.join(STREAMS_DIR, str(aid) + '.json')
 
 def process_activity(act, force_fetch=False):
+    # Wahoo-only activities: use summary data, no streams available
+    if act.get('_wahoo'):
+        aid = act['id']
+        print(f'  Processing {aid}: {act.get("name","")} (Wahoo-only, no streams)')
+        return act  # already has all fields from fetch_wahoo_workouts()
+
     aid = act['id']
     print('  Processing ' + str(aid) + ': ' + act['name'])
     spath = stream_path(aid)
