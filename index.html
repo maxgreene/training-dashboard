@@ -389,6 +389,24 @@ function showPage(name,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
+  requestAnimationFrame(()=>{
+    if(name==='rides'){
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else if(name==='plan'){
+      // Scroll to the week card containing today (or last done day)
+      const today=document.querySelector('.today-c');
+      const lastDone=[...document.querySelectorAll('.pday.done')].pop();
+      const dayEl=today||lastDone;
+      const weekCard=dayEl?dayEl.closest('.wcard'):null;
+      const target=weekCard||dayEl;
+      if(target){
+        const y=target.getBoundingClientRect().top+window.scrollY-80;
+        window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+      } else {
+        window.scrollTo({top:0,behavior:'smooth'});
+      }
+    }
+  });
 }
 
 function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
