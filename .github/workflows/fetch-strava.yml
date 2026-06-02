@@ -10,8 +10,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
       - name: Refresh Strava Token
-        id: token
+        id: strava_token
         run: |
           RESPONSE=$(curl -s -X POST https://www.strava.com/oauth/token \
             -d client_id=${{ secrets.STRAVA_CLIENT_ID }} \
@@ -22,17 +23,44 @@ jobs:
           NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
           echo "access_token=$ACCESS" >> $GITHUB_OUTPUT
           echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
+
       - name: Update Strava Refresh Token
         run: gh secret set STRAVA_REFRESH_TOKEN --body "$NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Refresh Wahoo Token
+        id: wahoo_token
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.wahooligan.com/oauth/token \
+            -d client_id=${{ secrets.WAHOO_CLIENT_ID }} \
+            -d client_secret=${{ secrets.WAHOO_CLIENT_SECRET }} \
+            -d refresh_token=${{ secrets.WAHOO_REFRESH_TOKEN }} \
+            -d grant_type=refresh_token)
+          echo "Response: $RESPONSE"
+          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))")
+          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('refresh_token',''))")
+          echo "wahoo_access=$ACCESS" >> $GITHUB_OUTPUT
+          echo "WAHOO_NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
+
+      - name: Update Wahoo Refresh Token
+        run: |
+          if [ -n "$WAHOO_NEW_REFRESH" ]; then
+            gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"
+            echo "Wahoo token updated"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
       - name: Fetch Activities
         run: python3 scripts/fetch_activities.py
         env:
-          STRAVA_ACCESS_TOKEN: ${{ steps.token.outputs.access_token }}
-          WAHOO_REFRESH_TOKEN: ${{ secrets.WAHOO_REFRESH_TOKEN }}
+          STRAVA_ACCESS_TOKEN: ${{ steps.strava_token.outputs.access_token }}
+          WAHOO_ACCESS_TOKEN: ${{ steps.wahoo_token.outputs.wahoo_access }}
+
       - name: Analyze Activities
         run: python3 scripts/analyze_activities.py
+
       - name: Commit data
         run: |
           git config user.name "github-actions[bot]"
