@@ -487,7 +487,8 @@ function renderPlan(){
         // Show real activity data
         const names=acts.map(a=>a.name).join(' + ');
         const totalDurMin=Math.round(acts.reduce((s,a)=>s+actDur(a),0)/60);
-        const mainAct=acts.reduce((best,a)=>actDur(a)>actDur(best)?a:best,acts[0]);
+        // Pick mainAct: prefer PM activity, else longest
+        const mainAct=acts.find(a=>a.has_power&&actDur(a)>=600)||acts.reduce((b,a)=>actDur(a)>actDur(b)?a:b,acts[0]);
         title=names.length>40?names.substring(0,38)+'…':names;
         const parts=[];
         if(totalDurMin>0)parts.push(totalDurMin>59?Math.floor(totalDurMin/60)+'h'+(totalDurMin%60?String(totalDurMin%60).padStart(2,'0'):''):''+totalDurMin+'min');
@@ -500,7 +501,14 @@ function renderPlan(){
         }
         const np=mainAct.np,ftp=FTP;
         if(np){const if_=np/ftp;rightTss=Math.round(actDur(mainAct)*np*if_/(ftp*3600)*100);}
-        rightZs=mainAct.power_zones&&mainAct.power_zones.length?mainAct.power_zones.map(p=>p/100):null;
+        // Zone bars: prefer power_zones from any PM activity that day, else HR zones
+        const pmAct=acts.find(a=>a.power_zones&&a.power_zones.length&&actDur(a)>=1800)||null;
+        if(pmAct&&pmAct.power_zones.length){
+          rightZs=pmAct.power_zones.map(p=>p/100);
+        } else {
+          const hrAct=acts.find(a=>a.hr_zones&&a.hr_zones.length&&actDur(a)>=1800)||null;
+          rightZs=hrAct?hrAct.hr_zones.map(p=>p/100):null;
+        }
       }
 
       h+=`<div class="${cls}" onclick="togglePlanDet(this)">`;
