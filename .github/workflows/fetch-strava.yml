@@ -14,17 +14,26 @@ jobs:
       - name: Refresh Strava Token
         id: strava_token
         run: |
-          RESPONSE=$(curl -s -X POST https://www.strava.com/oauth/token \
+          RESPONSE=$(curl -s --retry 3 --retry-delay 5 -X POST https://www.strava.com/oauth/token \
             -d client_id=${{ secrets.STRAVA_CLIENT_ID }} \
             -d client_secret=${{ secrets.STRAVA_CLIENT_SECRET }} \
             -d refresh_token=${{ secrets.STRAVA_REFRESH_TOKEN }} \
             -d grant_type=refresh_token)
-          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
-          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['refresh_token'])")
+          if [ -z "$RESPONSE" ]; then
+            echo "Strava API returned empty response — skipping run"
+            exit 0
+          fi
+          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token',''))" 2>/dev/null || echo "")
+          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('refresh_token',''))" 2>/dev/null || echo "")
+          if [ -z "$ACCESS" ]; then
+            echo "Could not parse Strava token: $RESPONSE"
+            exit 0
+          fi
           echo "access_token=$ACCESS" >> $GITHUB_OUTPUT
           echo "NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
 
       - name: Update Strava Refresh Token
+        if: env.NEW_REFRESH != ''
         run: gh secret set STRAVA_REFRESH_TOKEN --body "$NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -32,36 +41,35 @@ jobs:
       - name: Refresh Wahoo Token
         id: wahoo_token
         run: |
-          RESPONSE=$(curl -s -X POST https://api.wahooligan.com/oauth/token \
+          RESPONSE=$(curl -s --retry 3 --retry-delay 5 -X POST https://api.wahooligan.com/oauth/token \
             -d client_id=${{ secrets.WAHOO_CLIENT_ID }} \
             -d client_secret=${{ secrets.WAHOO_CLIENT_SECRET }} \
             -d refresh_token=${{ secrets.WAHOO_REFRESH_TOKEN }} \
             -d grant_type=refresh_token)
-          echo "Response: $RESPONSE"
-          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))")
-          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('refresh_token',''))")
+          ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
+          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('refresh_token',''))" 2>/dev/null || echo "")
           echo "wahoo_access=$ACCESS" >> $GITHUB_OUTPUT
           echo "WAHOO_NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
 
       - name: Update Wahoo Refresh Token
-        run: |
-          if [ -n "$WAHOO_NEW_REFRESH" ]; then
-            gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"
-            echo "Wahoo token updated"
-          fi
+        if: env.WAHOO_NEW_REFRESH != ''
+        run: gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Fetch Activities
+        if: steps.strava_token.outputs.access_token != ''
         run: python3 scripts/fetch_activities.py
         env:
           STRAVA_ACCESS_TOKEN: ${{ steps.strava_token.outputs.access_token }}
           WAHOO_ACCESS_TOKEN: ${{ steps.wahoo_token.outputs.wahoo_access }}
 
       - name: Analyze Activities
+        if: steps.strava_token.outputs.access_token != ''
         run: python3 scripts/analyze_activities.py
 
       - name: Commit data
+        if: steps.strava_token.outputs.access_token != ''
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
