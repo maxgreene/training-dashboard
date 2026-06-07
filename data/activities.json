@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-07T16:00:34.558803+00:00",
+  "updated_at": "2026-06-07T16:15:23.595273+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -16,7 +16,7 @@
   "activities": [
     {
       "id": 18826432930,
-      "name": "Radfahren",
+      "name": "Saarbr\u00fccken > Bonn \ud83e\udd29",
       "date": "2026-06-07",
       "start_time": "05:52",
       "type": "Ride",
