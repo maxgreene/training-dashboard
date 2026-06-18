@@ -402,12 +402,66 @@ def main():
         print(f'Kept {recovered} existing activities not in current fetch')
         activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
 
-    recent = [a for a in activities if a['date'] >= PLAN_START_DATE]
+    # ── Mark duplicates: Strava + Wahoo often report the SAME ride twice
+    # (identical start_time, near-identical duration). Keep BOTH in storage,
+    # but flag the weaker one as hidden=True so the dashboard shows/sums only one.
+    def mark_duplicates(acts):
+        from collections import defaultdict
+        groups = defaultdict(list)
+        for a in acts:
+            a['hidden'] = False  # reset flag each run
+            a['dup_of'] = None
+            groups[a.get('date', '')].append(a)
+        marked = 0
+        for date, day_acts in groups.items():
+            used = [False] * len(day_acts)
+            for i in range(len(day_acts)):
+                if used[i]:
+                    continue
+                group = [day_acts[i]]
+                used[i] = True
+                for j in range(i + 1, len(day_acts)):
+                    if used[j]:
+                        continue
+                    a, b = day_acts[i], day_acts[j]
+                    if a.get('start_time') == b.get('start_time'):
+                        da = a.get('duration_sec') or 0
+                        db = b.get('duration_sec') or 0
+                        if abs(da - db) <= 60:
+                            group.append(b)
+                            used[j] = True
+                if len(group) > 1:
+                    def score(x):
+                        s = 0
+                        if x.get('has_power'):
+                            s += 10000
+                        if x.get('has_hr'):
+                            s += 1000
+                        if x.get('has_latlng'):
+                            s += 100
+                        streams = x.get('streams') or {}
+                        s += len(streams.get('time') or [])
+                        return s
+                    best = max(group, key=score)
+                    for g in group:
+                        if g is not best:
+                            g['hidden'] = True
+                            g['dup_of'] = best['id']
+                            marked += 1
+                    print(f"  Dup {date} {best.get('start_time')}: showing '{best['name']}', hiding {[g['name'] for g in group if g is not best]}")
+        if marked:
+            print(f'Marked {marked} duplicate activities as hidden (kept in storage)')
+
+    mark_duplicates(activities)
+    activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+
+    visible = [a for a in activities if not a.get('hidden')]
+    recent = [a for a in visible if a['date'] >= PLAN_START_DATE]
     output = {
         'updated_at': datetime.now(timezone.utc).isoformat(),
         'analysis_version': ANALYSIS_VERSION,
         'athlete': {'id': 13589996, 'name': 'Wolf Harmening', 'ftp_estimate': FTP, 'hrmax_estimate': HRMAX, 'weight_kg': 81},
-        'summary': {'total_activities': len(activities), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
+        'summary': {'total_activities': len(visible), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
         'activities': activities,
     }
     os.makedirs('data', exist_ok=True)
