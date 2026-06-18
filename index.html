@@ -1238,7 +1238,7 @@ async function loadData(){
     const r=await fetch('data/activities.json?_='+Date.now());
     const data=await r.json();
     document.getElementById('loading').style.display='none';
-    allActivities=data.activities||[];
+    allActivities=(data.activities||[]).filter(a=>!a.hidden);
     const upd=new Date(data.updated_at);
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
