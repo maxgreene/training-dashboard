@@ -6,15 +6,16 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 4
+ANALYSIS_VERSION = 5
 FTP   = 237
 HRMAX = 175
 
 def normalized_power(watts, window=30):
-    valid = [w for w in watts if w and w > 0]
-    if len(valid) < window: return None
-    rolling = [(sum(valid[i:i+window])/window)**4 for i in range(len(valid)-window)]
-    return round((sum(rolling)/len(rolling))**0.25)
+    # Coggan standard: rolling average over ALL data (incl. zeros for coasting/descending)
+    if len(watts) < window: return None
+    rolling = [sum(watts[i:i+window])/window for i in range(len(watts)-window)]
+    np = (sum(r**4 for r in rolling)/len(rolling))**0.25
+    return round(np)
 
 def power_curve(watts):
     valid = [w for w in watts if w and w > 0]
@@ -76,22 +77,31 @@ def trim_core(ts, watts, hr, trim_pct=0.08):
     return tc, pc, hc
 
 def decoupling_stats(ts_c, pw_c, hr_c):
+    # Pa:HR aerobic decoupling — Coggan/TrainingPeaks standard
+    # Positive drift = HR drifted UP relative to power = cardiac drift = BAD
+    # Good aerobic base: drift < 5%  |  Excellent: drift < 2%
     n = len(ts_c)
     if n < 10: return None
-    half = n//2
-    p1,h1 = pw_c[:half],hr_c[:half]
-    p2,h2 = pw_c[half:],hr_c[half:]
+    # Split by temporal midpoint for fairness
+    mid_t = (ts_c[0] + ts_c[-1]) / 2
+    split = next((i for i,t in enumerate(ts_c) if t >= mid_t), n//2)
+    if split < 3 or split > n-3: split = n//2
+    p1,h1 = pw_c[:split],hr_c[:split]
+    p2,h2 = pw_c[split:],hr_c[split:]
     if not p1 or not h1 or not p2 or not h2: return None
     aw1=sum(p1)/len(p1); ah1=sum(h1)/len(h1)
     aw2=sum(p2)/len(p2); ah2=sum(h2)/len(h2)
-    if ah1==0 or ah2==0 or aw1==0 or aw2==0: return None
+    if ah1==0 or ah2==0 or aw1==0: return None
     ef1=aw1/ah1; ef2=aw2/ah2
-    if ef1==0: return None
-    np_c = normalized_power(pw_c)
+    # ef_gesamt: avg_W/avg_HR (consistent with ef1/ef2 — all use avg_W)
+    avg_w_c = sum(pw_c)/len(pw_c)
     avg_hr_c = sum(hr_c)/len(hr_c)
-    ef_g = round((np_c/avg_hr_c) if np_c else (sum(pw_c)/len(pw_c)/avg_hr_c),4)
+    ef_g = round(avg_w_c/avg_hr_c, 4) if avg_hr_c else 0
+    # Drift: positive = cardiac drift (EF declined = HR rose relative to power)
+    # (EF1 - EF2) / EF1 × 100  →  positive means decoupling/drift
+    drift = round((ef1-ef2)/ef1*100, 2) if ef1 else 0
     return {'ef_gesamt':ef_g,'ef1':round(ef1,4),'ef2':round(ef2,4),
-            'drift_pct':round((ef2-ef1)/ef1*100,2),'half_t':ts_c[half],
+            'drift_pct':drift,'half_t':ts_c[split],
             'avg_w1':round(aw1,1),'avg_h1':round(ah1,1),
             'avg_w2':round(aw2,1),'avg_h2':round(ah2,1),'n_core':n}
 
