@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-19T08:04:19.404552+00:00",
+  "updated_at": "2026-06-19T08:15:34.500609+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -36,7 +36,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 203,
+      "np": 197,
       "power_curve": {
         "5": 487,
         "10": 448,
@@ -61,7 +61,7 @@
         12.4,
         14.3
       ],
-      "decoupling_pct": -5.36,
+      "decoupling_pct": 5.27,
       "power_duration_sec": 1317,
       "streams": {
         "time": [
@@ -515,7 +515,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 155,
+      "np": 146,
       "power_curve": {
         "5": 333,
         "10": 321,
@@ -904,7 +904,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 126,
+      "np": 91,
       "power_curve": {
         "5": 173,
         "10": 164,
@@ -1425,7 +1425,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": false,
-      "np": 100,
+      "np": 70,
       "power_curve": {
         "5": 250,
         "10": 217,
@@ -1816,7 +1816,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": false,
-      "np": 200,
+      "np": 175,
       "power_curve": {
         "5": 521,
         "10": 444,
@@ -2203,7 +2203,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 145,
+      "np": 139,
       "power_curve": {
         "5": 486,
         "10": 457,
@@ -2596,7 +2596,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 239,
+      "np": 212,
       "power_curve": {
         "5": 994,
         "10": 919,
@@ -2623,7 +2623,7 @@
         22.7,
         26.8
       ],
-      "decoupling_pct": 3.89,
+      "decoupling_pct": -5.73,
       "power_duration_sec": 9314,
       "streams": {
         "time": [
@@ -3067,7 +3067,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 242,
+      "np": 206,
       "power_curve": {
         "5": 647,
         "10": 563,
@@ -3090,7 +3090,7 @@
         18.6,
         28.0
       ],
-      "decoupling_pct": 2.46,
+      "decoupling_pct": 1.02,
       "power_duration_sec": 649,
       "streams": {
         "time": [
@@ -3539,7 +3539,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 202,
+      "np": 185,
       "power_curve": {
         "5": 530,
         "10": 463,
@@ -3925,7 +3925,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 195,
+      "np": 187,
       "power_curve": {
         "5": 610,
         "10": 497,
@@ -3950,7 +3950,7 @@
         11.5,
         10.8
       ],
-      "decoupling_pct": 11.91,
+      "decoupling_pct": -8.99,
       "power_duration_sec": 1403,
       "streams": {
         "time": [
@@ -4828,7 +4828,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 206,
+      "np": 193,
       "power_curve": {
         "5": 663,
         "10": 507,
@@ -4852,7 +4852,7 @@
         14.5,
         14.7
       ],
-      "decoupling_pct": -2.28,
+      "decoupling_pct": -2.64,
       "power_duration_sec": 1297,
       "streams": {
         "time": [
@@ -5709,7 +5709,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 203,
+      "np": 194,
       "power_curve": {
         "5": 691,
         "10": 678,
@@ -5734,7 +5734,7 @@
         9.1,
         11.1
       ],
-      "decoupling_pct": 16.21,
+      "decoupling_pct": -15.2,
       "power_duration_sec": 1449,
       "streams": {
         "time": [
@@ -6590,7 +6590,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 236,
+      "np": 215,
       "power_curve": {
         "5": 626,
         "10": 502,
@@ -6614,7 +6614,7 @@
         15.6,
         22.5
       ],
-      "decoupling_pct": 19.39,
+      "decoupling_pct": -22.44,
       "power_duration_sec": 1252,
       "streams": {
         "time": [
@@ -7073,7 +7073,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 246,
+      "np": 232,
       "power_curve": {
         "5": 739,
         "10": 548,
@@ -7097,7 +7097,7 @@
         17.7,
         24.9
       ],
-      "decoupling_pct": -3.75,
+      "decoupling_pct": 3.6,
       "power_duration_sec": 1345,
       "streams": {
         "time": [
@@ -7561,7 +7561,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 171,
+      "np": 137,
       "power_curve": {
         "5": 381,
         "10": 343,
@@ -7951,7 +7951,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 210,
+      "np": 192,
       "power_curve": {
         "5": 596,
         "10": 514,
@@ -7975,7 +7975,7 @@
         22.9,
         15.3
       ],
-      "decoupling_pct": -9.29,
+      "decoupling_pct": 10.84,
       "power_duration_sec": 1283,
       "streams": {
         "time": [
@@ -8419,7 +8419,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 204,
+      "np": 184,
       "power_curve": {
         "5": 398,
         "10": 388,
@@ -8443,7 +8443,7 @@
         8.7,
         18.2
       ],
-      "decoupling_pct": -37.06,
+      "decoupling_pct": 39.08,
       "power_duration_sec": 1099,
       "streams": {
         "time": [
@@ -8907,7 +8907,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 306,
+      "np": 276,
       "power_curve": {
         "5": 871,
         "10": 818,
@@ -8931,7 +8931,7 @@
         10.0,
         19.2
       ],
-      "decoupling_pct": -26.21,
+      "decoupling_pct": 26.6,
       "power_duration_sec": 1434,
       "streams": {
         "time": [
@@ -9395,7 +9395,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 239,
+      "np": 227,
       "power_curve": {
         "5": 908,
         "10": 830,
@@ -9420,7 +9420,7 @@
         8.0,
         12.1
       ],
-      "decoupling_pct": 3.25,
+      "decoupling_pct": -0.47,
       "power_duration_sec": 1476,
       "streams": {
         "time": [
@@ -9869,7 +9869,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 174,
+      "np": 164,
       "power_curve": {
         "5": 416,
         "10": 402,
@@ -9894,7 +9894,7 @@
         8.6,
         5.9
       ],
-      "decoupling_pct": 5.27,
+      "decoupling_pct": -5.74,
       "power_duration_sec": 1542,
       "streams": {
         "time": [
@@ -10343,7 +10343,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 164,
+      "np": 155,
       "power_curve": {
         "5": 437,
         "10": 410,
@@ -10368,7 +10368,7 @@
         6.2,
         6.5
       ],
-      "decoupling_pct": -4.73,
+      "decoupling_pct": 4.99,
       "power_duration_sec": 1541,
       "streams": {
         "time": [
@@ -10817,7 +10817,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 181,
+      "np": 164,
       "power_curve": {
         "5": 476,
         "10": 352,
@@ -10841,7 +10841,7 @@
         11.9,
         9.2
       ],
-      "decoupling_pct": -9.75,
+      "decoupling_pct": 5.19,
       "power_duration_sec": 1335,
       "streams": {
         "time": [
@@ -11300,7 +11300,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 173,
+      "np": 159,
       "power_curve": {
         "5": 513,
         "10": 480,
@@ -11693,7 +11693,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 186,
+      "np": 159,
       "power_curve": {
         "5": 423,
         "10": 392,
@@ -11720,7 +11720,7 @@
         20.2,
         13.4
       ],
-      "decoupling_pct": -1.3,
+      "decoupling_pct": 1.09,
       "power_duration_sec": 10000,
       "streams": {
         "time": [
@@ -12159,7 +12159,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 142,
+      "np": 94,
       "power_curve": {
         "5": 334,
         "10": 247,
@@ -12538,7 +12538,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 218,
+      "np": 194,
       "power_curve": {
         "5": 332,
         "10": 310,
@@ -12938,7 +12938,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 196,
+      "np": 155,
       "power_curve": {
         "5": 511,
         "10": 387,
@@ -13325,7 +13325,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 208,
+      "np": 194,
       "power_curve": {
         "5": 526,
         "10": 487,
@@ -13351,7 +13351,7 @@
         22.2,
         16.1
       ],
-      "decoupling_pct": 5.51,
+      "decoupling_pct": -5.97,
       "power_duration_sec": 4136,
       "streams": {
         "time": [
@@ -13800,7 +13800,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 188,
+      "np": 177,
       "power_curve": {
         "5": 432,
         "10": 401,
@@ -13825,7 +13825,7 @@
         6.7,
         13.7
       ],
-      "decoupling_pct": -1.78,
+      "decoupling_pct": 1.74,
       "power_duration_sec": 1523,
       "streams": {
         "time": [
@@ -14269,7 +14269,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 190,
+      "np": 175,
       "power_curve": {
         "5": 458,
         "10": 369,
@@ -14293,7 +14293,7 @@
         15.3,
         10.1
       ],
-      "decoupling_pct": 10.13,
+      "decoupling_pct": -14.09,
       "power_duration_sec": 1338,
       "streams": {
         "time": [
@@ -14752,7 +14752,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 181,
+      "np": 172,
       "power_curve": {
         "5": 462,
         "10": 386,
@@ -14776,7 +14776,7 @@
         7.3,
         9.4
       ],
-      "decoupling_pct": 0.57,
+      "decoupling_pct": -0.18,
       "power_duration_sec": 1143,
       "streams": {
         "time": [
@@ -15257,7 +15257,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 171,
+      "np": 156,
       "power_curve": {
         "5": 534,
         "10": 343,
@@ -15281,7 +15281,7 @@
         7.7,
         6.5
       ],
-      "decoupling_pct": 2.42,
+      "decoupling_pct": -2.27,
       "power_duration_sec": 1278,
       "streams": {
         "time": [
@@ -15750,7 +15750,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 238,
+      "np": 220,
       "power_curve": {
         "5": 764,
         "10": 645,
@@ -15774,7 +15774,7 @@
         9.5,
         16.7
       ],
-      "decoupling_pct": -1.41,
+      "decoupling_pct": 1.3,
       "power_duration_sec": 1328,
       "streams": {
         "time": [
@@ -16228,7 +16228,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 148,
+      "np": 144,
       "power_curve": {
         "5": 314,
         "10": 288,
@@ -16608,7 +16608,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 107,
+      "np": 81,
       "power_curve": {
         "5": 198,
         "10": 189,
@@ -16999,7 +16999,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 180,
+      "np": 164,
       "power_curve": {
         "5": 810,
         "10": 544,
@@ -17026,7 +17026,7 @@
         7.6,
         8.6
       ],
-      "decoupling_pct": 10.04,
+      "decoupling_pct": -10.36,
       "power_duration_sec": 9066,
       "streams": {
         "time": [
@@ -17470,7 +17470,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 99,
+      "np": 91,
       "power_curve": {
         "5": 285,
         "10": 255,
@@ -17496,7 +17496,7 @@
         1.4,
         0.7
       ],
-      "decoupling_pct": -13.73,
+      "decoupling_pct": 12.94,
       "power_duration_sec": 3449,
       "streams": {
         "time": [
@@ -17940,7 +17940,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 193,
+      "np": 173,
       "power_curve": {
         "5": 286,
         "10": 240,
@@ -21905,7 +21905,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 182,
+      "np": 174,
       "power_curve": {
         "5": 410,
         "10": 315,
@@ -21929,7 +21929,7 @@
         12.2,
         10.5
       ],
-      "decoupling_pct": 12.34,
+      "decoupling_pct": -9.47,
       "power_duration_sec": 1152,
       "streams": {
         "time": [
@@ -22383,7 +22383,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 196,
+      "np": 177,
       "power_curve": {
         "5": 598,
         "10": 466,
@@ -22410,7 +22410,7 @@
         19.2,
         15.8
       ],
-      "decoupling_pct": -13.45,
+      "decoupling_pct": 14.94,
       "power_duration_sec": 9468,
       "streams": {
         "time": [
@@ -22854,7 +22854,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 225,
+      "np": 202,
       "power_curve": {
         "5": 570,
         "10": 425,
@@ -22877,7 +22877,7 @@
         21.8,
         27.2
       ],
-      "decoupling_pct": 4.6,
+      "decoupling_pct": -4.67,
       "power_duration_sec": 740,
       "streams": {
         "time": [
@@ -23331,7 +23331,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 236,
+      "np": 197,
       "power_curve": {
         "5": 581,
         "10": 488,
@@ -23354,7 +23354,7 @@
         17.6,
         31.0
       ],
-      "decoupling_pct": -5.02,
+      "decoupling_pct": -2.32,
       "power_duration_sec": 654,
       "streams": {
         "time": [
@@ -23803,7 +23803,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 198,
+      "np": 189,
       "power_curve": {
         "5": 647,
         "10": 615,
@@ -23828,7 +23828,7 @@
         6.8,
         10.0
       ],
-      "decoupling_pct": -0.32,
+      "decoupling_pct": 0.08,
       "power_duration_sec": 1366,
       "streams": {
         "time": [
@@ -24298,7 +24298,7 @@
         8.8,
         14.6
       ],
-      "decoupling_pct": 7.36,
+      "decoupling_pct": -7.36,
       "power_duration_sec": 2063,
       "streams": {
         "time": [
@@ -27367,7 +27367,7 @@
         12.4,
         0.0
       ],
-      "decoupling_pct": -5.61,
+      "decoupling_pct": 5.61,
       "power_duration_sec": 5401,
       "streams": {
         "time": [
@@ -28523,7 +28523,7 @@
         0.0,
         0.0
       ],
-      "decoupling_pct": -5.06,
+      "decoupling_pct": 5.06,
       "power_duration_sec": 3417,
       "streams": {
         "time": [
@@ -30897,7 +30897,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 211,
+      "np": 199,
       "power_curve": {
         "5": 686,
         "10": 504,
@@ -30924,7 +30924,7 @@
         22.6,
         14.5
       ],
-      "decoupling_pct": -1.3,
+      "decoupling_pct": 0.38,
       "power_duration_sec": 8182,
       "streams": {
         "time": [
@@ -32174,7 +32174,7 @@
         0.0,
         0.0
       ],
-      "decoupling_pct": -6.33,
+      "decoupling_pct": 6.33,
       "power_duration_sec": 2702,
       "streams": {
         "time": [
@@ -32540,7 +32540,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 200,
+      "np": 174,
       "power_curve": {
         "5": 487,
         "10": 434,
@@ -32563,7 +32563,7 @@
         13.5,
         14.1
       ],
-      "decoupling_pct": -10.15,
+      "decoupling_pct": 11.51,
       "power_duration_sec": 787,
       "streams": {
         "time": [
@@ -33042,7 +33042,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 261,
+      "np": 236,
       "power_curve": {
         "5": 516,
         "10": 453,
@@ -33065,7 +33065,7 @@
         16.1,
         37.8
       ],
-      "decoupling_pct": -13.13,
+      "decoupling_pct": 5.13,
       "power_duration_sec": 750,
       "streams": {
         "time": [
@@ -33524,7 +33524,7 @@
       "has_power": true,
       "has_hr": false,
       "has_latlng": true,
-      "np": 194,
+      "np": 179,
       "power_curve": {
         "5": 643,
         "10": 572,
@@ -33912,7 +33912,7 @@
       "has_power": true,
       "has_hr": true,
       "has_latlng": true,
-      "np": 247,
+      "np": 238,
       "power_curve": {
         "5": 647,
         "10": 613,
@@ -33936,7 +33936,7 @@
         18.9,
         19.8
       ],
-      "decoupling_pct": -14.51,
+      "decoupling_pct": 14.56,
       "power_duration_sec": 1300,
       "streams": {
         "time": [
