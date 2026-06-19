@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 3
+ANALYSIS_VERSION = 4
 FTP   = 237
 HRMAX = 175
 
@@ -123,7 +123,7 @@ def analyze(aid, streams, act):
     lat = streams.get('latlng',[])
     if not ts: return None
     dur = ts[-1]
-    step = max(1, len(ts)//300)
+    step = max(1, len(ts)//1500)  # target ~1500 pts per chart
     chart = {
         'time':ts[::step],
         'watts':pw[::step] if pw else [],
@@ -159,7 +159,7 @@ def analyze(aid, streams, act):
             res['decoupling'] = decoupling_stats(ts_c, pw_c, hr_c)
         if has_pw and len(ts_c) >= 6:
             res['ef_series'] = rolling_ef(ts, pw, hr)
-            sc_step = max(1, len(ts_c)//300)
+            sc_step = max(1, len(ts_c)//800)
             cad_map = {ts[i]:cad[i] for i in range(len(ts)) if cad and i<len(cad)} if cad else {}
             res['scatter'] = [{'t':ts_c[i],'w':pw_c[i],'hr':hr_c[i],'cad':cad_map.get(ts_c[i])}
                               for i in range(0,len(ts_c),sc_step)]
