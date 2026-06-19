@@ -551,16 +551,17 @@ function renderPlan(){
         if(mainAct.np&&mainAct.avg_hr){
           rightEf=(mainAct.np/mainAct.avg_hr).toFixed(2);
         }
-        const np=mainAct.np,ftp=FTP;
-        if(np){
-          const kj=mainAct.kilojoules,avgW=mainAct.avg_power;
-          if(kj&&avgW&&avgW>0){
-            rightTss=Math.round(kj*100000*np*np/(avgW*ftp*ftp*3600));
-          } else {
-            const dur=actDur(mainAct),el=mainAct.elapsed_sec||dur,best=el>dur*1.5?el:dur;
-            rightTss=Math.round(best*np*(np/ftp)/(ftp*3600)*100);
-          }
-        }
+        // Sum TSS across ALL activities of the day (not just mainAct)
+        const ftp=FTP;
+        let dayTss=0,hasTss=false;
+        acts.forEach(a=>{
+          const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
+          if(!np) return;
+          hasTss=true;
+          if(kj&&avgW&&avgW>0) dayTss+=kj*100000*np*np/(avgW*ftp*ftp*3600);
+          else {const dur=a.elapsed_sec||a.duration_sec||0;dayTss+=dur*np*(np/ftp)/(ftp*3600)*100;}
+        });
+        if(hasTss) rightTss=Math.round(dayTss);
         // Zone bars: prefer power_zones from any PM activity that day, else HR zones
         const pmAct=acts.find(a=>a.power_zones&&a.power_zones.length&&actDur(a)>=1800)||null;
         if(pmAct&&pmAct.power_zones.length){
