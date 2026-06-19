@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 5
+ANALYSIS_VERSION = 6
 FTP   = 237
 HRMAX = 175
 
@@ -205,7 +205,9 @@ def main():
         if res.get('hr_zones'):    act['hr_zones']=res['hr_zones']
         if res.get('cadence_avg'): act['avg_cadence']=res['cadence_avg']
         d=res.get('decoupling') or {}
-        if d: act['decoupling_pct']=d['drift_pct']
+        if d:
+            act['decoupling_pct']=d['drift_pct']
+            act['ef_gesamt']=d['ef_gesamt']
         nc=len(res['chart'].get('time',[]))
         ne=len(res.get('ef_series',[]))
         nclimb=len(res.get('climbs',[]))
