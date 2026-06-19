@@ -1124,10 +1124,10 @@ async function loadAndDrawAnalysis(act){
     const dPos=d.drift_pct>0;
     avDiv.innerHTML=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse</div><div class="sh-line"></div></div>
     <div class="detail-stats">
-      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">NP_core / HR_core</div></div>
-      <div class="ds"><div class="ds-label">EF₁</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">EF₂</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">Drift</div><div class="ds-val" style="color:${dPos?'var(--red)':'var(--green)'}">${dPos?'+':''}${d.drift_pct.toFixed(2)}<span>%</span></div><div class="ds-sub">${dPos?'HR stieg':'EF stieg'} · n=${d.n_core}</div></div>
+      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">avgW / avgHR · Kern</div></div>
+      <div class="ds"><div class="ds-label">EF₁ (1. Hälfte)</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
+      <div class="ds"><div class="ds-label">EF₂ (2. Hälfte)</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
+      <div class="ds"><div class="ds-label">Pa:HR Drift</div><div class="ds-val" style="color:${dPos?'var(--red)':'var(--green)'}">${dPos?'+':''}${d.drift_pct.toFixed(2)}<span>%</span></div><div class="ds-sub">${dPos?'HR-Drift (decoupling)':'gut gekoppelt'} · &lt;5% = gut</div></div>
     </div>`;
   }
 }
