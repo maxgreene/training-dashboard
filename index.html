@@ -494,7 +494,21 @@ function renderPlan(){
     }
 
     h+=`<div class="wcard">`;
-    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.lbl}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}</span></div>`;
+    // Actual TSS for this week
+    let weekTss=0;
+    week.days.forEach(d=>{
+      const dk='2026-'+d.date.split('.').reverse().join('-');
+      allActivities.filter(a=>a.date===dk&&!a.hidden).forEach(a=>{
+        const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
+        if(!np) return;
+        let t=0;
+        if(kj&&avgW&&avgW>0) t=kj*100000*np*np/(avgW*FTP*FTP*3600);
+        else {const dur=a.elapsed_sec||a.duration_sec||0;t=dur*np*(np/FTP)/(FTP*3600)*100;}
+        weekTss+=t;
+      });
+    });
+    const tssTag=weekTss>0?` <span style="font-size:10px;color:#666;font-family:'JetBrains Mono',monospace">TSS ${Math.round(weekTss)}</span>`:'';
+    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.lbl}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}${tssTag}</span></div>`;
 
     if(week.days) week.days.forEach((d,di)=>{
       const done=isDone(d);
@@ -538,7 +552,15 @@ function renderPlan(){
           rightEf=(mainAct.np/mainAct.avg_hr).toFixed(2);
         }
         const np=mainAct.np,ftp=FTP;
-        if(np){const if_=np/ftp;rightTss=Math.round(actDur(mainAct)*np*if_/(ftp*3600)*100);}
+        if(np){
+          const kj=mainAct.kilojoules,avgW=mainAct.avg_power;
+          if(kj&&avgW&&avgW>0){
+            rightTss=Math.round(kj*100000*np*np/(avgW*ftp*ftp*3600));
+          } else {
+            const dur=actDur(mainAct),el=mainAct.elapsed_sec||dur,best=el>dur*1.5?el:dur;
+            rightTss=Math.round(best*np*(np/ftp)/(ftp*3600)*100);
+          }
+        }
         // Zone bars: prefer power_zones from any PM activity that day, else HR zones
         const pmAct=acts.find(a=>a.power_zones&&a.power_zones.length&&actDur(a)>=1800)||null;
         if(pmAct&&pmAct.power_zones.length){
