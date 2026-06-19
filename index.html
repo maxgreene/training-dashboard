@@ -258,6 +258,10 @@ canvas.chart{width:100%;display:block;}
   <div id="today-banner-wrap"></div>
   <div class="page active" id="page-plan"></div>
 <div class="page" id="page-rides">
+<div id="ef-trend-wrap" style="margin-bottom:16px">
+  <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:6px;letter-spacing:.04em">EF TREND (W/bpm) · alle Einheiten mit Powermeter</div>
+  <div style="position:relative;width:100%;height:180px"><canvas id="ef-chart" role="img" aria-label="EF-Trend über die Zeit. Punkte logarithmisch nach Fahrtdauer skaliert.">EF-Entwicklung seit Planstart.</canvas></div>
+</div>
 <div class="stats" id="summary-stats"></div>
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
     <div class="act-list" id="activity-list"></div>
@@ -1243,6 +1247,7 @@ async function loadData(){
     document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     renderSummary();
     renderActivityList();
+    if(window.Chart) renderEFChart();
     renderPlan();
     renderTodayBanner();
   }catch(e){
@@ -1254,6 +1259,71 @@ renderPlan();
 renderTodayBanner();
 loadData();
 setInterval(loadData,5*60*1000);
-</script>
-</body>
-</html>
+function renderEFChart(){
+  if(!window.Chart) return;
+  const acts=allActivities.filter(a=>
+    a.has_power&&a.ef_gesamt&&a.ef_gesamt>0.8&&a.ef_gesamt<2.5
+    &&(a.duration_sec||0)>=600
+  );
+  if(!acts.length) return;
+  const t0=new Date('2026-05-04').getTime();
+  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
+  const logR=dur=>{
+    const t=Math.max(0,Math.min(1,Math.log(Math.max(dur,10)/10)/Math.log(200/10)));
+    return Math.round(5+15*t);
+  };
+  const alpha=dur=>+(0.25+0.75*Math.min(1,Math.log(Math.max(dur,10)/10)/Math.log(200/10))).toFixed(2);
+  const col=(name,dur)=>{
+    const a=alpha(dur);
+    if(name.includes('Bonn')||name.includes('Saar')) return 'rgba(150,150,150,'+a+')';
+    if(name.includes('FTP')||name.includes('Rampe')||name.includes('Test')) return 'rgba(180,60,220,'+a+')';
+    if(dur>=90) return 'rgba(249,115,22,'+a+')';
+    return 'rgba(96,165,250,'+a+')';
+  };
+  const pts=acts.map(a=>{
+    const dur=(a.duration_sec||0)/60;
+    return {x:dayOf(a.date),y:+a.ef_gesamt,r:logR(dur),
+            bg:col(a.name||'',dur),name:a.name||'',dur:Math.round(dur)};
+  });
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),n=xs.length;
+  const sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+  const sxy=xs.reduce((a,p,i)=>a+p*ys[i],0),sx2=xs.reduce((a,p)=>a+p*p,0);
+  const sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;
+  const x0=Math.min(...xs),x1=Math.max(...xs);
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
+  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  const ticks={};
+  for(let w=0;w<=16;w++){
+    const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
+    ticks[w*7]=(d.getDate()).toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.';
+  }
+  const ex=Chart.getChart('ef-chart');if(ex)ex.destroy();
+  new Chart(document.getElementById('ef-chart'),{
+    type:'bubble',
+    data:{datasets:[
+      {label:'EF',data:pts,backgroundColor:pts.map(p=>p.bg),borderWidth:0},
+      {label:'Trend',type:'line',
+       data:[{x:x0,y:+(ic+sl*x0).toFixed(3)},{x:x1,y:+(ic+sl*x1).toFixed(3)}],
+       borderColor:'rgba(249,115,22,0.35)',borderWidth:1.5,borderDash:[5,4],
+       pointRadius:0,fill:false,tension:0,order:-1},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:8,right:8,bottom:4,left:4}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const p=pts[ctx.dataIndex];
+        return p?p.name+' \xb7 '+p.dur+'min \xb7 EF '+ctx.parsed.y.toFixed(3):ctx.dataset.label;
+      }}}},
+      scales:{
+        x:{min:x0-2,max:x1+4,
+          ticks:{color:cT,font:{size:9},callback:function(v){return ticks[v]||'';},autoSkip:false},
+          grid:{color:cG}},
+        y:{min:0.9,max:2.2,
+          ticks:{color:cT,font:{size:9},callback:function(v){return v.toFixed(2);}},
+          grid:{color:cG},
+          title:{display:true,text:'EF W/bpm',color:cT,font:{size:9}}}
+      }
+    }
+  });
+}
