@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-19T08:15:34.500609+00:00",
+  "updated_at": "2026-06-19T08:29:41.535533+00:00",
   "analysis_version": 9,
   "athlete": {
     "id": 13589996,
@@ -491,7 +491,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.4817
     },
     {
       "id": 18975705423,
@@ -3043,7 +3044,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5781
     },
     {
       "id": 18959033041,
@@ -3515,7 +3517,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.8573
     },
     {
       "id": 18959028306,
@@ -4380,7 +4383,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.4661
     },
     {
       "id": 18945019220,
@@ -5277,7 +5281,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.472
     },
     {
       "id": 18938950814,
@@ -6154,7 +6159,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.4285
     },
     {
       "id": 18930679174,
@@ -7049,7 +7055,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5627
     },
     {
       "id": 18925289465,
@@ -7537,7 +7544,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.645
     },
     {
       "id": 18917982073,
@@ -8395,7 +8403,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5158
     },
     {
       "id": 18879521241,
@@ -8883,7 +8892,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 2.6908
     },
     {
       "id": 18867197058,
@@ -9371,7 +9381,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5288
     },
     {
       "id": 18860810429,
@@ -9845,7 +9856,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.441
     },
     {
       "id": 18853192368,
@@ -10319,7 +10331,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3181
     },
     {
       "id": 18846307093,
@@ -10793,7 +10806,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.2461
     },
     {
       "id": 18838731237,
@@ -11276,7 +11290,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3884
     },
     {
       "id": 18832889968,
@@ -12135,7 +12150,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.374
     },
     {
       "id": 18814812469,
@@ -13776,7 +13792,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.45
     },
     {
       "id": 18765879572,
@@ -14245,7 +14262,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.398
     },
     {
       "id": 18758051090,
@@ -14728,7 +14746,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.4793
     },
     {
       "id": 18752517683,
@@ -15201,7 +15220,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3402
     },
     {
       "id": "wahoo_462150754",
@@ -15726,7 +15746,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3188
     },
     {
       "id": 18737725563,
@@ -16204,7 +16225,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5323
     },
     {
       "id": 18731665916,
@@ -17446,7 +17468,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.1869
     },
     {
       "id": 18717251723,
@@ -17916,7 +17939,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 0.7527
     },
     {
       "id": 18715186987,
@@ -22359,7 +22383,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3103
     },
     {
       "id": 18644855197,
@@ -22830,7 +22855,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3655
     },
     {
       "id": 18642584107,
@@ -23307,7 +23333,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.6835
     },
     {
       "id": 18609891449,
@@ -23779,7 +23806,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.7995
     },
     {
       "id": 18604459977,
@@ -24248,7 +24276,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.284
     },
     {
       "id": 18599770325,
@@ -24644,7 +24673,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3615
     },
     {
       "id": 18597013744,
@@ -27705,7 +27735,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3031
     },
     {
       "id": 18493521897,
@@ -28865,7 +28896,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.3121
     },
     {
       "id": 18478814589,
@@ -31344,7 +31376,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.353
     },
     {
       "id": 18426671311,
@@ -32516,7 +32549,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.1933
     },
     {
       "id": 18414124325,
@@ -33018,7 +33052,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.5486
     },
     {
       "id": 18408238477,
@@ -33500,7 +33535,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.7705
     },
     {
       "id": 18400636404,
@@ -34361,7 +34397,8 @@
         ]
       },
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "ef_gesamt": 1.4938
     },
     {
       "id": 18386717855,
