@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 6
+ANALYSIS_VERSION = 7
 FTP   = 237
 HRMAX = 175
 
@@ -196,6 +196,12 @@ def main():
         name=act.get('name',''); dur=round(act.get('duration_sec',0)/60)
         print('  ' + name + ' ' + act.get('date','') + ' ' + str(dur) + 'min')
         with open(sf) as f: streams=json.load(f).get('streams',{})
+        # ── PM calibration fix: 30.05.2026 4iiii read ~20% low (verified vs Ingo's Stages + EF method) ──
+        if aid in (18719827047, 18717251723):
+            CAL = 1.247
+            if streams.get('watts'):
+                streams['watts'] = [round(w*CAL) if w else w for w in streams['watts']]
+            print(f'    [calib] scaled watts x{CAL} (4iiii under-read on 30.05)')
         res=analyze(aid, streams, act)
         if not res: continue
         with open(af,'w') as f: json.dump(res,f)
