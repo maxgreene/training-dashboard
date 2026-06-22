@@ -269,7 +269,7 @@ canvas.chart{width:100%;display:block;}
       <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:rgba(249,115,22,0.4);display:inline-block;border-top:2px dashed rgba(249,115,22,0.4)"></span>Trend</span>
     </span>
   </div>
-  <div style="position:relative;width:100%;height:340px"><canvas id="ef-chart" style="cursor:pointer" role="img" aria-label="EF-Trend über die Zeit. Punkte logarithmisch nach Fahrtdauer skaliert.">EF-Entwicklung seit Planstart.</canvas></div>
+  <div id="ef-chart-box" style="position:relative;width:100%;height:340px"><canvas id="ef-chart" style="cursor:pointer" role="img" aria-label="EF-Trend über die Zeit. Punkte logarithmisch nach Fahrtdauer skaliert.">EF-Entwicklung seit Planstart.</canvas></div>
 </div>
 <div class="stats" id="summary-stats"></div>
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
@@ -281,6 +281,26 @@ canvas.chart{width:100%;display:block;}
 const FTP=237,HRMAX=175;
 const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
 const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
+
+// ═══════════════════════════════════════════════════════════
+//  EINSTELLUNGEN — hier anpassen
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  efTrend: {
+    height:       340,    // Höhe des Charts in px
+    yMin:         1.1,    // untere Grenze EF-Achse
+    yMax:         2.0,    // obere Grenze EF-Achse
+    dotMinR:      3,      // kleinster Punkt-Radius (kurze Fahrt)
+    dotMaxR:      15,     // größter Punkt-Radius (lange Fahrt)
+    dotMinDur:    10,     // min Dauer (min) für Skala
+    dotMaxDur:    600,    // max Dauer (min) für Skala
+    alphaMin:     0.25,   // Transparenz kurze Fahrt
+    alphaMax:     0.75,    // Transparenz lange Fahrt
+    minDurMin:    10,     // Einheiten kürzer werden nicht gezeigt (min)
+    showTrend:    true,   // Trendlinie an/aus
+  },
+};
+// ═══════════════════════════════════════════════════════════
 let allActivities=[],selectedRideId=null;
 
 const PLAN_WEEKS=[
@@ -1293,18 +1313,20 @@ loadData();
 setInterval(loadData,5*60*1000);
 function renderEFChart(){
   if(!window.Chart) return;
+  const C=CONFIG.efTrend;
   const acts=allActivities.filter(a=>
     a.has_power&&a.ef_gesamt&&a.ef_gesamt>0.8&&a.ef_gesamt<2.5
-    &&(a.duration_sec||0)>=600
+    &&(a.duration_sec||0)>=C.minDurMin*60
   );
   if(!acts.length) return;
   const t0=new Date('2026-05-04').getTime();
   const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
+  const logSpan=Math.log(C.dotMaxDur/C.dotMinDur);
   const logR=dur=>{
-    const t=Math.max(0,Math.min(1,Math.log(Math.max(dur,10)/10)/Math.log(200/10)));
-    return Math.round(5+15*t);
+    const t=Math.max(0,Math.min(1,Math.log(Math.max(dur,C.dotMinDur)/C.dotMinDur)/logSpan));
+    return Math.round(C.dotMinR+(C.dotMaxR-C.dotMinR)*t);
   };
-  const alpha=dur=>+(0.25+0.75*Math.min(1,Math.log(Math.max(dur,10)/10)/Math.log(200/10))).toFixed(2);
+  const alpha=dur=>+(C.alphaMin+(C.alphaMax-C.alphaMin)*Math.min(1,Math.log(Math.max(dur,C.dotMinDur)/C.dotMinDur)/logSpan)).toFixed(2);
   const col=(name,dur)=>{
     const a=alpha(dur);
     if(name.includes('Bonn')||name.includes('Saar')) return 'rgba(150,150,150,'+a+')';
@@ -1330,15 +1352,17 @@ function renderEFChart(){
     const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
     ticks[w*7]=(d.getDate()).toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.';
   }
+  const box=document.getElementById('ef-chart-box');
+  if(box) box.style.height=C.height+'px';
   const ex=Chart.getChart('ef-chart');if(ex)ex.destroy();
   const efChart=new Chart(document.getElementById('ef-chart'),{
     type:'bubble',
     data:{datasets:[
       {label:'EF',data:pts,backgroundColor:pts.map(p=>p.bg),borderWidth:0},
-      {label:'Trend',type:'line',
+      ...(C.showTrend?[{label:'Trend',type:'line',
        data:[{x:x0,y:+(ic+sl*x0).toFixed(3)},{x:x1,y:+(ic+sl*x1).toFixed(3)}],
        borderColor:'rgba(249,115,22,0.35)',borderWidth:1.5,borderDash:[5,4],
-       pointRadius:0,fill:false,tension:0,order:-1},
+       pointRadius:0,fill:false,tension:0,order:-1}]:[]),
     ]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:false,
@@ -1359,7 +1383,7 @@ function renderEFChart(){
         x:{min:x0-2,max:x1+4,
           ticks:{color:cT,font:{size:9},callback:function(v){return ticks[v]||'';},autoSkip:false},
           grid:{color:cG}},
-        y:{min:1.1,max:2.0,
+        y:{min:C.yMin,max:C.yMax,
           ticks:{color:cT,font:{size:9},callback:function(v){return v.toFixed(2);}},
           grid:{color:cG},
           title:{display:true,text:'EF W/bpm',color:cT,font:{size:9}}}
