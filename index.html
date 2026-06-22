@@ -287,15 +287,15 @@ const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   efTrend: {
-    height:       340,    // Höhe des Charts in px
+    height:       380,    // Höhe des Charts in px
     yMin:         1.1,    // untere Grenze EF-Achse
     yMax:         2.0,    // obere Grenze EF-Achse
-    dotMinR:      3,      // kleinster Punkt-Radius (kurze Fahrt)
+    dotMinR:      5,      // kleinster Punkt-Radius (kurze Fahrt)
     dotMaxR:      15,     // größter Punkt-Radius (lange Fahrt)
     dotMinDur:    10,     // min Dauer (min) für Skala
-    dotMaxDur:    600,    // max Dauer (min) für Skala
-    alphaMin:     0.25,   // Transparenz kurze Fahrt
-    alphaMax:     0.75,    // Transparenz lange Fahrt
+    dotMaxDur:    200,    // max Dauer (min) für Skala
+    alphaMin:     0.5,   // Transparenz kurze Fahrt
+    alphaMax:     0.85,    // Transparenz lange Fahrt
     minDurMin:    10,     // Einheiten kürzer werden nicht gezeigt (min)
     showTrend:    true,   // Trendlinie an/aus
   },
