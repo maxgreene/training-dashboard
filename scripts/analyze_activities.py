@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 7
+ANALYSIS_VERSION = 10
 FTP   = 237
 HRMAX = 175
 
@@ -132,7 +132,7 @@ def analyze(aid, streams, act):
     grd = streams.get('grade_smooth',[])
     lat = streams.get('latlng',[])
     if not ts: return None
-    dur = ts[-1]
+    dur = int(ts[-1] - ts[0]) if len(ts) >= 2 else (ts[-1] if ts else 0)
     step = max(1, len(ts)//1500)  # target ~1500 pts per chart
     chart = {
         'time':ts[::step],
