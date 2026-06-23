@@ -7,7 +7,7 @@ TOKEN = os.environ['STRAVA_ACCESS_TOKEN']
 HEADERS = {'Authorization': 'Bearer ' + TOKEN}
 DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
-ANALYSIS_VERSION = 9
+ANALYSIS_VERSION = 10
 PLAN_START_DATE  = '2026-05-04'
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 
