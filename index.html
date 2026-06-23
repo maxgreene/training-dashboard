@@ -819,7 +819,7 @@ function buildDetail(act){
   if(act.avg_power) h+=`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>`;
   if(act.max_power) h+=`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`;
   if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Arbeit</div><div class="ds-val">${act.kilojoules}<span> kJ</span></div></div>`;
-  h+=`<div class="ds"><div class="ds-label">Dauer</div><div class="ds-val">${fmtDur(elapsedSec)}</div><div class="ds-sub">${showBothDur?'bewegend '+fmtDur(movingSec):''}</div></div>`;
+  h+=`<div class="ds"><div class="ds-label">Bewegte Zeit</div><div class="ds-val">${fmtDur(movingSec)}</div><div class="ds-sub">${showBothDur?'gesamt '+fmtDur(elapsedSec):''}</div></div>`;
   if(act.distance_m) h+=`<div class="ds"><div class="ds-label">Distanz</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
   if(act.elevation_m) h+=`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`;
   if(act.avg_hr) h+=`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>`;
