@@ -263,17 +263,37 @@ def process_activity(act, force_fetch=False):
         result['np'] = normalized_power(pw)
         result['power_curve'] = power_curve(pw)
         result['power_zones'] = power_zones(pw)
-    # Duration from the actual TIME stream, not sample count.
-    # Strava caps high-res streams at ~10000 points, so for rides >2.7h
-    # 1 sample != 1 second. The time stream holds real elapsed seconds.
+    # ── Zeitberechnung: bewegte Zeit vs. Gesamtzeit sauber trennen ──
+    # Strava cappt High-Res-Streams bei ~10000 Punkten, daher ist die
+    # Sample-Anzahl NICHT die Sekundenzahl. Wir nutzen echte Zeitstempel.
     time_stream = streams.get('time', [])
-    if time_stream and len(time_stream) >= 2:
-        result['duration_sec'] = int(time_stream[-1] - time_stream[0])
+    moving_stream = streams.get('moving', [])
+    # 1) Gesamtzeit (elapsed): aus Activity-Metadaten (zuverlässig)
+    elapsed = act.get('elapsed_time', 0)
+    # 2) Bewegte Zeit (moving): bevorzugt aus dem moving-Stream summiert,
+    #    da dieser auch bei gecappten Streams die echte Bewegungszeit trägt
+    moving_sec = 0
+    if time_stream and len(time_stream) >= 2 and moving_stream and len(moving_stream) == len(time_stream):
+        # Summe der Zeitintervalle in denen moving==True
+        for i in range(1, len(time_stream)):
+            dt = time_stream[i] - time_stream[i-1]
+            if moving_stream[i]:
+                moving_sec += dt
+        moving_sec = int(moving_sec)
+    elif time_stream and len(time_stream) >= 2:
+        # Kein moving-Stream: Zeitspanne der Daten als Näherung
+        moving_sec = int(time_stream[-1] - time_stream[0])
     elif moving_time:
-        result['duration_sec'] = moving_time
-    # Recompute avg speed from corrected duration
-    if result.get('distance_m') and result.get('duration_sec'):
-        result['avg_speed_kmh'] = round(result['distance_m'] / result['duration_sec'] * 3.6, 1)
+        moving_sec = moving_time
+    # Plausibilitäts-Check: moving darf nicht größer als elapsed sein
+    if elapsed and moving_sec > elapsed:
+        moving_sec = elapsed
+    result['duration_sec'] = moving_sec or moving_time      # bewegte Zeit (primär)
+    result['elapsed_sec']  = elapsed or moving_sec          # Gesamtzeit
+    result['moving_sec']   = moving_sec                     # explizit benannt
+    # Avg speed aus bewegter Zeit (Standard-Konvention)
+    if result.get('distance_m') and moving_sec:
+        result['avg_speed_kmh'] = round(result['distance_m'] / moving_sec * 3.6, 1)
     if hr:
         result['hr_zones'] = hr_zones(hr)
     if pw and hr:
