@@ -263,7 +263,17 @@ def process_activity(act, force_fetch=False):
         result['np'] = normalized_power(pw)
         result['power_curve'] = power_curve(pw)
         result['power_zones'] = power_zones(pw)
-        result['duration_sec'] = len(pw)
+    # Duration from the actual TIME stream, not sample count.
+    # Strava caps high-res streams at ~10000 points, so for rides >2.7h
+    # 1 sample != 1 second. The time stream holds real elapsed seconds.
+    time_stream = streams.get('time', [])
+    if time_stream and len(time_stream) >= 2:
+        result['duration_sec'] = int(time_stream[-1] - time_stream[0])
+    elif moving_time:
+        result['duration_sec'] = moving_time
+    # Recompute avg speed from corrected duration
+    if result.get('distance_m') and result.get('duration_sec'):
+        result['avg_speed_kmh'] = round(result['distance_m'] / result['duration_sec'] * 3.6, 1)
     if hr:
         result['hr_zones'] = hr_zones(hr)
     if pw and hr:
