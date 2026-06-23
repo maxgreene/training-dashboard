@@ -287,16 +287,16 @@ const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   efTrend: {
-    height:       380,    // Höhe des Charts in px
+    height:       340,    // Höhe des Charts in px
     yMin:         1.1,    // untere Grenze EF-Achse
     yMax:         2.0,    // obere Grenze EF-Achse
     dotMinR:      5,      // kleinster Punkt-Radius (kurze Fahrt)
-    dotMaxR:      15,     // größter Punkt-Radius (lange Fahrt)
-    dotMinDur:    15,     // min Dauer (min) für Skala
+    dotMaxR:      20,     // größter Punkt-Radius (lange Fahrt)
+    dotMinDur:    10,     // min Dauer (min) für Skala
     dotMaxDur:    200,    // max Dauer (min) für Skala
-    alphaMin:     0.5,   // Transparenz kurze Fahrt
-    alphaMax:     0.85,    // Transparenz lange Fahrt
-    minDurMin:    15,     // Einheiten kürzer werden nicht gezeigt (min)
+    alphaMin:     0.25,   // Transparenz kurze Fahrt
+    alphaMax:     1.0,    // Transparenz lange Fahrt
+    minDurMin:    10,     // Einheiten kürzer werden nicht gezeigt (min)
     showTrend:    true,   // Trendlinie an/aus
   },
 };
@@ -470,7 +470,7 @@ function showPage(name,btn){
 function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
 function fmtDist(m){return(m/1000).toFixed(1)+' km';}
 function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
-function actDur(a){return a.power_duration_sec||a.duration_sec;}
+function actDur(a){return a.duration_sec||a.power_duration_sec;}
 function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
 
 // ── PLAN ──
