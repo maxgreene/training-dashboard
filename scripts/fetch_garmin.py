@@ -15,15 +15,23 @@ def setup_tokens():
         print('Kein GARMIN_TOKENS Secret gesetzt - ueberspringe Garmin')
         return False
     try:
-        tokens = json.loads(base64.b64decode(blob).decode())
+        # Whitespace entfernen + fehlendes Base64-Padding ergaenzen
+        blob = blob.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+        missing = len(blob) % 4
+        if missing:
+            blob += '=' * (4 - missing)
+        decoded = base64.b64decode(blob).decode()
+        tokens = json.loads(decoded)
         tdir = os.path.expanduser('~/.garth')
         os.makedirs(tdir, exist_ok=True)
-        for fname, content in tokens.items():
-            with open(os.path.join(tdir, fname), 'w') as f:
-                f.write(content)
+        for fname, fcontent in tokens.items():
+            with open(os.path.join(tdir, fname), 'w') as fh:
+                fh.write(fcontent)
+        print(f'Tokens entpackt: {list(tokens.keys())}')
         return True
     except Exception as e:
         print(f'Token-Setup fehlgeschlagen: {e}')
+        print(f'  blob-Laenge: {len(blob)} Zeichen')
         return False
 
 def main():
