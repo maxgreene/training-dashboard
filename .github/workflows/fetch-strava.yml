@@ -73,8 +73,15 @@ jobs:
         if: steps.strava_token.outputs.access_token != ''
         run: python3 scripts/analyze_activities.py
 
+      - name: Install Garmin deps
+        run: pip install garth
+
+      - name: Fetch Garmin Health
+        run: python3 scripts/fetch_garmin.py
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+
       - name: Commit data
-        if: steps.strava_token.outputs.access_token != ''
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
