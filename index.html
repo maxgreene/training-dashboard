@@ -499,14 +499,28 @@ function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstr
 // ── ADAPTIVE PLAN: passt zukuenftige Tage der laufenden Woche an die Form an ──
 // Gibt {newType,newTitle,reason,protected} zurueck oder null (keine Anpassung)
 function adaptDay(d, weekIdx, week){
+  // Eigene Datums-Helfer (dateObj/isDone sind lokal in renderPlan)
+  const _dateObj=(ds)=>{
+    if(!ds) return null;
+    const[dd,mm]=ds.split('.');
+    const x=new Date(2026,parseInt(mm)-1,parseInt(dd)); x.setHours(0,0,0,0); return x;
+  };
+  const _now=new Date(); _now.setHours(0,0,0,0);
+  const _isDone=(day)=>{
+    if(day.done) return true;
+    const dt2=_dateObj(day.date);
+    if(!dt2||dt2>=_now) return false;
+    const key='2026-'+(day.date.split('.')[1])+'-'+(day.date.split('.')[0]);
+    return allActivities.some(a=>a.date===key);
+  };
   // Nur zukuenftige, nicht erledigte Tage anpassen
-  const dt=dateObj(d.date);
-  const now=new Date(); now.setHours(0,0,0,0);
+  const dt=_dateObj(d.date);
+  const now=_now;
   if(!dt||dt<now) return null;          // Vergangenheit: nie anpassen
-  if(isDone(d)) return null;
+  if(_isDone(d)) return null;
 
   // Nur die laufende Woche + ist es ueberhaupt eine harte Einheit?
-  const weekDates=week.days.map(x=>dateObj(x.date)).filter(Boolean);
+  const weekDates=week.days.map(x=>_dateObj(x.date)).filter(Boolean);
   const wkStart=weekDates[0], wkEnd=weekDates[weekDates.length-1];
   const inThisWeek = wkStart&&wkEnd&&now>=wkStart&&now<=wkEnd;
   // laufende Woche ODER naechste 7 Tage
