@@ -496,6 +496,58 @@ function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstr
 
 // ── PLAN ──
 // -- PLAN --
+// ── ADAPTIVE PLAN: passt zukuenftige Tage der laufenden Woche an die Form an ──
+// Gibt {newType,newTitle,reason,protected} zurueck oder null (keine Anpassung)
+function adaptDay(d, weekIdx, week){
+  // Nur zukuenftige, nicht erledigte Tage anpassen
+  const dt=dateObj(d.date);
+  const now=new Date(); now.setHours(0,0,0,0);
+  if(!dt||dt<now) return null;          // Vergangenheit: nie anpassen
+  if(isDone(d)) return null;
+
+  // Nur die laufende Woche + ist es ueberhaupt eine harte Einheit?
+  const weekDates=week.days.map(x=>dateObj(x.date)).filter(Boolean);
+  const wkStart=weekDates[0], wkEnd=weekDates[weekDates.length-1];
+  const inThisWeek = wkStart&&wkEnd&&now>=wkStart&&now<=wkEnd;
+  // laufende Woche ODER naechste 7 Tage
+  const daysAhead=Math.round((dt-now)/86400000);
+  if(daysAhead>7) return null;
+
+  // Taper-Schutz: geschuetzte Einheiten nie abschwaechen
+  if(d.protected||week.protected) return null;
+  // Schluessel-/Ziel-Einheiten in Event-Phasen schuetzen
+  if(week.phase&&/TAPER|ZIEL|EVENT|BB2026|EYECYLE/i.test(week.phase)) {
+    return {protected:true};
+  }
+
+  // Nur harte Einheiten kommen fuer Abschwaechung infrage
+  const hardTypes=['roll','test'];          // Intervalle/Tests
+  const isHard=hardTypes.includes(d.type)|| /intervall|vo2|threshold|sweetspot|ftp|rampe|test/i.test((d.title||'')+(d.desc||''));
+  if(!isHard) return null;                    // Z2/Commute/Rest: nie nach unten
+
+  // Readiness fuer DIESEN Tag (heute-basiert, da Garmin nur bis heute reicht)
+  const todayISO=new Date().toISOString().slice(0,10);
+  let r=null;
+  if(typeof readinessFor==='function' && allHealth.length){
+    r=readinessFor(todayISO);
+    if(!r.h && allHealth[0]) r=readinessFor(allHealth[0].date);
+  }
+  if(!r) return null;
+
+  // Asymmetrisch: nur hart -> leicht, nie hoch
+  if(r.light==='red'){
+    return {newType:'aus', newTitle:'Z2 locker (angepasst)',
+            reason:`Form rot: ${r.msg.toLowerCase()}`, downgraded:true};
+  }
+  if(r.light==='yellow'){
+    return {keepType:true, dosisHint:'Intensität −5–10% · ein Intervall weniger',
+            reason:`Form gelb: ${r.msg.toLowerCase()}`, softened:true};
+  }
+  // gruen: Plan bleibt, optionaler Push-Hinweis
+  return {keepType:true, dosisHint:'Form gut · oberes Ende der Vorgabe möglich',
+          reason:'Form grün', boosted:true};
+}
+
 function renderPlan(){
   const el=document.getElementById('page-plan');
   if(!el)return;
@@ -613,6 +665,26 @@ function renderPlan(){
         }
       }
 
+      // ── Adaptive Anpassung (nur zukuenftige harte Einheiten) ──
+      let adaptBadge='', adaptNote='';
+      if(!showActual){
+        const ad=adaptDay(d, 0, week);
+        if(ad){
+          if(ad.protected){
+            adaptBadge='<span style="font-size:8px;font-weight:700;color:#a78bfa;border:1px solid #a78bfa55;border-radius:3px;padding:1px 4px;margin-left:6px">GESCHÜTZT</span>';
+          } else if(ad.downgraded){
+            title=ad.newTitle;
+            sub=`<span style="text-decoration:line-through;opacity:.5">${d.title}</span> · ${ad.reason}`;
+            adaptBadge='<span style="font-size:8px;font-weight:700;color:#ef4444;border:1px solid #ef444455;border-radius:3px;padding:1px 4px;margin-left:6px">ANGEPASST</span>';
+          } else if(ad.softened){
+            adaptNote=`<div style="font-size:10px;color:#fbbf24;margin-top:2px">⚠ ${ad.dosisHint} · ${ad.reason}</div>`;
+            adaptBadge='<span style="font-size:8px;font-weight:700;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 4px;margin-left:6px">±</span>';
+          } else if(ad.boosted){
+            adaptNote=`<div style="font-size:10px;color:#34d399;margin-top:2px">↑ ${ad.dosisHint}</div>`;
+          }
+        }
+      }
+
       h+=`<div class="${cls}" onclick="togglePlanDet(this)">`;
       h+=`<div class="pday-badge ${bc}"><div class="pday-dow">${dow}</div><div class="pday-num">${num}</div></div>`;
       h+=`<div class="pday-check">${done?'<span style="color:#5a8a52">✓</span>':isToday?'<span style="color:#5a8a52">→</span>':''}</div>`;
@@ -621,7 +693,7 @@ function renderPlan(){
       const typeTag=TYPE_TAGS[d.type||"rest"]||"-";
       const typeColor=TYPE_COLORS[d.type||"rest"]||"#555";
       h+=`<div style="width:38px;flex-shrink:0;margin-right:8px;text-align:center;font-size:9px;font-weight:700;color:${typeColor};text-transform:uppercase;letter-spacing:.5px">${typeTag}</div>`;
-      h+=`<div class="pday-text"><div class="pday-title">${title}</div>${sub?`<div class="pday-sub">${sub}</div>`:''}</div>`;
+      h+=`<div class="pday-text"><div class="pday-title">${title}${adaptBadge}</div>${sub?`<div class="pday-sub">${sub}</div>`:''}${adaptNote}</div>`;
 
       const hasRight=rightEf||rightTss||rightZs;
       if(hasRight){
