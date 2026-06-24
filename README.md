@@ -1,4 +1,4 @@
 # Training Dashboard · Wolf
 
-Automatisches Cycling-Dashboard mit Strava-Integration.
+Automatisches Cycling-Dashboard aus Daten von Strava, Wahoo und Garmin.
 
