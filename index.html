@@ -250,6 +250,7 @@ canvas.chart{width:100%;display:block;}
   <div class="nav-tabs">
     <button class="tab active" onclick="showPage('plan',this)">Plan</button>
     <button class="tab" onclick="showPage('rides',this)">Rides</button>
+    <button class="tab" onclick="showPage('health',this)">Form</button>
   </div>
   <div class="nav-meta" id="updated-at"></div>
 </nav>
@@ -275,6 +276,26 @@ canvas.chart{width:100%;display:block;}
     <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
     <div class="act-list" id="activity-list"></div>
   </div>
+<div class="page" id="page-health">
+  <div id="health-banner"></div>
+  <div id="ff-chart-wrap" style="margin:16px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.04em">FITNESS / FATIGUE / FORM</span>
+      <span style="display:flex;gap:12px;font-size:10px;color:var(--color-text-secondary)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#60a5fa;display:inline-block"></span>Fitness (CTL)</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#f97316;display:inline-block"></span>Fatigue (ATL)</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#34d399;display:inline-block"></span>Form (TSB)</span>
+      </span>
+    </div>
+    <div style="position:relative;width:100%;height:240px"><canvas id="ff-chart"></canvas></div>
+  </div>
+  <div id="hrv-chart-wrap" style="margin:16px 0">
+    <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.04em;margin-bottom:6px">HRV &amp; RUHE-HERZFREQUENZ</div>
+    <div style="position:relative;width:100%;height:180px"><canvas id="hrv-chart"></canvas></div>
+  </div>
+  <div class="sh"><div class="sh-title">Tageswerte</div><div class="sh-line"></div></div>
+  <div class="act-list" id="health-list"></div>
+</div>
 </main>
 
 <script>
@@ -301,7 +322,7 @@ const CONFIG = {
   },
 };
 // ═══════════════════════════════════════════════════════════
-let allActivities=[],selectedRideId=null;
+let allActivities=[],selectedRideId=null,allHealth=[];
 
 const PLAN_WEEKS=[
   {lbl:"WOCHE 1",dates:"04.–10. Mai",vol:"7.7h",
@@ -448,7 +469,7 @@ function showPage(name,btn){
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
   requestAnimationFrame(()=>{
-    if(name==='rides'){
+    if(name==='rides'||name==='health'){
       window.scrollTo({top:0,behavior:'smooth'});
     } else if(name==='plan'){
       // Scroll to the week card containing today (or last done day)
@@ -1273,7 +1294,22 @@ function renderTodayBanner(){
   const typeColors={comm:'#555',roll:'#60a5fa',aus:'#34d399',test:'#fbbf24',check:'#a78bfa',rest:'#333',goal:'#ef4444'};
   const accent = typeColors[todayDay.type]||'#555';
 
-  wrap.innerHTML=`<div class="today-banner ${status}" style="border-left-color:${accent}">
+  // Kombi-Score aus Garmin + TSB (falls Daten da), sonst ATL-Fallback
+  const todayISO=new Date().toISOString().slice(0,10);
+  let ampelDot=status, ampelText=`<strong>${statusLabel}</strong> — ${statusDetail}`, ampelMeta=`ATL ${atl.toFixed(0)}`;
+  if(typeof readinessFor==='function' && allHealth.length && Object.keys(loadModel).length){
+    let r=readinessFor(todayISO);
+    if(!r.h && allHealth[0]) r=readinessFor(allHealth[0].date);
+    const map={green:'fresh',yellow:'normal',red:'tired'};
+    ampelDot=map[r.light]||'normal';
+    ampelText=`<strong>${r.msg}</strong>`;
+    const bits=[];
+    if(r.tsb!=null) bits.push(`Form ${r.tsb>0?'+':''}${r.tsb.toFixed(0)}`);
+    if(r.garminParts&&r.garminParts.length) bits.push(...r.garminParts);
+    ampelMeta=bits.join(' · ');
+  }
+
+  wrap.innerHTML=`<div class="today-banner ${ampelDot}" style="border-left-color:${accent}">
     <div class="tb-row1">
       <span class="tb-date">Heute · ${dow} ${todayStr.slice(0,5)}</span>
       <span class="tb-title">${todayDay.title}</span>
@@ -1281,9 +1317,9 @@ function renderTodayBanner(){
     <div class="tb-desc">${todayDay.desc}</div>
     <div class="tb-det">${todayDay.det}</div>
     <div class="tb-status">
-      <div class="tb-dot ${status}"></div>
-      <span class="tb-status-text"><strong>${statusLabel}</strong> — ${statusDetail}</span>
-      <span class="tb-tss">ATL ${atl.toFixed(0)}</span>
+      <div class="tb-dot ${ampelDot}"></div>
+      <span class="tb-status-text">${ampelText}</span>
+      <span class="tb-tss">${ampelMeta}</span>
     </div>
   </div>`;
 }
@@ -1302,15 +1338,212 @@ async function loadData(){
     if(window.Chart) renderEFChart();
     renderPlan();
     renderTodayBanner();
+    // Garmin health data (separate file, non-blocking)
+    try{
+      const hr2=await fetch('data/health.json?_='+Date.now());
+      const hdata=await hr2.json();
+      allHealth=hdata.days||[];
+      computeLoadModel();
+      renderHealthBanner();
+      renderHealthList();
+      if(window.Chart){ renderFFChart(); renderHrvChart(); }
+      renderTodayBanner();
+    }catch(e){ console.log('health.json noch nicht da'); }
   }catch(e){
     document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
   }
+}
+
+// ── LOAD MODEL: CTL/ATL/TSB aus TSS + Kombi-Score mit Garmin ──
+let loadModel={};  // date -> {ctl,atl,tsb,tss}
+function dayTSSfor(dateStr){
+  let tss=0;
+  allActivities.filter(a=>a.date===dateStr&&!a.hidden).forEach(a=>{
+    const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
+    if(!np) return;
+    if(kj&&avgW&&avgW>0) tss+=kj*100000*np*np/(avgW*FTP*FTP*3600);
+    else {const dur=a.elapsed_sec||a.duration_sec||0;tss+=dur*np*(np/FTP)/(FTP*3600)*100;}
+  });
+  return tss;
+}
+function computeLoadModel(){
+  // Build daily TSS series from plan start to today
+  const start=new Date('2026-05-04'), today=new Date();
+  const days=[];
+  for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
+    const ds=d.toISOString().slice(0,10);
+    days.push({date:ds,tss:dayTSSfor(ds)});
+  }
+  // Exponentially weighted: CTL tau=42, ATL tau=7
+  let ctl=0,atl=0;
+  const kC=1-Math.exp(-1/42), kA=1-Math.exp(-1/7);
+  loadModel={};
+  days.forEach(day=>{
+    ctl=ctl+kC*(day.tss-ctl);
+    atl=atl+kA*(day.tss-atl);
+    loadModel[day.date]={ctl,atl,tsb:ctl-atl,tss:day.tss};
+  });
+}
+// Kombi-Score: TSB (Form) + Garmin-Erholung -> Ampel
+function readinessFor(dateStr){
+  const lm=loadModel[dateStr];
+  const h=allHealth.find(x=>x.date===dateStr);
+  const tsb=lm?lm.tsb:null;
+  // Garmin-Komponente: HRV vs 30T-Baseline + Schlaf letzte Nacht
+  let garminScore=0, garminParts=[];
+  if(h){
+    const hrvVals=allHealth.map(x=>x.hrv).filter(Boolean);
+    const hrvBase=hrvVals.length?hrvVals.reduce((s,v)=>s+v,0)/hrvVals.length:null;
+    if(h.hrv&&hrvBase){
+      const dev=(h.hrv-hrvBase)/hrvBase;
+      if(dev>0.05) garminScore+=1; else if(dev<-0.08) garminScore-=1;
+      garminParts.push(`HRV ${h.hrv}${dev<-0.08?' ↓':dev>0.05?' ↑':''}`);
+    }
+    if(h.sleep_h!=null){
+      if(h.sleep_h>=7.5) garminScore+=1; else if(h.sleep_h<6) garminScore-=1;
+      garminParts.push(`${h.sleep_h}h Schlaf`);
+    }
+  }
+  // TSB-Komponente
+  let tsbScore=0;
+  if(tsb!=null){
+    if(tsb>5) tsbScore+=1; else if(tsb<-20) tsbScore-=1;
+  }
+  const total=garminScore+tsbScore;
+  let light,msg;
+  if(total>=2){light='green';msg='Frisch — Vollgas möglich';}
+  else if(total<=-2){light='red';msg='Erschöpft — heute erholen';}
+  else if(total<=-1){light='yellow';msg='Leicht müde — locker halten';}
+  else {light='green';msg='Bereit — normales Training';}
+  return {light,msg,tsb,garminParts,h};
 }
 
 renderPlan();
 renderTodayBanner();
 loadData();
 setInterval(loadData,5*60*1000);
+// ── HEALTH PAGE RENDERERS ──
+function renderHealthBanner(){
+  const el=document.getElementById('health-banner');
+  if(!el) return;
+  const today=new Date().toISOString().slice(0,10);
+  // Nimm heutigen oder letzten verfügbaren Readiness
+  let r=readinessFor(today);
+  if(!r.h){
+    const last=allHealth[0];
+    if(last) r=readinessFor(last.date);
+  }
+  const colors={green:'#34d399',yellow:'#fbbf24',red:'#ef4444'};
+  const c=colors[r.light]||'#888';
+  const lm=loadModel[today]||loadModel[Object.keys(loadModel).pop()]||{};
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--color-background-secondary);border-radius:10px;border-left:4px solid ${c}">
+      <div style="width:14px;height:14px;border-radius:50%;background:${c};flex-shrink:0;box-shadow:0 0 12px ${c}88"></div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:600;color:var(--color-text-primary)">${r.msg}</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px">
+          Form (TSB) ${lm.tsb!=null?(lm.tsb>0?'+':'')+lm.tsb.toFixed(0):'—'}
+          ${r.garminParts&&r.garminParts.length?' · '+r.garminParts.join(' · '):''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderFFChart(){
+  if(!window.Chart) return;
+  const dates=Object.keys(loadModel).sort();
+  if(!dates.length) return;
+  const t0=new Date('2026-05-04').getTime();
+  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
+  const ctl=dates.map(d=>({x:dayOf(d),y:+loadModel[d].ctl.toFixed(1)}));
+  const atl=dates.map(d=>({x:dayOf(d),y:+loadModel[d].atl.toFixed(1)}));
+  const tsb=dates.map(d=>({x:dayOf(d),y:+loadModel[d].tsb.toFixed(1)}));
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
+  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  const ticks={};
+  for(let w=0;w<=10;w++){const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
+    ticks[w*7]=(d.getDate()+'').padStart(2,'0')+'.'+((d.getMonth()+1)+'').padStart(2,'0')+'.';}
+  const ex=Chart.getChart('ff-chart');if(ex)ex.destroy();
+  new Chart(document.getElementById('ff-chart'),{
+    type:'line',
+    data:{datasets:[
+      {label:'Fitness',data:ctl,borderColor:'#60a5fa',backgroundColor:'#60a5fa22',borderWidth:2,pointRadius:0,fill:true,tension:.3},
+      {label:'Fatigue',data:atl,borderColor:'#f97316',borderWidth:1.5,pointRadius:0,fill:false,tension:.3},
+      {label:'Form',data:tsb,borderColor:'#34d399',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,3]},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
+        title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
+        label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(0)}`}}},
+      scales:{
+        x:{type:'linear',min:0,max:dayOf(dates[dates.length-1])+2,
+          ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
+        y:{ticks:{color:cT,font:{size:9}},grid:{color:cG}}}
+    }
+  });
+}
+
+function renderHrvChart(){
+  if(!window.Chart||!allHealth.length) return;
+  const t0=new Date('2026-05-04').getTime();
+  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
+  const rows=[...allHealth].filter(h=>h.hrv||h.resting_hr).sort((a,b)=>a.date.localeCompare(b.date));
+  const hrv=rows.filter(h=>h.hrv).map(h=>({x:dayOf(h.date),y:h.hrv}));
+  const rhr=rows.filter(h=>h.resting_hr).map(h=>({x:dayOf(h.date),y:h.resting_hr}));
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
+  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  const ticks={};
+  for(let w=0;w<=10;w++){const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
+    ticks[w*7]=(d.getDate()+'').padStart(2,'0')+'.'+((d.getMonth()+1)+'').padStart(2,'0')+'.';}
+  const ex=Chart.getChart('hrv-chart');if(ex)ex.destroy();
+  new Chart(document.getElementById('hrv-chart'),{
+    type:'line',
+    data:{datasets:[
+      {label:'HRV',data:hrv,borderColor:'#a78bfa',borderWidth:2,pointRadius:2,fill:false,tension:.3,yAxisID:'y'},
+      {label:'Ruhe-HR',data:rhr,borderColor:'#ef4444',borderWidth:1.5,pointRadius:2,fill:false,tension:.3,yAxisID:'y1'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
+        title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
+        label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}`}}},
+      scales:{
+        x:{type:'linear',min:0,max:dayOf(rows[rows.length-1].date)+2,
+          ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
+        y:{position:'left',ticks:{color:'#a78bfa',font:{size:9}},grid:{color:cG},title:{display:true,text:'HRV',color:'#a78bfa',font:{size:9}}},
+        y1:{position:'right',ticks:{color:'#ef4444',font:{size:9}},grid:{display:false},title:{display:true,text:'Ruhe-HR',color:'#ef4444',font:{size:9}}}}
+    }
+  });
+}
+
+function renderHealthList(){
+  const el=document.getElementById('health-list');
+  if(!el) return;
+  const colors={green:'#34d399',yellow:'#fbbf24',red:'#ef4444'};
+  el.innerHTML=allHealth.map(h=>{
+    const r=readinessFor(h.date);
+    const c=colors[r.light]||'#888';
+    const dt=new Date(h.date);
+    const dstr=dt.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+    const lm=loadModel[h.date];
+    const sleepCol=h.sleep_h>=7.5?'#34d399':h.sleep_h<6?'#ef4444':'var(--color-text-secondary)';
+    return `<div class="act-item" style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--color-border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div>
+      <div style="width:96px;font-size:12px;color:var(--color-text-secondary)">${dstr}</div>
+      <div style="flex:1;display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+        <span title="HRV">HRV <b style="color:var(--color-text-primary)">${h.hrv||'—'}</b></span>
+        <span title="Ruhe-HR">RHR <b style="color:var(--color-text-primary)">${h.resting_hr||'—'}</b></span>
+        <span title="Schlaf">Schlaf <b style="color:${sleepCol}">${h.sleep_h!=null?h.sleep_h+'h':'—'}</b></span>
+        <span title="Sleep Score">SS <b style="color:var(--color-text-primary)">${h.sleep_score||'—'}</b></span>
+        <span title="Stress">Stress <b style="color:var(--color-text-primary)">${h.stress_avg||'—'}</b></span>
+        <span title="Body Battery">BB <b style="color:var(--color-text-primary)">${h.bb_low||'—'}–${h.bb_high||'—'}</b></span>
+        ${lm?`<span title="Form/TSB">TSB <b style="color:${lm.tsb>0?'#34d399':'#f97316'}">${lm.tsb>0?'+':''}${lm.tsb.toFixed(0)}</b></span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderEFChart(){
   if(!window.Chart) return;
   const C=CONFIG.efTrend;
@@ -1393,6 +1626,6 @@ function renderEFChart(){
 }
 
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="renderEFChart()"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="renderEFChart();if(allHealth.length){renderFFChart();renderHrvChart();}"></script>
 </body>
 </html>
