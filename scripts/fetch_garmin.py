@@ -6,7 +6,8 @@ Nutzt gespeicherte Tokens aus dem GitHub Secret GARMIN_TOKENS (base64).
 import os, json, base64, sys
 from datetime import date, timedelta
 
-DAYS_BACK = 30          # wie viele Tage rueckwirkend holen
+PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
+REFRESH_TAIL = 3            # die letzten N Tage immer neu holen (Sync-Nachlauf)
 HEALTH_FILE = 'data/health.json'
 
 def setup_tokens():
@@ -61,10 +62,22 @@ def main():
             pass
 
     today = date.today()
+    # Welche Tage muessen geholt werden?
+    # - Alle Tage von PLAN_START bis heute, die noch NICHT in existing sind
+    # - PLUS die letzten REFRESH_TAIL Tage (immer neu, da Garmin spaet synct)
+    plan_start = date.fromisoformat(PLAN_START)
+    span_days = (today - plan_start).days + 1
+    tail_dates = {(today - timedelta(days=i)).isoformat() for i in range(REFRESH_TAIL)}
+    to_fetch = []
+    for i in range(span_days):
+        ds = (today - timedelta(days=i)).isoformat()
+        if ds not in existing or ds in tail_dates:
+            to_fetch.append(ds)
+    print(f'Zu holen: {len(to_fetch)} Tage (von {len(existing)} bereits vorhanden, '
+          f'Spanne seit {PLAN_START})')
+
     fetched = 0
-    for i in range(DAYS_BACK):
-        d = today - timedelta(days=i)
-        ds = d.isoformat()
+    for ds in to_fetch:
         day = existing.get(ds, {'date': ds})
         try:
             # HRV (nightly)
