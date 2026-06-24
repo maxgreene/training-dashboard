@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-24T06:45:34.247939+00:00",
+  "updated_at": "2026-06-24T07:00:54.611474+00:00",
   "analysis_version": 10,
   "athlete": {
     "id": 13589996,
@@ -490,7 +490,7 @@
     },
     {
       "id": 19040836155,
-      "name": "Night Ride",
+      "name": "Rampe DNF",
       "date": "2026-06-23",
       "start_time": "22:13",
       "type": "VirtualRide",
