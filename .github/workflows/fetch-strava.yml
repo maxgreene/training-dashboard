@@ -77,9 +77,16 @@ jobs:
         run: pip install garth
 
       - name: Fetch Garmin Health
+        id: garmin
         run: python3 scripts/fetch_garmin.py
         env:
           GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+
+      - name: Update Garmin Token Secret
+        if: steps.garmin.outputs.garmin_tokens != ''
+        run: gh secret set GARMIN_TOKENS --body "${{ steps.garmin.outputs.garmin_tokens }}"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Commit data
         run: |
