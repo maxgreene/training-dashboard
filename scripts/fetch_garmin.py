@@ -47,6 +47,13 @@ def main():
     try:
         garth.resume(os.path.expanduser('~/.garth'))
         print('Garmin-Tokens geladen')
+        # Access-Token bei Bedarf erneuern (Refresh-Token gueltig bis ~1 Jahr)
+        try:
+            # Ein beliebiger API-Call triggert intern Auto-Refresh wenn noetig
+            garth.client.username
+            print('Token-Refresh OK')
+        except Exception as re:
+            print(f'Token-Refresh-Versuch: {re}')
     except Exception as e:
         print(f'Token-Resume fehlgeschlagen: {e}')
         return
@@ -127,6 +134,26 @@ def main():
     with open(HEALTH_FILE, 'w') as f:
         json.dump(out, f, indent=2)
     print(f'Garmin: {fetched} Tage aktualisiert, {len(days)} gesamt')
+
+    # Erneuerte Tokens zurueck-exportieren (fuer Secret-Update im Workflow)
+    try:
+        tdir = os.path.expanduser('~/.garth')
+        garth.client.dump(tdir)
+        tokens = {}
+        for fname in os.listdir(tdir):
+            fp = os.path.join(tdir, fname)
+            if os.path.isfile(fp):
+                with open(fp) as fh:
+                    tokens[fname] = fh.read()
+        blob = base64.b64encode(json.dumps(tokens).encode()).decode()
+        # In GITHUB_OUTPUT schreiben, damit der Workflow das Secret updaten kann
+        gh_out = os.environ.get('GITHUB_OUTPUT')
+        if gh_out:
+            with open(gh_out, 'a') as fh:
+                fh.write(f'garmin_tokens={blob}\n')
+            print('Erneuerte Tokens exportiert (fuer Secret-Update)')
+    except Exception as e:
+        print(f'Token-Export uebersprungen: {e}')
 
     # Letzte 5 Tage zur Kontrolle
     for d in days[:5]:
