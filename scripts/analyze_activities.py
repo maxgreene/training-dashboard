@@ -6,9 +6,9 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 10
+ANALYSIS_VERSION = 11
 FTP   = 237
-HRMAX = 175
+HRMAX = 173
 
 def normalized_power(watts, window=30):
     # Coggan standard: rolling average over ALL data (incl. zeros for coasting/descending)
