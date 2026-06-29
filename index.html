@@ -320,6 +320,17 @@ const CONFIG = {
     minDurMin:    15,     // Einheiten kürzer werden nicht gezeigt (min)
     showTrend:    true,   // Trendlinie an/aus
   },
+  scatter: {
+    cleanByDefault:  true,   // Start im "stabil"-Modus (true) oder "roh" (false)
+    minRideMin:      45,     // Filter nur ab dieser Fahrtdauer anbieten (min)
+    minWatt:         60,     // Punkte unter dieser Leistung raus (Coasting)
+    minHR:           90,     // Punkte unter dieser HR raus
+    minCad:          40,     // Trittfrequenz-Minimum (Coasting raus)
+    windowSec:       30,     // Zeitfenster für Stabilitätsprüfung (s)
+    powerCoV:        0.12,   // max. Variationskoeffizient der Leistung im Fenster
+    hrDriftMax:      6,      // max. HR-Änderung im Fenster (bpm)
+    showTrend:       true,   // Regressionsgerade einzeichnen
+  },
 };
 // ═══════════════════════════════════════════════════════════
 let allActivities=[],selectedRideId=null,allHealth=[];
@@ -1175,56 +1186,99 @@ async function loadAndDrawAnalysis(act){
   }
 
   if(scWrap&&scatter.length){
+    const SC=CONFIG.scatter;
+    const rideMin=(an.duration_sec||0)/60;
+    const canFilter=rideMin>=SC.minRideMin;
+    // Stabilitaetsfilter: nur quasi-stationaere Phasen
+    function filterStable(pts){
+      if(!canFilter) return pts;
+      const out=[];
+      for(let i=0;i<pts.length;i++){
+        const p=pts[i];
+        if(p.w<SC.minWatt||p.hr<SC.minHR||(p.cad!=null&&p.cad<SC.minCad)) continue;
+        // Fenster: alle Punkte innerhalb windowSec vor p
+        const win=[];
+        for(let j=i;j>=0;j--){
+          if(p.t-pts[j].t>SC.windowSec) break;
+          win.push(pts[j]);
+        }
+        if(win.length<3) continue;
+        const ws=win.map(x=>x.w);
+        const mean=ws.reduce((s,x)=>s+x,0)/ws.length;
+        const sd=Math.sqrt(ws.reduce((s,x)=>s+(x-mean)**2,0)/ws.length);
+        if(mean>0&&sd/mean>SC.powerCoV) continue;       // Leistung instabil
+        const hs=win.map(x=>x.hr);
+        if(Math.abs(hs[0]-hs[hs.length-1])>SC.hrDriftMax) continue; // HR nicht eingeschwungen
+        out.push(p);
+      }
+      return out;
+    }
+    // Toggle-State pro Ride (default aus CONFIG)
+    if(window.__scatterClean===undefined) window.__scatterClean=SC.cleanByDefault;
+    const useClean=canFilter&&window.__scatterClean;
+    const shownPts=useClean?filterStable(scatter):scatter.filter(p=>p.w>=SC.minWatt&&p.hr>=SC.minHR);
+
+    // Toggle-Button (nur wenn Filtern moeglich)
+    if(canFilter){
+      const existing=scWrap.parentElement.querySelector('.sc-toggle');
+      if(!existing){
+        const btn=document.createElement('button');
+        btn.className='sc-toggle';
+        btn.style.cssText='position:absolute;top:6px;right:8px;z-index:5;font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid var(--color-border);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer';
+        btn.textContent=window.__scatterClean?'● stabil':'○ roh';
+        btn.onclick=(e)=>{e.stopPropagation();window.__scatterClean=!window.__scatterClean;const act=allActivities.find(a=>a.id===selectedRideId);if(act)loadAndDrawAnalysis(act);};
+        scWrap.parentElement.style.position='relative';
+        scWrap.parentElement.appendChild(btn);
+      }
+    }
+
     drawInWrap(scWrap,(ctx,W,H)=>{
       const pL=38,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      // Fixed axes for cross-ride comparison
-      const minW=50, maxW=400;
-      const minH=80, maxH=175;
-      // Zone boundaries
-      const wZones=[144,180,216,252]; // Z2,Z3,Z4,Z5 starts
-      const hZones=[Math.round(175*0.68),Math.round(175*0.83),Math.round(175*0.88),Math.round(175*0.95)]; // 119,145,154,166
+      const minW=50, maxW=400, minH=80, maxH=175;
+      const wZones=[144,180,216,252];
       function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
       function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-      // Grid
-      // Background grid
       ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
       [100,150,200,250,300,350,400].forEach(w=>{ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();});
       [90,100,110,120,130,140,150,160,170].forEach(h=>{ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();});
-      // Power zone vertical lines
       const zCols=['#34d399','#60a5fa','#fbbf24','#f97316'];
       wZones.forEach((w,i)=>{
-        ctx.strokeStyle=zCols[i].replace(')',',0.25)').replace('rgb','rgba')||'rgba(255,255,255,0.1)';
-        ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.setLineDash([3,4]);
+        ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();ctx.setLineDash([]);
         ctx.fillStyle=zCols[i];ctx.font='8px monospace';ctx.textAlign='center';
         ctx.fillText('Z'+(i+2),xOf(w)+12,pT+9);
       });
-      // HR zone horizontal lines
-      hZones.forEach((h,i)=>{
-        ctx.strokeStyle=zCols[i].replace(')',',0.2)').replace('rgb','rgba')||'rgba(255,255,255,0.08)';
-        ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();
-        ctx.setLineDash([]);
-      });
-      // Points
-      const tMin=scatter[0].t,tMax=scatter[scatter.length-1].t;
-      scatter.forEach(p=>{
+      // Punkte
+      const tMin=shownPts.length?shownPts[0].t:0,tMax=shownPts.length?shownPts[shownPts.length-1].t:1;
+      shownPts.forEach(p=>{
         if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
         const tf=(p.t-tMin)/Math.max(1,tMax-tMin);
         const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
-        ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),2.5,0,Math.PI*2);
-        ctx.fillStyle='rgba('+r+','+g+','+b+',0.7)';ctx.fill();
+        ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),useClean?3:2.5,0,Math.PI*2);
+        ctx.fillStyle='rgba('+r+','+g+','+b+','+(useClean?0.8:0.6)+')';ctx.fill();
       });
-      // Labels
+      // Regressionsgerade (nur im stabil-Modus)
+      if(useClean&&SC.showTrend&&shownPts.length>=5){
+        const n=shownPts.length;
+        const sx=shownPts.reduce((s,p)=>s+p.hr,0),sy=shownPts.reduce((s,p)=>s+p.w,0);
+        const sxy=shownPts.reduce((s,p)=>s+p.hr*p.w,0),sx2=shownPts.reduce((s,p)=>s+p.hr*p.hr,0);
+        const m=(n*sxy-sx*sy)/(n*sx2-sx*sx),b=(sy-m*sx)/n;
+        const r2=Math.pow(n*sxy-sx*sy,2)/((n*sx2-sx*sx)*(n*shownPts.reduce((s,p)=>s+p.w*p.w,0)-sy*sy));
+        const hrs=shownPts.map(p=>p.hr),h1=Math.min(...hrs),h2=Math.max(...hrs);
+        ctx.strokeStyle='rgba(52,211,153,0.8)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(xOf(m*h1+b),yOf(h1));ctx.lineTo(xOf(m*h2+b),yOf(h2));ctx.stroke();
+        ctx.fillStyle='rgba(52,211,153,0.9)';ctx.font='9px monospace';ctx.textAlign='left';
+        ctx.fillText('R²='+r2.toFixed(2),pL+4,pT+cH-4);
+      }
+      // Achsen
       ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
       [80,100,120,140,160,175].forEach(h=>ctx.fillText(h,pL-3,yOf(h)+3));
       ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
       [100,150,200,250,300,350,400].forEach(w=>ctx.fillText(w+'W',xOf(w),H-pB+14));
-      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';
-      ctx.fillText('HR vs Watt',pL+4,pT+12);
-      ctx.fillStyle='rgba(100,100,100,0.5)';
-      ctx.fillText('blau=früh, orange=spät',pL+4,pT+22);
+      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.textAlign='left';
+      ctx.fillText(useClean?'HR vs Watt · stabile Phasen ('+shownPts.length+')':'HR vs Watt · roh',pL+4,pT+12);
+      if(!useClean){ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('blau=früh, orange=spät',pL+4,pT+22);}
+      else if(!canFilter){ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('zu kurz für Filter',pL+4,pT+22);}
       ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
       ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
     });
