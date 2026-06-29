@@ -1575,18 +1575,28 @@ function renderHrvChart(){
   const t0=new Date('2026-05-04').getTime();
   const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
   const rows=[...allHealth].filter(h=>h.hrv||h.resting_hr).sort((a,b)=>a.date.localeCompare(b.date));
-  const hrv=rows.filter(h=>h.hrv).map(h=>({x:dayOf(h.date),y:h.hrv}));
-  const rhr=rows.filter(h=>h.resting_hr).map(h=>({x:dayOf(h.date),y:h.resting_hr}));
-  // Lineare Regression fuer Trendlinie
-  function fit(pts){
-    const n=pts.length; if(n<2) return null;
-    const sx=pts.reduce((s,p)=>s+p.x,0),sy=pts.reduce((s,p)=>s+p.y,0);
-    const sxy=pts.reduce((s,p)=>s+p.x*p.y,0),sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
-    const m=(n*sxy-sx*sy)/(n*sx2-sx*sx),b=(sy-m*sx)/n;
-    const x0=pts[0].x,x1=pts[pts.length-1].x;
-    return [{x:x0,y:+(m*x0+b).toFixed(2)},{x:x1,y:+(m*x1+b).toFixed(2)}];
+  const hrvPts=rows.filter(h=>h.hrv).map(h=>({x:dayOf(h.date),y:h.hrv}));
+  const rhrPts=rows.filter(h=>h.resting_hr).map(h=>({x:dayOf(h.date),y:h.resting_hr}));
+  // EWMA + Band (Standardabweichung der EWMA-Residuen, exp. gewichtet)
+  function ewmaBand(pts, alpha){
+    if(!pts.length) return {line:[],upper:[],lower:[]};
+    let e=pts[0].y, v=0;
+    const line=[],upper=[],lower=[];
+    pts.forEach((p,i)=>{
+      const prev=e;
+      e=e+alpha*(p.y-e);
+      // exp. gewichtete Varianz der Abweichung
+      const dev=p.y-prev;
+      v=(1-alpha)*(v+alpha*dev*dev);
+      const sd=Math.sqrt(v);
+      line.push({x:p.x,y:+e.toFixed(2)});
+      upper.push({x:p.x,y:+(e+sd).toFixed(2)});
+      lower.push({x:p.x,y:+(e-sd).toFixed(2)});
+    });
+    return {line,upper,lower};
   }
-  const hrvTrend=fit(hrv), rhrTrend=fit(rhr);
+  const hrvE=ewmaBand(hrvPts,0.1);
+  const rhrE=ewmaBand(rhrPts,0.1);
   const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
   const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
   const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
@@ -1595,17 +1605,27 @@ function renderHrvChart(){
     ticks[w*7]=(d.getDate()+'').padStart(2,'0')+'.'+((d.getMonth()+1)+'').padStart(2,'0')+'.';}
   const ex=Chart.getChart('hrv-chart');if(ex)ex.destroy();
   const ds=[
-    {label:'HRV',type:'scatter',data:hrv,backgroundColor:'#a78bfa',pointRadius:2.5,yAxisID:'y'},
-    {label:'Ruhe-HR',type:'scatter',data:rhr,backgroundColor:'#ef4444',pointRadius:2.5,yAxisID:'y1'},
+    // HRV Band (linke Achse)
+    {label:'_hrvU',type:'line',data:hrvE.upper,borderColor:'transparent',backgroundColor:'rgba(167,139,250,0.13)',pointRadius:0,fill:'+1',tension:.4,yAxisID:'y',order:6},
+    {label:'_hrvL',type:'line',data:hrvE.lower,borderColor:'transparent',pointRadius:0,fill:false,tension:.4,yAxisID:'y',order:6},
+    // RHR Band (rechte Achse)
+    {label:'_rhrU',type:'line',data:rhrE.upper,borderColor:'transparent',backgroundColor:'rgba(239,68,68,0.10)',pointRadius:0,fill:'+1',tension:.4,yAxisID:'y1',order:6},
+    {label:'_rhrL',type:'line',data:rhrE.lower,borderColor:'transparent',pointRadius:0,fill:false,tension:.4,yAxisID:'y1',order:6},
+    // EWMA Linien
+    {label:'HRV',type:'line',data:hrvE.line,borderColor:'#a78bfa',borderWidth:2.5,pointRadius:0,fill:false,tension:.4,yAxisID:'y',order:1},
+    {label:'Ruhe-HR',type:'line',data:rhrE.line,borderColor:'#ef4444',borderWidth:2.5,pointRadius:0,fill:false,tension:.4,yAxisID:'y1',order:2},
+    // Tageswerte als Punkte
+    {label:'_hrvP',type:'scatter',data:hrvPts,backgroundColor:'rgba(167,139,250,0.5)',pointRadius:2,yAxisID:'y',order:3},
+    {label:'_rhrP',type:'scatter',data:rhrPts,backgroundColor:'rgba(239,68,68,0.5)',pointRadius:2,yAxisID:'y1',order:4},
   ];
-  if(hrvTrend) ds.push({label:'HRV Trend',type:'line',data:hrvTrend,borderColor:'#a78bfa',borderWidth:2,pointRadius:0,fill:false,yAxisID:'y'});
-  if(rhrTrend) ds.push({label:'RHR Trend',type:'line',data:rhrTrend,borderColor:'#ef4444',borderWidth:2,borderDash:[5,3],pointRadius:0,fill:false,yAxisID:'y1'});
   new Chart(document.getElementById('hrv-chart'),{
     data:{datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{
-        title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
-        label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}`}}},
+      plugins:{legend:{display:false},tooltip:{
+        filter:i=>i.dataset.label==='HRV'||i.dataset.label==='Ruhe-HR',
+        callbacks:{
+          title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
+          label:ctx=>`${ctx.dataset.label} (Trend): ${ctx.parsed.y.toFixed(1)}`}}},
       scales:{
         x:{type:'linear',min:0,max:dayOf(rows[rows.length-1].date)+2,
           ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
