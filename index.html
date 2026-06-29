@@ -1642,24 +1642,37 @@ function renderHealthList(){
   const el=document.getElementById('health-list');
   if(!el) return;
   const colors={green:'#34d399',yellow:'#fbbf24',red:'#ef4444'};
+  // Ampel-Balken (wie zstrip bei Rides): zeigt Readiness-Verlauf-Segment
+  function lightStrip(light, parts){
+    const c=colors[light]||'#888';
+    return `<div class="zstrip" style="display:flex;gap:2px;height:5px;margin-top:8px;border-radius:3px;overflow:hidden">
+      <div style="flex:1;background:${c}"></div>
+    </div>`;
+  }
   el.innerHTML=allHealth.map(h=>{
     const r=readinessFor(h.date);
     const c=colors[r.light]||'#888';
-    const dt=new Date(h.date);
-    const dstr=dt.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
     const lm=loadModel[h.date];
-    const sleepCol=h.sleep_h>=7.5?'#34d399':h.sleep_h<6?'#ef4444':'var(--color-text-secondary)';
-    return `<div class="act-item" style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--color-border)">
-      <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div>
-      <div style="width:96px;font-size:12px;color:var(--color-text-secondary)">${dstr}</div>
-      <div style="flex:1;display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
-        <span title="HRV">HRV <b style="color:var(--color-text-primary)">${h.hrv||'—'}</b></span>
-        <span title="Ruhe-HR">RHR <b style="color:var(--color-text-primary)">${h.resting_hr||'—'}</b></span>
-        <span title="Schlaf">Schlaf <b style="color:${sleepCol}">${h.sleep_h!=null?h.sleep_h+'h':'—'}</b></span>
-        <span title="Sleep Score">SS <b style="color:var(--color-text-primary)">${h.sleep_score||'—'}</b></span>
-        <span title="Stress">Stress <b style="color:var(--color-text-primary)">${h.stress_avg||'—'}</b></span>
-        <span title="Body Battery">BB <b style="color:var(--color-text-primary)">${h.bb_low||'—'}–${h.bb_high||'—'}</b></span>
-        ${lm?`<span title="Form/TSB">TSB <b style="color:${lm.tsb>0?'#34d399':'#f97316'}">${lm.tsb>0?'+':''}${lm.tsb.toFixed(0)}</b></span>`:''}
+    const sleepCol=h.sleep_h>=7.5?'#34d399':h.sleep_h<6?'#ef4444':'';
+    const dimSleep=sleepCol?` style="color:${sleepCol}"`:'';
+    return `<div class="act-item">
+      <div class="act-row">
+        <div class="act-main">
+          <div class="act-date">${fmtDate(h.date)}</div>
+          <div class="act-name">${r.msg}</div>
+          <div class="act-metrics">
+            <div class="am">HRV <b>${h.hrv||'—'}</b></div>
+            <div class="asep">·</div>
+            <div class="am">RHR <b>${h.resting_hr||'—'}</b><span class="u"> bpm</span></div>
+            <div class="asep">·</div>
+            <div class="am"${dimSleep}>Schlaf <b>${h.sleep_h!=null?h.sleep_h:'—'}</b><span class="u"> h</span></div>
+            ${h.sleep_score?`<div class="asep">·</div><div class="am">SS <b>${h.sleep_score}</b></div>`:''}
+            ${h.stress_avg!=null?`<div class="asep">·</div><div class="am">Stress <b>${h.stress_avg}</b></div>`:''}
+            ${(h.bb_low!=null||h.bb_high!=null)?`<div class="asep">·</div><div class="am">BB <b>${h.bb_low||'—'}–${h.bb_high||'—'}</b></div>`:''}
+            ${lm?`<div class="asep">·</div><div class="am">TSB <b style="color:${lm.tsb>0?'#34d399':'#f97316'}">${lm.tsb>0?'+':''}${lm.tsb.toFixed(0)}</b></div>`:''}
+          </div>
+        </div>
+        ${lightStrip(r.light)}
       </div>
     </div>`;
   }).join('');
