@@ -1554,9 +1554,9 @@ function renderFFChart(){
   new Chart(document.getElementById('ff-chart'),{
     type:'line',
     data:{datasets:[
-      {label:'Fitness',data:ctl,borderColor:'#60a5fa',backgroundColor:'#60a5fa22',borderWidth:2,pointRadius:0,fill:true,tension:.3},
-      {label:'Fatigue',data:atl,borderColor:'#f97316',borderWidth:1.5,pointRadius:0,fill:false,tension:.3},
-      {label:'Form',data:tsb,borderColor:'#34d399',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,3]},
+      {label:'Fitness',data:ctl,borderColor:'#60a5fa',backgroundColor:'#60a5fa22',borderWidth:2,pointRadius:0,fill:true,tension:.3,yAxisID:'y'},
+      {label:'Fatigue',data:atl,borderColor:'#f97316',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,yAxisID:'y'},
+      {label:'Form',data:tsb,borderColor:'#34d399',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,3],yAxisID:'y1'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
@@ -1565,7 +1565,10 @@ function renderFFChart(){
       scales:{
         x:{type:'linear',min:0,max:dayOf(dates[dates.length-1])+2,
           ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
-        y:{ticks:{color:cT,font:{size:9}},grid:{color:cG}}}
+        y:{position:'left',ticks:{color:cT,font:{size:9}},grid:{color:cG},
+          title:{display:true,text:'Fitness / Fatigue',color:cT,font:{size:9}}},
+        y1:{position:'right',ticks:{color:'#34d399',font:{size:9}},grid:{display:false},
+          title:{display:true,text:'Form (TSB)',color:'#34d399',font:{size:9}}}}
     }
   });
 }
