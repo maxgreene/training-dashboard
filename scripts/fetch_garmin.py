@@ -7,7 +7,7 @@ import os, json, base64, sys
 from datetime import date, timedelta
 
 PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
-REFRESH_TAIL = 3            # die letzten N Tage immer neu holen (Sync-Nachlauf)
+REFRESH_TAIL = 5            # die letzten N Tage immer neu holen (Sync-Nachlauf)
 HEALTH_FILE = 'data/health.json'
 
 def setup_tokens():
