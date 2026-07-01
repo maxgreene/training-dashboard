@@ -168,15 +168,18 @@ def fetch_wahoo_workouts(token):
                 return round(float(v), 1) if v is not None else None
             s = w.get('workout_summary') or {}
             fit_url = (s.get('file') or {}).get('url')
-            # Local time from starts (UTC)
-            starts_raw = w.get('starts','')
+            # Startzeit robust aus starts ODER started_at (Summary) parsen,
+            # von UTC nach Europe/Berlin umrechnen (sonst 00:00 / falsche Zeit).
+            starts_raw = w.get('starts','') or (s.get('started_at','') if isinstance(s,dict) else '')
+            local_date, local_hm = _parse_local(starts_raw, starts)
+            print(f'    starts_raw={starts_raw!r} -> {local_date} {local_hm}')
             acts.append({
                 '_wahoo':       True,
                 'id':           f"wahoo_{w['id']}",
                 'wahoo_id':     w['id'],
                 'name':         w.get('name') or 'Wahoo Ride',
-                'date':         starts,
-                'start_time':   starts_raw[11:16],
+                'date':         local_date,
+                'start_time':   local_hm,
                 'type':         'Ride',
                 'duration_sec': int(float(s.get('duration_active_accum') or w.get('minutes',0)*60 or 0)),
                 'elapsed_sec':  int(float(s.get('duration_total_accum')  or w.get('minutes',0)*60 or 0)),
@@ -371,6 +374,31 @@ def process_activity(act, force_fetch=False):
         result['avg_speed_kmh'] = round(result['distance_m'] / moving_sec * 3.6, 1)
     # hr_zones + decoupling ebenfalls durch analyze (nicht hier doppelt rechnen)
     return result
+
+
+def _parse_local(ts_raw, fallback_date):
+    """Wahoo-Timestamp (UTC ISO) -> (lokales Datum, 'HH:MM') in Europe/Berlin.
+    Robust gegen fehlende Zeit / abweichende Formate. Fallback: Datum + '00:00'."""
+    from datetime import datetime, timezone, timedelta
+    if not ts_raw:
+        return fallback_date, '00:00'
+    s = ts_raw.strip().replace('Z', '+00:00')
+    # Wenn kein Zeit-Anteil vorhanden ist (kein 'T' oder Doppelpunkt), nur Datum
+    if 'T' not in s and ':' not in s:
+        return (ts_raw[:10] or fallback_date), '00:00'
+    try:
+        dt = datetime.fromisoformat(s)
+    except Exception:
+        return (ts_raw[:10] or fallback_date), '00:00'
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    # Europe/Berlin: Sommerzeit (CEST) = UTC+2 zwischen Ende Maerz und Ende Oktober.
+    # Ohne zoneinfo-Abhaengigkeit: einfache DST-Naeherung fuer Rad-Saison.
+    month = dt.month
+    offset = 2 if 3 <= month <= 10 else 1   # grobe DST-Naeherung, fuer Anzeige ausreichend
+    local = dt + timedelta(hours=offset)
+    return local.strftime('%Y-%m-%d'), local.strftime('%H:%M')
+
 
 def main():
     existing = {}
