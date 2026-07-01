@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # fetch_activities.py
-import os, json, urllib.request
+import os, json, urllib.request, urllib.error
 from datetime import datetime, timezone
 
 TOKEN = os.environ['STRAVA_ACCESS_TOKEN']
@@ -10,6 +10,85 @@ STREAMS_DIR = 'data/streams'
 ANALYSIS_VERSION = 10
 PLAN_START_DATE  = '2026-05-04'
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
+
+
+# ── FIT-Datei Parsing (fuer Wahoo-Streams) ──────────────────────────────────
+def parse_fit_streams(fit_url):
+    """Laedt eine FIT-Datei und extrahiert Streams im Strava-Format."""
+    try:
+        import fitparse
+    except ImportError:
+        print('    fitparse nicht installiert')
+        return None
+    try:
+        raw = urllib.request.urlopen(fit_url, timeout=60).read()
+    except Exception as e:
+        print(f'    FIT-Download fehlgeschlagen: {e}')
+        return None
+    try:
+        import io
+        fit = fitparse.FitFile(io.BytesIO(raw))
+        recs = list(fit.get_messages('record'))
+    except Exception as e:
+        print(f'    FIT-Parse fehlgeschlagen: {e}')
+        return None
+    if not recs:
+        return None
+
+    time, latlng, distance, altitude = [], [], [], []
+    heartrate, cadence, watts, velocity, grade, moving = [], [], [], [], [], []
+    t0 = None
+    prev_dist = 0
+    for r in recs:
+        v = {d.name: d.value for d in r}
+        ts = v.get('timestamp')
+        if ts is None:
+            continue
+        if t0 is None:
+            t0 = ts
+        time.append(int((ts - t0).total_seconds()))
+        lat = v.get('position_lat'); lon = v.get('position_long')
+        if lat is not None and lon is not None:
+            # FIT speichert als semicircles
+            latlng.append([lat * (180/2**31), lon * (180/2**31)])
+        else:
+            latlng.append(None)
+        dist = v.get('distance')
+        distance.append(round(float(dist), 1) if dist is not None else (distance[-1] if distance else 0.0))
+        alt = v.get('enhanced_altitude', v.get('altitude'))
+        altitude.append(round(float(alt), 1) if alt is not None else (altitude[-1] if altitude else 0.0))
+        hr = v.get('heart_rate')
+        heartrate.append(int(hr) if hr is not None else (heartrate[-1] if heartrate else 0))
+        cad = v.get('cadence')
+        cadence.append(int(cad) if cad is not None else 0)
+        pw = v.get('power')
+        watts.append(int(pw) if pw is not None else 0)
+        spd = v.get('enhanced_speed', v.get('speed'))
+        velocity.append(round(float(spd), 3) if spd is not None else 0.0)
+        grade.append(round(float(v.get('grade')), 1) if v.get('grade') is not None else 0.0)
+
+    # moving-Stream aus Geschwindigkeit ableiten (>0.5 m/s = in Bewegung)
+    moving = [bool(s and s > 0.5) for s in velocity]
+    # latlng-Luecken auffuellen (letzte gueltige Position)
+    last_ll = None
+    for i in range(len(latlng)):
+        if latlng[i] is None:
+            latlng[i] = last_ll
+        else:
+            last_ll = latlng[i]
+    latlng = [ll for ll in latlng if ll is not None] if any(latlng) else []
+
+    streams = {
+        'time': time, 'distance': distance, 'altitude': altitude,
+        'heartrate': heartrate, 'cadence': cadence, 'watts': watts,
+        'velocity_smooth': velocity, 'grade_smooth': grade, 'moving': moving,
+    }
+    if latlng and len(latlng) == len(time):
+        streams['latlng'] = latlng
+    has_pw = any(w > 0 for w in watts)
+    has_hr = any(h > 0 for h in heartrate)
+    print(f'    FIT: {len(time)} Punkte, Power={has_pw}, HR={has_hr}')
+    return streams
 
 # ── WAHOO API ──────────────────────────────────────────────────────────────
 WAHOO_CLIENT_ID     = 'Dyxm-b7rOkV4VZtxrba512mnIhx70WqlzW4xSoEadQQ'
@@ -199,11 +278,43 @@ def stream_path(aid):
     return os.path.join(STREAMS_DIR, str(aid) + '.json')
 
 def process_activity(act, force_fetch=False):
-    # Wahoo-only activities: use summary data, no streams available
+    # Wahoo activities: parse FIT file for full streams
     if act.get('_wahoo'):
         aid = act['id']
-        print(f'  Processing {aid}: {act.get("name","")} (Wahoo-only, no streams)')
-        return act  # already has all fields from fetch_wahoo_workouts()
+        spath = stream_path(aid)
+        # Cached streams?
+        if os.path.exists(spath) and not force_fetch:
+            print(f'  Processing {aid}: {act.get("name","")} (Wahoo, cached streams)')
+            with open(spath) as f:
+                streams = json.load(f).get('streams', {})
+        else:
+            fit_url = act.get('_fit_url')
+            if not fit_url:
+                print(f'  Processing {aid}: {act.get("name","")} (Wahoo, keine FIT-URL)')
+                return act
+            print(f'  Processing {aid}: {act.get("name","")} (Wahoo, lade FIT...)')
+            streams = parse_fit_streams(fit_url)
+            if not streams or not streams.get('time'):
+                print(f'    Keine Streams — nutze nur Summary')
+                return act
+            # Streams speichern
+            os.makedirs(STREAMS_DIR, exist_ok=True)
+            with open(spath, 'w') as f:
+                json.dump({'streams': streams}, f)
+        # Aus Streams die Detailwerte ableiten (max power/hr, gps)
+        pw = streams.get('watts', [])
+        hr = streams.get('heartrate', [])
+        ll = streams.get('latlng', [])
+        if pw:
+            act['max_power'] = max(pw) if pw else None
+            act['has_power'] = any(w > 0 for w in pw)
+        if hr:
+            act['max_hr'] = max(hr) if hr else None
+            act['has_hr'] = any(h > 0 for h in hr)
+        if ll:
+            act['has_latlng'] = True
+            act['gps_ok'] = True
+        return act
 
     aid = act['id']
     print('  Processing ' + str(aid) + ': ' + act['name'])
@@ -315,8 +426,17 @@ def main():
     CYCLING_TYPES = {'Ride','GravelRide','MountainBikeRide','VirtualRide','EBikeRide','Cycling','Handcycle','Velomobile','BMX'}
     strava_acts = []
     page = 1
+    strava_ok = True
     while True:
-        batch = api(f'/athlete/activities?per_page=100&after={PLAN_START_EPOCH}&page={page}')
+        try:
+            batch = api(f'/athlete/activities?per_page=100&after={PLAN_START_EPOCH}&page={page}')
+        except urllib.error.HTTPError as e:
+            if e.code == 403:
+                print('  ⚠ Strava 403 — API-Zugang gesperrt (Abo-Pflicht seit 30.06.2026).')
+                print('  → Fahre fort mit Wahoo + vorhandenen Daten.')
+                strava_ok = False
+                break
+            raise
         if not batch:
             break
         strava_acts.extend(batch)
@@ -325,7 +445,7 @@ def main():
             break
         page += 1
     cycling = [a for a in strava_acts if a.get('sport_type') in CYCLING_TYPES or a.get('type') == 'Ride']
-    print(f"Fetched {len(strava_acts)} total, {len(cycling)} cycling")
+    print(f"Fetched {len(strava_acts)} total, {len(cycling)} cycling (Strava {'OK' if strava_ok else 'GESPERRT'})")
 
     # Recover activities whose stream files exist but are missing from API response
     # Reconstruct directly from stream files — no Strava API needed
