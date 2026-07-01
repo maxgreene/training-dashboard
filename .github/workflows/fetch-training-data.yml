@@ -16,6 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install garth fitparse
+
       - name: Refresh Wahoo Token
         id: wahoo_token
         run: |
@@ -31,6 +39,7 @@ jobs:
 
       - name: Update Wahoo Refresh Token
         if: env.WAHOO_NEW_REFRESH != ''
+        continue-on-error: true
         run: gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -43,17 +52,16 @@ jobs:
       - name: Analyze Activities
         run: python3 scripts/analyze_activities.py
 
-      - name: Install Garmin deps
-        run: pip install garth fitparse
-
       - name: Fetch Garmin Health
         id: garmin
+        continue-on-error: true
         run: python3 scripts/fetch_garmin.py
         env:
           GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
 
       - name: Update Garmin Token Secret
         if: steps.garmin.outputs.garmin_tokens != ''
+        continue-on-error: true
         run: gh secret set GARMIN_TOKENS --body "${{ steps.garmin.outputs.garmin_tokens }}"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -63,6 +71,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
-          git diff --staged --quiet || git commit -m "update training data $(date -u +%Y-%m-%dT%H:%M)"
-          git pull --rebase -X ours origin main
-          git push
+          if git diff --staged --quiet; then
+            echo "Keine Aenderungen zu committen"
+          else
+            git commit -m "update training data $(date -u +%Y-%m-%dT%H:%M)"
+            git pull --rebase -X ours origin main || git rebase --abort
+            git push || (git pull --rebase -X ours origin main && git push)
+          fi
