@@ -178,6 +178,18 @@ def analyze(aid, streams, act):
     return res
 
 
+def _writeback(act, res):
+    """Schreibt die berechneten Kennzahlen aus der Analyse zurueck ins activities.json."""
+    if res.get('np') is not None:     act['np']=res['np']
+    if res.get('power_curve'):        act['power_curve']=res['power_curve']
+    if res.get('power_zones'):        act['power_zones']=res['power_zones']
+    if res.get('hr_zones'):           act['hr_zones']=res['hr_zones']
+    if res.get('cadence_avg') is not None: act['avg_cadence']=res['cadence_avg']
+    d=res.get('decoupling') or {}
+    if d:
+        act['decoupling_pct']=d.get('drift_pct')
+        act['ef_gesamt']=d.get('ef_gesamt')
+
 def main():
     if not os.path.exists(DATA_FILE):
         print('No activities.json'); return
@@ -190,9 +202,13 @@ def main():
         sf=os.path.join(STREAMS_DIR, str(aid)+'.json')
         af=os.path.join(ANALYSIS_DIR, str(aid)+'.json')
         if not os.path.exists(sf): continue
+        # Wenn die Analyse schon aktuell ist: NICHT neu rechnen, aber die Werte
+        # trotzdem ins activities.json zurueckschreiben (fetch koennte sie geleert haben).
         if os.path.exists(af):
             with open(af) as f: ex=json.load(f)
-            if ex.get('analysis_version')==ANALYSIS_VERSION: continue
+            if ex.get('analysis_version')==ANALYSIS_VERSION:
+                _writeback(act, ex)
+                continue
         name=act.get('name',''); dur=round(act.get('duration_sec',0)/60)
         print('  ' + name + ' ' + act.get('date','') + ' ' + str(dur) + 'min')
         with open(sf) as f: streams=json.load(f).get('streams',{})
@@ -205,15 +221,8 @@ def main():
         res=analyze(aid, streams, act)
         if not res: continue
         with open(af,'w') as f: json.dump(res,f)
-        if res.get('np'):          act['np']=res['np']
-        if res.get('power_curve'): act['power_curve']=res['power_curve']
-        if res.get('power_zones'): act['power_zones']=res['power_zones']
-        if res.get('hr_zones'):    act['hr_zones']=res['hr_zones']
-        if res.get('cadence_avg'): act['avg_cadence']=res['cadence_avg']
+        _writeback(act, res)
         d=res.get('decoupling') or {}
-        if d:
-            act['decoupling_pct']=d['drift_pct']
-            act['ef_gesamt']=d['ef_gesamt']
         nc=len(res['chart'].get('time',[]))
         ne=len(res.get('ef_series',[]))
         nclimb=len(res.get('climbs',[]))
