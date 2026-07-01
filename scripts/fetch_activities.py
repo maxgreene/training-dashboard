@@ -7,7 +7,7 @@ TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt 
 HEADERS = {'Authorization': 'Bearer ' + TOKEN} if TOKEN else {}
 DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
-ANALYSIS_VERSION = 10
+ANALYSIS_VERSION = 11
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
 
@@ -211,7 +211,7 @@ def fetch_wahoo_workouts(token):
 
 STREAM_KEYS = ['time','latlng','distance','altitude','heartrate','cadence','watts','velocity_smooth','grade_smooth','moving']
 FTP   = 237
-HRMAX = 175
+HRMAX = 173
 
 def api(path):
     req = urllib.request.Request('https://www.strava.com/api/v3' + path, headers=HEADERS)
@@ -227,54 +227,6 @@ def fetch_streams(aid):
     except Exception as e:
         print('  Stream error: ' + str(e))
         return {}
-
-def normalized_power(watts):
-    if len(watts) < 30: return None
-    rolling = []
-    for i in range(len(watts) - 30):
-        avg = sum(watts[i:i+30]) / 30
-        rolling.append(avg ** 4)
-    return round((sum(rolling) / len(rolling)) ** 0.25)
-
-def power_curve(watts):
-    result = {}
-    for d in [5, 10, 30, 60, 120, 300, 600, 1200]:
-        if len(watts) >= d:
-            best = max(sum(watts[i:i+d]) / d for i in range(len(watts) - d))
-            result[str(d)] = round(best)
-    return result
-
-def hr_zones(hr_list):
-    bounds = [0, 0.68, 0.83, 0.88, 0.95, 1.0]
-    zones = [0] * 5
-    for h in hr_list:
-        for z in range(4, -1, -1):
-            if h >= bounds[z] * HRMAX:
-                zones[z] += 1
-                break
-    total = len(hr_list) or 1
-    return [round(z / total * 100, 1) for z in zones]
-
-def power_zones(pw_list):
-    bounds = [0, 0.55, 0.75, 0.87, 1.05, 999]
-    zones = [0] * 5
-    for p in pw_list:
-        for z in range(4, -1, -1):
-            if p >= bounds[z] * FTP:
-                zones[z] += 1
-                break
-    total = len(pw_list) or 1
-    return [round(z / total * 100, 1) for z in zones]
-
-def decoupling(pw, hr):
-    pairs = [(w, h) for w, h in zip(pw, hr) if w > 20 and h > 60]
-    if len(pairs) < 60: return None
-    half = len(pairs) // 2
-    p1, h1 = zip(*pairs[:half])
-    p2, h2 = zip(*pairs[half:])
-    r1 = (sum(h1)/len(h1)) / (sum(p1)/len(p1))
-    r2 = (sum(h2)/len(h2)) / (sum(p2)/len(p2))
-    return round((r2 - r1) / r1 * 100, 1)
 
 def mini_chart(streams, n=80):
     ts  = streams.get('time', [])
@@ -382,10 +334,10 @@ def process_activity(act, force_fetch=False):
         'power_duration_sec': len(pw) if pw else None,
         'streams': mini_chart(streams),
     }
-    if pw:
-        result['np'] = normalized_power(pw)
-        result['power_curve'] = power_curve(pw)
-        result['power_zones'] = power_zones(pw)
+    # Abgeleitete Kennzahlen (NP, power_curve, zones, decoupling) berechnet
+    # ausschliesslich analyze_activities.py — das ist die einzige Quelle der Wahrheit.
+    # fetch schreibt nur Rohdaten + Metadaten. Die Felder bleiben als Platzhalter (None/leer)
+    # und werden direkt danach von analyze befuellt (laeuft im selben Workflow-Schritt danach).
     # ── Zeitberechnung: bewegte Zeit vs. Gesamtzeit sauber trennen ──
     # Strava cappt High-Res-Streams bei ~10000 Punkten, daher ist die
     # Sample-Anzahl NICHT die Sekundenzahl. Wir nutzen echte Zeitstempel.
@@ -417,10 +369,7 @@ def process_activity(act, force_fetch=False):
     # Avg speed aus bewegter Zeit (Standard-Konvention)
     if result.get('distance_m') and moving_sec:
         result['avg_speed_kmh'] = round(result['distance_m'] / moving_sec * 3.6, 1)
-    if hr:
-        result['hr_zones'] = hr_zones(hr)
-    if pw and hr:
-        result['decoupling_pct'] = decoupling(pw, hr)
+    # hr_zones + decoupling ebenfalls durch analyze (nicht hier doppelt rechnen)
     return result
 
 def main():
