@@ -1,5 +1,10 @@
 # Verifizierte Fakten (Stand 2026-07-01, direkt gegen Live-Repo geprüft)
 
+> HINWEIS: Sensible Details (IDs, Athletenprofil, Gesundheit, Standort) sind
+> in einer separaten PRIVAT.md ausgelagert, die NICHT im öffentlichen Repo
+> liegt. Für vollständigen Kontext diese Datei separat anfordern/anhängen.
+
+
 > Diese Fakten wurden am 1.7.2026 direkt gegen das Live-Repo verifiziert
 > (via curl auf raw.githubusercontent.com). Sie sind der harte Grundstock für
 > die ARCHITECTURE.md — NICHT neu erarbeiten, nur einordnen und mit Details/
@@ -56,7 +61,7 @@ Die Workflow-Datei heißt aktuell `fetch-training-data.yml` (früher `fetch-stra
 
 ## Datenquellen — VERIFIZIERT
 
-- **Wahoo** (Hauptquelle ab 1.7.2026): user_id 1989354. FIT-Parsing via fitparse.
+- **Wahoo** (Hauptquelle ab 1.7.2026): user_id <siehe PRIVAT.md>. FIT-Parsing via fitparse.
   Validiert gegen Strava: NP/avgW/HR aufs Watt identisch (10 Fahrten verglichen,
   max Δ: NP 0W, avgW 0.2W, HR 0.1bpm). Refresh-Token ROTIERT bei jedem Refresh.
   Token-Limit lösen: www.wahooligan.com/profile → "Revoke Access".
@@ -95,7 +100,7 @@ aus dem Fenster rutscht.
 
 ## Spezialfälle / Fixes — VERIFIZIERT (nicht entfernen!)
 
-- **4iiii-Kalibrierung**: aid in (18719827047, 18717251723) → watts × 1.247
+- **4iiii-Kalibrierung**: aid in (<zwei IDs, siehe PRIVAT.md>) → watts × 1.247
   (30.5.2026, 4iiii las ~20% zu niedrig, verifiziert vs Ingos Stages + EF-Methode).
 - **NAME_FIXES** in fetch: Wahoo-Auto-Titel dürfen spezifische Namen nie
   überschreiben (z.B. ClassicCrew, id 19093792211). Am Ende von fetch angewandt.
@@ -112,12 +117,9 @@ auch von cron-job.org genutzt), STRAVA_* (ungenutzt, löschbar).
 
 ## Athletenprofil
 
-Wolf Harmening, 48J, 81kg, 181cm. FTP-Anzeige 237W (real ~250-260 laut
-HR-Power-Scatter, Anhebung ausstehend). HRmax 173 (war 175; einziger echter
-Max-Test 174 am 21.5.). Ruhe-HR 42-43, HRV ~38-40. Prädiabetes, FreeStyle
-Libre 3 CGM. Geräte: Wahoo ELEMNT Bolt/ROAM, Tacx Trainer, 4iiii PM (links),
-Garmin Forerunner 245. Ziele: BB2026 (Bergwochenende 10.-12.7.), EyeCyle 2026
-(90km Charity, 14.7.).
+Siehe PRIVAT.md (Alter, Gewicht, Größe, Geräte, Gesundheit,
+physiologische Werte, Ziele). Nicht im öffentlichen Repo.
+
 
 ## NOCH ZU DOKUMENTIEREN (aus Transcripts holen — hier fehlt Detail!)
 
@@ -141,7 +143,7 @@ und Begründungen stehen dort:
 
 ## Datenquellen — VERIFIZIERT
 
-- **Wahoo** (Hauptquelle ab 1.7.2026): user_id 1989354. FIT-Parsing via fitparse.
+- **Wahoo** (Hauptquelle ab 1.7.2026): user_id <siehe PRIVAT.md>. FIT-Parsing via fitparse.
   Validiert gegen Strava: NP/avgW/HR aufs Watt identisch (10 Fahrten verglichen,
   max Δ: NP 0W, avgW 0.2W, HR 0.1bpm). Refresh-Token ROTIERT bei jedem Refresh.
   Token-Limit lösen: www.wahooligan.com/profile → "Revoke Access".
@@ -152,7 +154,7 @@ und Begründungen stehen dort:
 
 ## Spezialfälle / Fixes — VERIFIZIERT (nicht entfernen!)
 
-- **4iiii-Kalibrierung**: aid in (18719827047, 18717251723) → watts × 1.247
+- **4iiii-Kalibrierung**: aid in (<zwei IDs, siehe PRIVAT.md>) → watts × 1.247
   (30.5.2026, 4iiii las ~20% zu niedrig, verifiziert vs Ingos Stages + EF-Methode).
 - **NAME_FIXES** in fetch: Wahoo-Auto-Titel dürfen spezifische Namen nie
   überschreiben (z.B. ClassicCrew, id 19093792211). Am Ende von fetch angewandt.
@@ -169,12 +171,9 @@ auch von cron-job.org genutzt), STRAVA_* (ungenutzt, löschbar).
 
 ## Athletenprofil
 
-Wolf Harmening, 48J, 81kg, 181cm. FTP-Anzeige 237W (real ~250-260 laut
-HR-Power-Scatter, Anhebung ausstehend). HRmax 173 (war 175; einziger echter
-Max-Test 174 am 21.5.). Ruhe-HR 42-43, HRV ~38-40. Prädiabetes, FreeStyle
-Libre 3 CGM. Geräte: Wahoo ELEMNT Bolt/ROAM, Tacx Trainer, 4iiii PM (links),
-Garmin Forerunner 245. Ziele: BB2026 (Bergwochenende 10.-12.7.), EyeCyle 2026
-(90km Charity, 14.7.).
+Siehe PRIVAT.md (Alter, Gewicht, Größe, Geräte, Gesundheit,
+physiologische Werte, Ziele). Nicht im öffentlichen Repo.
+
 
 ## NOCH ZU DOKUMENTIEREN (aus Transcripts holen — hier fehlt Detail!)
 
