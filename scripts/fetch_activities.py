@@ -9,6 +9,7 @@ DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
 ANALYSIS_VERSION = 10
 PLAN_START_DATE  = '2026-05-04'
+WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 
 
@@ -138,8 +139,8 @@ def fetch_wahoo_workouts(token):
         for w in items:
             wt = (w.get('workout_type') or {}).get('name', '').lower().replace(' ', '_')
             starts = w.get('starts', '')[:10]
-            # Filter by date (don't early-return — Wahoo order may vary)
-            if starts < PLAN_START_DATE:
+            # Nur Fahrten ab dem Wahoo-Stichtag (davor liefern Strava-Streams die Daten)
+            if starts < WAHOO_START_DATE:
                 continue
             # Filter: name-based since workout_type is unreliable
             # workout_type_id: 0=cycling, others=running/strength/etc.
@@ -192,6 +193,11 @@ def fetch_wahoo_workouts(token):
                 'streams':      {},
                 '_fit_url':     fit_url,
             })
+        # Wahoo liefert neueste zuerst: wenn die ganze Seite vor Plan-Start liegt, stoppen
+        page_dates = [w.get('starts','')[:10] for w in items]
+        if page_dates and max(page_dates) < WAHOO_START_DATE:
+            print(f'  Seite komplett vor Wahoo-Stichtag ({WAHOO_START_DATE}) — stoppe Pagination')
+            break
         if len(items) < 100:
             break
         page += 1
@@ -282,22 +288,22 @@ def process_activity(act, force_fetch=False):
     if act.get('_wahoo'):
         aid = act['id']
         spath = stream_path(aid)
-        # Cached streams?
-        if os.path.exists(spath) and not force_fetch:
-            print(f'  Processing {aid}: {act.get("name","")} (Wahoo, cached streams)')
+        # FREEZE-SCHUTZ: bestehende Stream-Datei wird NIEMALS ueberschrieben.
+        # Vergangenheit bleibt eingefroren, nur wirklich neue Fahrten laden FIT.
+        if os.path.exists(spath):
+            print(f'  {aid}: {act.get("name","")} (Streams eingefroren, kein Reload)')
             with open(spath) as f:
                 streams = json.load(f).get('streams', {})
         else:
             fit_url = act.get('_fit_url')
             if not fit_url:
-                print(f'  Processing {aid}: {act.get("name","")} (Wahoo, keine FIT-URL)')
+                print(f'  {aid}: {act.get("name","")} (Wahoo, keine FIT-URL)')
                 return act
-            print(f'  Processing {aid}: {act.get("name","")} (Wahoo, lade FIT...)')
+            print(f'  {aid}: {act.get("name","")} (NEU, lade FIT...)')
             streams = parse_fit_streams(fit_url)
             if not streams or not streams.get('time'):
                 print(f'    Keine Streams — nutze nur Summary')
                 return act
-            # Streams speichern
             os.makedirs(STREAMS_DIR, exist_ok=True)
             with open(spath, 'w') as f:
                 json.dump({'streams': streams}, f)
@@ -516,13 +522,16 @@ def main():
         if wahoo_token:
             wahoo_acts = fetch_wahoo_workouts(wahoo_token)
             print(f'Wahoo: {len(wahoo_acts)} cycling workouts since plan start')
-            strava_dates = {a.get('start_date_local','')[:10] for a in cycling}
+            existing_ids = set(existing.keys())
             for wa in wahoo_acts:
-                if wa['date'] not in strava_dates:
+                # Wahoo-Fahrt hinzufuegen wenn ihre ID noch nicht bekannt ist.
+                # Dedup nach Datum macht mark_duplicates spaeter (reichere Version gewinnt).
+                if wa['id'] not in existing_ids:
                     cycling.append({**wa,
                         'start_date_local': wa['date'] + 'T' + wa['start_time'] + ':00',
                     })
-                    print(f"  + Wahoo-only: {wa['date']} {wa['name']}")
+            new_wahoo = sum(1 for wa in wahoo_acts if wa['id'] not in existing_ids)
+            print(f"  Wahoo: {new_wahoo} neue Fahrten zum Verarbeiten (FIT-Streams)")
     except Exception as e:
         print(f'  Wahoo skipped: {e}')
 
