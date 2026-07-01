@@ -119,6 +119,10 @@ def main():
         except Exception:
             pass
 
+        # DIAGNOSE-LOG: zeigt was die API pro Tag geliefert hat (fuer Debug)
+        _got = [k for k in ('hrv','resting_hr','sleep_h','stress_avg','bb_high') if day.get(k) is not None]
+        print(f'    {ds}: {_got if _got else "LEER (API gibt nichts zurueck)"}')
+
         # Nur speichern wenn mind. ein Wert da ist
         if any(k in day for k in ('resting_hr','hrv','sleep_h','stress_avg')):
             existing[ds] = day
