@@ -1,5 +1,10 @@
 # Training Dashboard — Vollständige Architektur & Projekt-Historie
 
+> HINWEIS: Sensible Details (IDs, Athletenprofil, Gesundheit, Standort) sind
+> in einer separaten PRIVAT.md ausgelagert, die NICHT im öffentlichen Repo
+> liegt. Für vollständigen Kontext diese Datei separat anfordern/anhängen.
+
+
 > Aufgebaut aus der gesamten Transcript-Historie (11 Sessions, Mai–Juli 2026).
 > Lebendes Dokument. Fakten sind aus den Transcripts belegt oder gegen das
 > Live-Repo verifiziert. Vor Änderungen an Triggern, Deployment oder Datenfluss
@@ -15,7 +20,7 @@ Status der Doku: **IN ARBEIT** — Sessions durchgearbeitet: 11/11 (vollständig
 
 ## Teil A — Projektursprung & Zielsetzung (aus Session 2026-05-08 früh)
 
-**Ausgangslage:** Wolf, 48J, 181cm, 81kg, Rennrad- und Gravelfahrer seit ~2018.
+**Ausgangslage:** Rennrad- und Gravelfahrer seit ~2018 (Profil-Details in PRIVAT.md).
 Nach Verletzungsjahr zurückgefallen. FTP anfangs auf ~220W geschätzt (2.72 W/kg).
 Arbeitet 8:30–17:00, kann den Arbeitsweg (Commute, beidseitig Rad, 4–25 km
 flexibel) als Trainingseinheit nutzen. Rolle (Tacx) im Keller für gezielte
@@ -61,7 +66,7 @@ Integration.
 
 **Erste Infrastruktur:** Strava-API-Anbindung (`scripts/fetch_activities.py`),
 GitHub Actions Workflow, erstes HTML-Dashboard, GitHub Pages Deployment.
-Strava athlete id 13589996. Anfangs FTP 240, HRmax 175 (in den Metadaten).
+Anfangs FTP 240, HRmax 175 (in den Metadaten).
 PLAN_START war zunächst 2026-05-06 (später auf 05-04 korrigiert).
 
 **Die Original-Metrik-Formeln (in Session 2 entstanden, bis heute stabil):**
@@ -211,7 +216,7 @@ Für Rides ohne diesen Wert kJ-basierte Schätzung. Große Rides: 230km/3700hm
 ~550-650 TSS auf einen Schlag (mehr als W1-W3 zusammen). Die moving-vs-elapsed-
 Debatte betraf auch TSS (moving gab zu niedrige Werte bei langen Fahrten mit Pausen).
 
-**Wahoo-Migration Beginn:** Wahoo API user_id 1989354. Workout-Summary-Felder:
+**Wahoo-Migration Beginn:** Wahoo API (user_id in PRIVAT.md). Workout-Summary-Felder:
 power_bike_np_last, power_bike_tss_last, power_avg, heart_rate_avg, distance_accum,
 duration_active/paused/total_accum, file.url (FIT-Datei). OAuth-Flow mit
 rotierendem Refresh-Token. Alternativen erwogen: Intervals.icu (aggregiert Strava/
