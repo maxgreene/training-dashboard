@@ -52,7 +52,92 @@ Die Workflow-Datei heißt aktuell `fetch-training-data.yml` (früher `fetch-stra
 | HRMAX            | 173        | fetch, analyze, index.html       |
 | PLAN_START       | 2026-05-04 | fetch, fetch_garmin              |
 | WAHOO_START_DATE | 2026-07-01 | fetch                            |
-| REFRESH_TAIL     | 3          | fetch_garmin                     |
+| REFRESH_TAIL     | 5          | fetch_garmin (war 3, s. Garmin-Sektion) |
+
+## Datenquellen — VERIFIZIERT
+
+- **Wahoo** (Hauptquelle ab 1.7.2026): user_id 1989354. FIT-Parsing via fitparse.
+  Validiert gegen Strava: NP/avgW/HR aufs Watt identisch (10 Fahrten verglichen,
+  max Δ: NP 0W, avgW 0.2W, HR 0.1bpm). Refresh-Token ROTIERT bei jedem Refresh.
+  Token-Limit lösen: www.wahooligan.com/profile → "Revoke Access".
+- **Strava** (TOT seit 30.6.2026, HTTP 403, Abo-Pflicht Standard-Tier): fetch
+  fängt 403 ab, STRAVA_ACCESS_TOKEN ist optional (kein Crash wenn fehlt).
+- **Garmin**: garth-Lib (deprecated). Login drosselt aggressiv (429). App zeigt
+  Werte oft früher als die API. REFRESH_TAIL holt die letzten N Tage neu.
+
+### Garmin "laufender Tag fehlt" — DEFINITIV DIAGNOSTIZIERT (01.07.2026)
+Symptom: der aktuelle Tag fehlt in health.json, obwohl die Garmin-App die Werte
+schon zeigt. Über einen Diagnose-Log im Garmin-Step (loggt pro Tag was die API
+liefert) wurde bewiesen:
+- Der Fetch fragt den laufenden Tag KORREKT ab (er ist im REFRESH_TAIL-Fenster).
+- Garmins API gibt für den laufenden Tag auf ALLEN Endpunkten LEER zurück
+  (HRV, Schlaf, Daily-Summary), während Vortage vollständig sind.
+- Beweis dass es NICHT der 429 ist: wäre der 429 die Ursache, wären auch die
+  Vortage leer — sie kommen aber vollständig. Der 429 betrifft nur den Token-
+  REFRESH, nicht die Daten-Abfragen.
+- FAZIT: **Kein Code-Bug.** Garmin gibt HRV/Schlaf der letzten Nacht erst am
+  Folgetag über die API frei (Server-Verarbeitung), während die App direkt von
+  der Uhr liest. Der Tag wird am nächsten Tag automatisch nachgeholt (REFRESH_TAIL).
+- Diagnose-Werkzeug: fetch_garmin.py hat eine Log-Zeile pro abgefragtem Tag
+  ("<datum>: [felder] ODER LEER"). Kann dauerhaft drinbleiben.
+
+### Garmin 429 beim Token-Refresh
+Nach vielen Login/Refresh-Versuchen drosselt Garmin den oauth-exchange-Endpunkt
+(429). Solange der Access-Token noch gültig ist, funktionieren die Datenabfragen
+trotzdem. Risiko nur, wenn der Access-Token abläuft BEVOR die Drosselung nachlässt
+— dann steht der Garmin-Fetch bis die Sperre weg ist (löst sich nach einer Weile
+ohne neue Login-Versuche von selbst).
+
+### REFRESH_TAIL-Empfehlung
+Auf 5 erhöht (war 3): fängt den Fall ab, dass Garmin einen Tag erst mit 2 Tagen
+Verzögerung freigibt. Ein zu kleiner Tail würde so einen Tag verpassen sobald er
+aus dem Fenster rutscht.
+
+## Spezialfälle / Fixes — VERIFIZIERT (nicht entfernen!)
+
+- **4iiii-Kalibrierung**: aid in (18719827047, 18717251723) → watts × 1.247
+  (30.5.2026, 4iiii las ~20% zu niedrig, verifiziert vs Ingos Stages + EF-Methode).
+- **NAME_FIXES** in fetch: Wahoo-Auto-Titel dürfen spezifische Namen nie
+  überschreiben (z.B. ClassicCrew, id 19093792211). Am Ende von fetch angewandt.
+- **FREEZE-Regel**: bestehende streams/{id}.json werden NIE überschrieben.
+- **Dauer**: duration_sec (bewegt, aus moving-Stream) vs elapsed_sec (gesamt).
+  Streams bei ~10000 Punkten gecappt → Dauer aus Zeitstempeln, nicht len().
+- **power_curve Bug gefixt**: `> d` statt `>= d` (leere range bei Gleichheit).
+
+## Secrets
+
+WAHOO_CLIENT_ID, WAHOO_CLIENT_SECRET, WAHOO_REFRESH_TOKEN (rotiert),
+GARMIN_TOKENS (base64, rotiert), GH_PAT (bis 2027-05-05, actions=write,
+auch von cron-job.org genutzt), STRAVA_* (ungenutzt, löschbar).
+
+## Athletenprofil
+
+Wolf Harmening, 48J, 81kg, 181cm. FTP-Anzeige 237W (real ~250-260 laut
+HR-Power-Scatter, Anhebung ausstehend). HRmax 173 (war 175; einziger echter
+Max-Test 174 am 21.5.). Ruhe-HR 42-43, HRV ~38-40. Prädiabetes, FreeStyle
+Libre 3 CGM. Geräte: Wahoo ELEMNT Bolt/ROAM, Tacx Trainer, 4iiii PM (links),
+Garmin Forerunner 245. Ziele: BB2026 (Bergwochenende 10.-12.7.), EyeCyle 2026
+(90km Charity, 14.7.).
+
+## NOCH ZU DOKUMENTIEREN (aus Transcripts holen — hier fehlt Detail!)
+
+Diese Themen sind aus den Transcripts vollständig zu erarbeiten, die Formeln
+und Begründungen stehen dort:
+- EF-Definition + die 3 Glättungsstufen (instant/60s/120s Rolling)
+- Decoupling-Formel (temporal midpoint split, trim_core 8%)
+- TSS-Berechnung (kJ-basiert; moving vs elapsed Debatte, Saarbrücken-Fall)
+- Power-Kurve / MMP (welche Dauern, wie berechnet)
+- CTL/ATL/TSB-Modell: tau=42/tau=7, Seed CTL=ATL=40, SETTLE_DAYS=42
+- readinessFor() Ampel-Logik (Garmin-Score + TSB-Score)
+- HRV/RHR-Chart: EWMA α=0.1 (warum EWMA statt linear/Median)
+- Adaptive Plan-Logik (adaptDay, Taper-Schutz-Keywords, asymmetrisch)
+- HR-Watt-Scatter-Cleanup (CONFIG.scatter Parameter, powerCoV, hrDriftMax)
+- Zonen-Modelle (HR-Zonen 0.68/0.83/0.88/0.95; Power-Zonen 0.55/0.75/0.87/1.05)
+- Trainingsplan-Struktur (PLAN_WEEKS, Wochen-Phasen, TSS-Ziele)
+- UI-Seiten (Rides / Plan / Form) und ihre Charts im Detail
+- Die ganze Migrations-Historie Strava → Wahoo
+- HR-Kinetik bei Phasenübergängen (Mai-Session)
+- GPX-Partner-Vergleich (Ingos Stages, Juni-Session)| REFRESH_TAIL     | 3          | fetch_garmin                     |
 
 ## Datenquellen — VERIFIZIERT
 
