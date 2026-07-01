@@ -74,7 +74,7 @@ jobs:
         run: python3 scripts/analyze_activities.py
 
       - name: Install Garmin deps
-        run: pip install garth
+        run: pip install garth fitparse
 
       - name: Fetch Garmin Health
         id: garmin
