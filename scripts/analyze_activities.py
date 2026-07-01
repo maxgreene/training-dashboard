@@ -21,7 +21,7 @@ def power_curve(watts):
     valid = [w for w in watts if w and w > 0]
     result = {}
     for d in [5, 10, 30, 60, 120, 300, 600, 1200, 1800, 3600]:
-        if len(valid) >= d:
+        if len(valid) > d:
             best = max(sum(valid[i:i+d])/d for i in range(len(valid)-d))
             result[str(d)] = round(best)
     return result
