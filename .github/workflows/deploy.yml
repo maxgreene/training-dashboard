@@ -12,9 +12,12 @@ permissions:
   pages: write
   id-token: write
 
+# Offizielles GitHub-Pages-Muster: nur EIN Deployment gleichzeitig, wartende
+# (veraltete) Laeufe werden uebersprungen. Verhindert Queue-Stau bei schnellen
+# Commits. Das jeweils neueste Deployment gewinnt.
 concurrency:
   group: "pages"
-  cancel-in-progress: false   # Deployments in Reihe abwarten statt abwuergen (verhindert queue-Stau)
+  cancel-in-progress: true 
 
 jobs:
   deploy:
