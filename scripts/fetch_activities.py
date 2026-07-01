@@ -3,8 +3,8 @@
 import os, json, urllib.request, urllib.error
 from datetime import datetime, timezone
 
-TOKEN = os.environ['STRAVA_ACCESS_TOKEN']
-HEADERS = {'Authorization': 'Bearer ' + TOKEN}
+TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt seit 30.06.2026
+HEADERS = {'Authorization': 'Bearer ' + TOKEN} if TOKEN else {}
 DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
 ANALYSIS_VERSION = 10
@@ -438,8 +438,10 @@ def main():
     CYCLING_TYPES = {'Ride','GravelRide','MountainBikeRide','VirtualRide','EBikeRide','Cycling','Handcycle','Velomobile','BMX'}
     strava_acts = []
     page = 1
-    strava_ok = True
-    while True:
+    strava_ok = bool(TOKEN)
+    if not TOKEN:
+        print('  Kein Strava-Token (Strava abgeschaltet) — nutze nur Wahoo + vorhandene Streams.')
+    while TOKEN:
         try:
             batch = api(f'/athlete/activities?per_page=100&after={PLAN_START_EPOCH}&page={page}')
         except urllib.error.HTTPError as e:
@@ -563,11 +565,7 @@ def main():
         else:
             activities.append(process_activity(act, force_fetch=force_reprocess))
     activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
-    # Namens-Korrekturen anwenden (ueberschriebene Strava-Namen wiederherstellen)
-    for _a in activities:
-        _fix = NAME_FIXES.get(str(_a.get('id')))
-        if _fix:
-            _a['name'] = _fix
+    # (Namens-Korrekturen werden ganz am Ende angewendet, siehe unten)
 
     # Add back any existing activities not covered by the Strava fetch or stream recovery
     # This ensures old activities are NEVER lost — merge, don't rebuild
@@ -643,6 +641,12 @@ def main():
         'summary': {'total_activities': len(visible), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
         'activities': activities,
     }
+    # Namens-Korrekturen ganz am Ende: greift unabhaengig vom Pfad (Fetch/Recovery/Cache)
+    for _a in activities:
+        _fix = NAME_FIXES.get(str(_a.get('id')))
+        if _fix and _a.get('name') != _fix:
+            print(f"  [name] {_a.get('id')}: '{_a.get('name')}' -> '{_fix}'")
+            _a['name'] = _fix
     os.makedirs('data', exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(output, f, indent=2)
