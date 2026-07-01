@@ -10,6 +10,12 @@ STREAMS_DIR = 'data/streams'
 ANALYSIS_VERSION = 10
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
+
+# Namens-Korrektur: Fahrten deren Strava-Name durch generischen Wahoo-Titel
+# ueberschrieben wurde. id -> korrekter Name. Wird beim Fetch wiederhergestellt.
+NAME_FIXES = {
+    '19093792211': 'ClassicCrew ™ 😎🙌',
+}
 PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 
 
@@ -541,13 +547,27 @@ def main():
         aid = act['id']
         if aid in existing and os.path.exists(stream_path(aid)) and not force_reprocess:
             cached = existing[aid]
-            # Always update mutable fields from fresh Strava data
-            cached['name'] = act['name']
+            # Namen NUR aktualisieren wenn der neue nicht generisch ist.
+            # Wahoo vergibt Auto-Titel ("Radfahren"/"Cycling") — die duerfen
+            # einen bestehenden spezifischen Namen (z.B. "ClassicCrew") nie ueberschreiben.
+            GENERIC = {'radfahren', 'cycling', 'ride', 'fahrt', 'workout', ''}
+            new_name = (act.get('name') or '').strip()
+            old_name = (cached.get('name') or '').strip()
+            if new_name and new_name.lower() not in GENERIC:
+                cached['name'] = new_name
+            elif not old_name:
+                cached['name'] = new_name
+            # sonst: alten (spezifischen) Namen behalten
             cached['start_time'] = act.get('start_date_local', '')[ 11:16]
             activities.append(cached)
         else:
             activities.append(process_activity(act, force_fetch=force_reprocess))
     activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+    # Namens-Korrekturen anwenden (ueberschriebene Strava-Namen wiederherstellen)
+    for _a in activities:
+        _fix = NAME_FIXES.get(str(_a.get('id')))
+        if _fix:
+            _a['name'] = _fix
 
     # Add back any existing activities not covered by the Strava fetch or stream recovery
     # This ensures old activities are NEVER lost — merge, don't rebuild
