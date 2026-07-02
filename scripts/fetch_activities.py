@@ -646,6 +646,13 @@ def main():
     mark_duplicates(activities)
     activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
 
+    # Namens-Korrekturen VOR dem Vergleich (greift unabhaengig vom Pfad)
+    for _a in activities:
+        _fix = NAME_FIXES.get(str(_a.get('id')))
+        if _fix and _a.get('name') != _fix:
+            print(f"  [name] {_a.get('id')}: '{_a.get('name')}' -> '{_fix}'")
+            _a['name'] = _fix
+
     visible = [a for a in activities if not a.get('hidden')]
     recent = [a for a in visible if a['date'] >= PLAN_START_DATE]
     output = {
@@ -655,12 +662,23 @@ def main():
         'summary': {'total_activities': len(visible), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
         'activities': activities,
     }
-    # Namens-Korrekturen ganz am Ende: greift unabhaengig vom Pfad (Fetch/Recovery/Cache)
-    for _a in activities:
-        _fix = NAME_FIXES.get(str(_a.get('id')))
-        if _fix and _a.get('name') != _fix:
-            print(f"  [name] {_a.get('id')}: '{_a.get('name')}' -> '{_fix}'")
-            _a['name'] = _fix
+
+    # DEPLOY-LAST SENKEN: updated_at NUR neu setzen wenn sich inhaltlich etwas
+    # geaendert hat. Sonst bleibt die Datei bit-identisch -> kein Commit (git diff
+    # --staged --quiet greift) -> kein Deploy. Verhindert ~96 Deploys/Tag ohne
+    # echte Aenderung. Vergleich ohne updated_at (das aendert sich ja immer).
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE) as f:
+                prev = json.load(f)
+            prev_cmp = {k: v for k, v in prev.items() if k != 'updated_at'}
+            new_cmp  = {k: v for k, v in output.items() if k != 'updated_at'}
+            if json.dumps(prev_cmp, sort_keys=True) == json.dumps(new_cmp, sort_keys=True):
+                output['updated_at'] = prev.get('updated_at', output['updated_at'])
+                print('Keine inhaltliche Aenderung -> updated_at unveraendert (kein Deploy)')
+        except Exception as e:
+            print(f'  (Vergleich mit altem Stand fehlgeschlagen: {e})')
+
     os.makedirs('data', exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(output, f, indent=2)
