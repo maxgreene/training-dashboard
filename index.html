@@ -812,7 +812,7 @@ function renderActivityList(){
           <div class="act-date">${fmtDate(a.date)} ${fmtStart(a)}</div>
           <div class="act-name">${a.name}</div>
           <div class="act-metrics">
-            ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
+            ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}</div><div class="asep">·</div>`:''}
             <div class="am">${fmtDur(actDur(a))}</div>
             ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
             ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
