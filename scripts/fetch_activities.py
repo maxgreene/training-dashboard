@@ -537,7 +537,8 @@ def main():
             elif not old_name:
                 cached['name'] = new_name
             # sonst: alten (spezifischen) Namen behalten
-            cached['start_time'] = act.get('start_date_local', '')[ 11:16]
+            cached['start_time'] = act.get('start_date_local', '')[11:16]
+            cached['id'] = str(cached['id'])   # ID-Typ vereinheitlichen (String)
             activities.append(cached)
         else:
             activities.append(process_activity(act, force_fetch=force_reprocess))
@@ -546,7 +547,7 @@ def main():
 
     # Add back any existing activities not covered by the Strava fetch or stream recovery
     # This ensures old activities are NEVER lost — merge, don't rebuild
-    processed_ids = {a['id'] for a in activities}
+    processed_ids = {str(a['id']) for a in activities}   # String-normalisiert gegen int/str-Mix
     recovered = 0
     for aid, old_act in existing.items():
         if aid not in processed_ids:
@@ -555,6 +556,29 @@ def main():
     if recovered:
         print(f'Kept {recovered} existing activities not in current fetch')
         activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+
+    # ── ID-Dedup: exakte Duplikate (gleiche ID mehrfach) ENTFERNEN, nicht nur
+    # verstecken. Entsteht bei int/str-ID-Mix in existing vs Recovery. Behaelt
+    # den reichhaltigeren Eintrag (mehr ausgefuellte Felder).
+    def dedup_by_id(acts):
+        from collections import OrderedDict
+        best = OrderedDict()
+        for a in acts:
+            key = str(a.get('id'))
+            if key not in best:
+                best[key] = a
+            else:
+                # reicheren behalten (mehr non-null Felder)
+                def richness(x):
+                    return sum(1 for v in x.values() if v not in (None, '', [], {}, 0))
+                if richness(a) > richness(best[key]):
+                    best[key] = a
+        removed = len(acts) - len(best)
+        if removed:
+            print(f'ID-Dedup: {removed} exakte Duplikate entfernt')
+        return list(best.values())
+
+    activities = dedup_by_id(activities)
 
     # ── Mark duplicates: Strava + Wahoo often report the SAME ride twice
     # (identical start_time, near-identical duration). Keep BOTH in storage,
