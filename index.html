@@ -501,7 +501,8 @@ function showPage(name,btn){
 
 function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
 function fmtDist(m){return(m/1000).toFixed(1)+' km';}
-function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function fmtStart(a){let t=a.start_time;if((!t||t==='00:00')&&a.start_date_local&&a.start_date_local.length>=16){t=a.start_date_local.slice(11,16);}return (!t||t==='00:00')?'':t;}
+    function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
 function actDur(a){return a.duration_sec||a.power_duration_sec;}
 function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
 
@@ -804,11 +805,11 @@ function renderSummary(){
 function renderActivityList(){
   document.getElementById('activity-list').innerHTML=allActivities.map(a=>{
     const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
-    const sel=selectedRideId===a.id;
+    const sel=selectedRideId===String(a.id);
     return`<div class="act-item">
-      <div class="act-row${sel?' selected':''}" onclick="selectRide(${a.id})">
+      <div class="act-row${sel?' selected':''}" onclick="selectRide('${a.id}')">
         <div class="act-main">
-          <div class="act-date">${fmtDate(a.date)} ${a.start_time}</div>
+          <div class="act-date">${fmtDate(a.date)} ${fmtStart(a)}</div>
           <div class="act-name">${a.name}</div>
           <div class="act-metrics">
             ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}${!a.gps_ok?' ⚠️':''}</div><div class="asep">·</div>`:''}
@@ -825,7 +826,7 @@ function renderActivityList(){
     </div>`;
   }).join('');
   if(selectedRideId){
-    const act=allActivities.find(a=>a.id===selectedRideId);
+    const act=allActivities.find(a=>String(a.id)===selectedRideId);
     const panel=document.getElementById('rd-'+selectedRideId);
     if(act&&panel&&!panel.innerHTML){
       panel.innerHTML=buildDetail(act);
@@ -846,7 +847,7 @@ function selectRide(id){
     document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
     return;
   }
-  const act=allActivities.find(a=>a.id===id);
+  const act=allActivities.find(a=>String(a.id)===id);
   if(!act)return;
   document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
   const clickedRow=document.querySelector(`#rd-${id}`)?.previousElementSibling;
@@ -901,7 +902,7 @@ function buildDetail(act){
     return h;
   }
 
-  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)} · ${act.start_time}</div>`;
+  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)}${fmtStart(act)?' · '+fmtStart(act):''}</div>`;
 
   // ── 1. GRAPHS (async, placeholder) ──
   h+=`<div id="aerob-${act.id}">`;
@@ -1226,7 +1227,7 @@ async function loadAndDrawAnalysis(act){
         btn.className='sc-toggle';
         btn.style.cssText='position:absolute;top:6px;right:8px;z-index:5;font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid var(--color-border);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer';
         btn.textContent=window.__scatterClean?'● stabil':'○ roh';
-        btn.onclick=(e)=>{e.stopPropagation();window.__scatterClean=!window.__scatterClean;const act=allActivities.find(a=>a.id===selectedRideId);if(act)loadAndDrawAnalysis(act);};
+        btn.onclick=(e)=>{e.stopPropagation();window.__scatterClean=!window.__scatterClean;const act=allActivities.find(a=>String(a.id)===selectedRideId);if(act)loadAndDrawAnalysis(act);};
         scWrap.parentElement.style.position='relative';
         scWrap.parentElement.appendChild(btn);
       }
