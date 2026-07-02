@@ -134,6 +134,19 @@ def main():
             __import__('datetime').timezone.utc).isoformat(),
         'days': days,
     }
+    # DEPLOY-LAST SENKEN: updated_at nur neu setzen wenn sich die Health-Daten
+    # geaendert haben. Sonst bleibt health.json bit-identisch -> kein Commit ->
+    # kein Deploy. Verhindert Deploy bei jedem Garmin-Lauf ohne neue Werte.
+    if os.path.exists(HEALTH_FILE):
+        try:
+            with open(HEALTH_FILE) as f:
+                prev = json.load(f)
+            if json.dumps(prev.get('days'), sort_keys=True) == json.dumps(days, sort_keys=True):
+                out['updated_at'] = prev.get('updated_at', out['updated_at'])
+                print('Keine Health-Aenderung -> updated_at unveraendert (kein Deploy)')
+        except Exception as e:
+            print(f'  (Health-Vergleich fehlgeschlagen: {e})')
+
     os.makedirs('data', exist_ok=True)
     with open(HEALTH_FILE, 'w') as f:
         json.dump(out, f, indent=2)
