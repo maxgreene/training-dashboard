@@ -406,7 +406,7 @@ def main():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE) as f:
             data = json.load(f)
-            existing = {a['id']: a for a in data.get('activities', [])}
+            existing = {str(a['id']): a for a in data.get('activities', [])}  # IDs normalisiert (gemischt int/str aus Migration)
             existing_version = data.get('analysis_version', 0)
     print('Existing: ' + str(len(existing)))
     force_reprocess = existing_version < ANALYSIS_VERSION
@@ -441,14 +441,14 @@ def main():
     # Recover activities whose stream files exist but are missing from API response
     # Reconstruct directly from stream files — no Strava API needed
     import glob
-    api_ids = {a['id'] for a in cycling}
+    api_ids = {str(a['id']) for a in cycling}
     stream_files = glob.glob(os.path.join(STREAMS_DIR, '*.json'))
-    stream_ids = {int(os.path.basename(f).replace('.json','')) for f in stream_files}
+    stream_ids = {os.path.basename(f).replace('.json','') for f in stream_files}
     missing_ids = stream_ids - api_ids
     if missing_ids:
         print(f"Recovering {len(missing_ids)} activities from stream files (no API needed)...")
         for sf in stream_files:
-            aid = int(os.path.basename(sf).replace('.json',''))
+            aid = os.path.basename(sf).replace('.json','')
             if aid not in missing_ids:
                 continue
             try:
@@ -523,7 +523,7 @@ def main():
     print('Found ' + str(len(cycling)) + ' cycling activities total')
     activities = []
     for act in cycling:
-        aid = act['id']
+        aid = str(act['id'])
         if aid in existing and os.path.exists(stream_path(aid)) and not force_reprocess:
             cached = existing[aid]
             # Namen NUR aktualisieren wenn der neue nicht generisch ist.
