@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-02T08:30:47.772844+00:00",
+  "updated_at": "2026-07-02T08:45:36.353240+00:00",
   "analysis_version": 11,
   "athlete": {
     "id": 13589996,
@@ -9,11 +9,45 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 104,
-    "recent_count": 104,
-    "recent_hours": 71.0
+    "total_activities": 105,
+    "recent_count": 105,
+    "recent_hours": 71.2
   },
   "activities": [
+    {
+      "_wahoo": true,
+      "id": "wahoo_471863178",
+      "wahoo_id": 471863178,
+      "name": "VO2max 5x3min",
+      "date": "2026-07-02",
+      "start_time": "02:00",
+      "type": "Ride",
+      "duration_sec": 900,
+      "elapsed_sec": 900,
+      "distance_m": 0,
+      "elevation_m": 0,
+      "avg_power": null,
+      "max_power": null,
+      "np": null,
+      "avg_hr": null,
+      "max_hr": null,
+      "avg_cadence": null,
+      "kilojoules": null,
+      "tss": null,
+      "gps_ok": false,
+      "has_power": false,
+      "has_hr": false,
+      "has_latlng": false,
+      "power_curve": {},
+      "hr_zones": [],
+      "power_zones": [],
+      "decoupling_pct": null,
+      "streams": {},
+      "_fit_url": null,
+      "start_date_local": "2026-07-02T02:00:00",
+      "hidden": false,
+      "dup_of": null
+    },
     {
       "_wahoo": true,
       "id": "wahoo_471831071",
