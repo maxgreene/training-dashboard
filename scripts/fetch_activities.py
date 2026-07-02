@@ -477,10 +477,15 @@ def main():
                 max_h = max(h_pos) if h_pos else None
                 date_str = sd.get('date', '')
                 name     = sd.get('name', 'Ride')
+                # Vorhandene (Backfill-)Startzeit + Metadaten aus existing bewahren,
+                # sonst wuerde die Rekonstruktion sie mit 00:00 / None ueberschreiben.
+                prev = existing.get(str(aid), {})
+                prev_st = prev.get('start_time')
+                sdl_time = f"T{prev_st}:00Z" if (prev_st and prev_st != '00:00') else 'T00:00:00Z'
                 fake_act = {
                     'id':             aid,
                     'name':           name,
-                    'start_date_local': date_str + 'T00:00:00Z',
+                    'start_date_local': date_str + sdl_time,
                     'sport_type':     'Ride',
                     'type':           'Ride',
                     'moving_time':    dur,
@@ -537,7 +542,15 @@ def main():
             elif not old_name:
                 cached['name'] = new_name
             # sonst: alten (spezifischen) Namen behalten
-            cached['start_time'] = act.get('start_date_local', '')[11:16]
+            # Startzeit NUR aktualisieren wenn die neue echt ist (nicht 00:00) ODER
+            # bisher keine da war. Schuetzt Backfill-Startzeiten vor Ueberschreibung.
+            new_st = act.get('start_date_local', '')[11:16]
+            old_st = cached.get('start_time')
+            if new_st and new_st != '00:00':
+                cached['start_time'] = new_st
+            elif not old_st:
+                cached['start_time'] = new_st
+            # sonst: bestehende (Backfill-)Startzeit behalten
             cached['id'] = str(cached['id'])   # ID-Typ vereinheitlichen (String)
             activities.append(cached)
         else:
