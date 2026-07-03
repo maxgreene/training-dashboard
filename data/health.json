@@ -1,6 +1,15 @@
 {
-  "updated_at": "2026-07-02T23:20:46.145661+00:00",
+  "updated_at": "2026-07-03T00:00:44.518905+00:00",
   "days": [
+    {
+      "date": "2026-07-03",
+      "sleep_score": null,
+      "resting_hr": 46,
+      "resting_hr_7d": 42,
+      "stress_avg": 25,
+      "bb_high": 44,
+      "bb_low": 35
+    },
     {
       "date": "2026-07-02",
       "hrv": 45,
