@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-03T06:20:44.287970+00:00",
+  "updated_at": "2026-07-03T07:20:45.083864+00:00",
   "analysis_version": 11,
   "athlete": {
     "id": 13589996,
@@ -9,11 +9,67 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 106,
-    "recent_count": 106,
-    "recent_hours": 72.1
+    "total_activities": 107,
+    "recent_count": 107,
+    "recent_hours": 72.5
   },
   "activities": [
+    {
+      "_wahoo": true,
+      "id": "wahoo_472146583",
+      "wahoo_id": 472146583,
+      "name": "Cycling",
+      "date": "2026-07-03",
+      "start_time": "08:19",
+      "type": "Ride",
+      "duration_sec": 1468,
+      "elapsed_sec": 1468,
+      "distance_m": 10294,
+      "elevation_m": 49,
+      "avg_power": 144.0,
+      "max_power": 530,
+      "np": 179,
+      "avg_hr": 108.0,
+      "max_hr": 139,
+      "avg_cadence": 81.3,
+      "kilojoules": 210.9,
+      "tss": 20.6,
+      "gps_ok": true,
+      "has_power": true,
+      "has_hr": true,
+      "has_latlng": true,
+      "power_curve": {
+        "5": 495,
+        "10": 430,
+        "30": 364,
+        "60": 331,
+        "120": 246,
+        "300": 182,
+        "600": 169,
+        "1200": 161
+      },
+      "hr_zones": [
+        79.6,
+        20.4,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "power_zones": [
+        35.3,
+        44.6,
+        8.0,
+        3.6,
+        8.4
+      ],
+      "decoupling_pct": -1.43,
+      "streams": {},
+      "_fit_url": "https://cdn.wahooligan.com/wahoo-cloud/production/uploads/workout_file/file/Tqu--Y_O9dYRS4N9IwpuxQ/2026-07-03-061919-ELEMNT_BOLT_AF8E-141-0.fit",
+      "start_date_local": "2026-07-03T08:19:00",
+      "hidden": false,
+      "dup_of": null,
+      "ef_gesamt": 1.4648
+    },
     {
       "_wahoo": true,
       "id": "wahoo_471986169",
