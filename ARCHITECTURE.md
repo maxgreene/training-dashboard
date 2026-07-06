@@ -1,10 +1,5 @@
 # Training Dashboard — Vollständige Architektur & Projekt-Historie
 
-> HINWEIS: Sensible Details (IDs, Athletenprofil, Gesundheit, Standort) sind
-> in einer separaten PRIVAT.md ausgelagert, die NICHT im öffentlichen Repo
-> liegt. Für vollständigen Kontext diese Datei separat anfordern/anhängen.
-
-
 > Aufgebaut aus der gesamten Transcript-Historie (11 Sessions, Mai–Juli 2026).
 > Lebendes Dokument. Fakten sind aus den Transcripts belegt oder gegen das
 > Live-Repo verifiziert. Vor Änderungen an Triggern, Deployment oder Datenfluss
@@ -20,14 +15,13 @@ Status der Doku: **IN ARBEIT** — Sessions durchgearbeitet: 11/11 (vollständig
 
 ## Teil A — Projektursprung & Zielsetzung (aus Session 2026-05-08 früh)
 
-**Ausgangslage:** Rennrad- und Gravelfahrer seit ~2018 (Profil-Details in PRIVAT.md).
+**Ausgangslage:** Rennrad- und Gravelfahrer seit ~2015.
 Nach Verletzungsjahr zurückgefallen. FTP anfangs auf ~220W geschätzt (2.72 W/kg).
-Arbeitet 8:30–17:00, kann den Arbeitsweg (Commute, beidseitig Rad, 4–25 km
+Arbeitet 8:00–18:00, kann den Arbeitsweg (Commute, beidseitig Rad, 4–25 km
 flexibel) als Trainingseinheit nutzen. Rolle (Tacx) im Keller für gezielte
-Einheiten. Zeichnet mit Wahoo ELEMNT Bolt auf, synct zu Strava.
+Einheiten. Zeichnet mit Wahoo ELEMNT Bolt/ROAM v3 auf, synct zu Strava.
 
-**Ziel:** Bis 10. Juli topfit für ein langes Rad-Wochenende mit Freunden am Berg
-("nicht abkacken"). Zielleistung ~240–250W (~3.0 W/kg).
+**Ziel:** Bis 10. Juli topfit für ein langes Rad-Wochenende. Zielleistung ~240–250W (~3.0 W/kg).
 
 **Trainingsplan-Grundstruktur (3 Phasen + Taper):**
 - Phase 1 Reaktivierung (Wo 1–3, bis ~25.5.): aerobe Basis, KEINE harten
