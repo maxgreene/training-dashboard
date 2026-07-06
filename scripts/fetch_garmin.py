@@ -64,10 +64,12 @@ def main():
                     print(f'429-Cooldown aktiv ({age_h:.1f}h/{COOLDOWN_H}h) - Refresh uebersprungen')
             except Exception:
                 pass
+        refresh_ok = False
         if not skip_refresh:
             try:
                 garth.client.username   # triggert Auto-Refresh wenn noetig
                 print('Token-Refresh OK')
+                refresh_ok = True
                 if os.path.exists(cd_file):
                     os.remove(cd_file)   # Erfolg -> Cooldown aufheben
             except Exception as re:
@@ -80,6 +82,19 @@ def main():
     except Exception as e:
         print(f'Token-Resume fehlgeschlagen: {e}')
         return
+
+    # Token-Gueltigkeit pruefen: nur wenn der OAuth2-Token jetzt gueltig ist,
+    # duerfen wir ihn spaeter ins Secret zurueckschreiben. Sonst wuerden wir das
+    # Secret mit einem toten Token ueberschreiben (Teufelskreis).
+    token_valid = False
+    try:
+        tok = getattr(garth.client, 'oauth2_token', None)
+        if tok is not None and not tok.expired:
+            token_valid = True
+    except Exception:
+        pass
+    if 'refresh_ok' in dir() and refresh_ok:
+        token_valid = True
 
     # Bestehende Daten laden (merge)
     existing = {}
@@ -175,8 +190,14 @@ def main():
         json.dump(out, f, indent=2)
     print(f'Garmin: {fetched} Tage aktualisiert, {len(days)} gesamt')
 
-    # Erneuerte Tokens zurueck-exportieren (fuer Secret-Update im Workflow)
+    # Erneuerte Tokens NUR zurueck-exportieren wenn der Token gueltig ist.
+    # Bei 429/totem Token NICHT exportieren -> Secret behaelt den letzten guten
+    # Stand (schuetzt v.a. den langlebigen OAuth1-Token). Verhindert Teufelskreis.
+    if not token_valid:
+        print('Token nicht gueltig (429/abgelaufen) -> Secret NICHT ueberschrieben, alter Stand bleibt')
     try:
+        if not token_valid:
+            raise RuntimeError('skip-export')
         tdir = os.path.expanduser('~/.garth')
         garth.client.dump(tdir)
         tokens = {}
