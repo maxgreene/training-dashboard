@@ -307,24 +307,160 @@ weil Bot-Commits mit GITHUB_TOKEN den push-Trigger unterdrücken.
 
 ---
 
-## Verifizierte Infrastruktur-Referenz
+---
 
-Siehe FAKTEN_verifiziert.md für die tabellarische Referenz (Trigger, Deployment,
-Konstanten, Secrets), die am 1.7.2026 direkt gegen das Live-Repo geprüft wurde.
+# TECHNISCHE REFERENZ (konsolidiert, Stand 2026-07-06)
+
+Diese Referenz führt die früher separate `FAKTEN_verifiziert.md` zusammen und
+ergänzt die Erkenntnisse vom 06.07.2026. Direkt gegen das Live-Repo geprüft.
+
+## System in einem Satz
+
+Ein statisches Dashboard auf GitHub Pages, das seine Trainings- und Gesundheits-
+daten über GitHub-Actions-Workflows selbst aus Wahoo (Rad) und Garmin (Health)
+holt, aufbereitet und als JSON ins Repo committet — die Website liest diese JSONs
+im Browser.
+
+## Datenfluss
+
+```
+cron-job.org (alle 20 Min)
+   └─> triggert Workflow "Fetch Training Data" (dispatch-API)
+        ├─ fetch_activities.py : Wahoo-FITs -> data/streams/{id}.json (Rohdaten)
+        │                        + Register -> data/activities.json (ohne Kennzahlen)
+        ├─ analyze_activities.py: streams+activities -> data/analysis/{id}.json
+        │                        + Kennzahlen zurück in activities.json
+        ├─ fetch_garmin.py      : Garmin Health -> data/health.json
+        └─ commit nach main (nur wenn sich etwas geändert hat)
+             └─> triggert Workflow "Deploy to GitHub Pages"
+                  └─ baut _site/ (nur Website-Dateien) -> deploy-pages
+                       └─> Live: maxgreene.github.io/training-dashboard
+```
+
+Die Website (`index.html`) lädt im Browser: `data/activities.json` (Liste),
+`data/analysis/{id}.json` (Details beim Klick auf eine Fahrt), `data/health.json`
+(Form-Seite). **`data/streams/` wird von der Website NIE geladen** — nur intern
+vom Fetch für die Recovery gebraucht.
+
+## Trigger (3 Wege)
+
+1. **cron-job.org** (extern, eigentlicher Takt, alle 20 Min):
+   `POST api.github.com/repos/maxgreene/training-dashboard/actions/workflows/fetch-training-data.yml/dispatches`
+   Header `Authorization: Bearer <GH_PAT>`, Body `{"ref":"main"}`, Erfolg = HTTP 204.
+   ⚠ Bei Umbenennung der Workflow-Datei MUSS diese URL angepasst werden.
+   ⚠ cron-job.org deaktiviert den Job dauerhaft nach zu vielen Fehlern und
+   reaktiviert NICHT von selbst — nach URL-/PAT-Änderung prüfen ob "enabled"
+   und "Next Runs" gefüllt; Test-Run muss 204 geben.
+2. GitHub-Cron `schedule: '0 * * * *'` in fetch-training-data.yml (stündliches Backup).
+3. Manuell: Actions → Fetch Training Data → Run workflow (workflow_dispatch).
+
+## Deployment
+
+- `deploy.yml` triggert auf `push` (main), `workflow_run` (nach "Fetch Training
+  Data") und `workflow_dispatch` (manueller Button).
+- Hängt am Workflow-NAMEN "Fetch Training Data", nicht am Dateinamen.
+- `concurrency: group "pages", cancel-in-progress: true` (offizielles Pages-Muster).
+- **Baut ein `_site/`-Verzeichnis mit NUR den Website-Dateien** (index.html,
+  plan.html falls vorhanden, data/activities.json, data/health.json, data/analysis/)
+  und deployt das — NICHT `path: '.'` (siehe Deploy-Timeout-Erkenntnis unten).
+
+## Kritische Konstanten (müssen synchron sein)
+
+| Konstante        | Wert       | Dateien                              |
+|------------------|------------|--------------------------------------|
+| ANALYSIS_VERSION | 11         | fetch UND analyze (müssen gleich!)   |
+| FTP              | 237        | fetch, analyze, index.html           |
+| HRMAX            | 173        | fetch, analyze, index.html           |
+| PLAN_START       | 2026-05-04 | fetch, fetch_garmin                  |
+| WAHOO_START_DATE | 2026-07-01 | fetch (davor eingefrorene Strava-Streams) |
+| REFRESH_TAIL     | 5          | fetch_garmin                         |
+
+## Datenquellen
+
+- **Wahoo** (Hauptquelle ab 1.7.2026): FIT-Parsing via fitparse. Gegen Strava
+  validiert (NP/avgW/HR aufs Watt identisch). Refresh-Token ROTIERT bei jedem
+  Refresh → Workflow schreibt ihn zurück ins Secret.
+- **Strava** (TOT seit 30.6.2026, HTTP 403 mangels Abo): fetch fängt 403 ab,
+  STRAVA_* Secrets ungenutzt/löschbar. Alte Strava-Fahrten liegen als
+  eingefrorene Streams vor (FREEZE-Regel).
+- **Garmin**: garth-Lib (deprecated). Zwei-Token-System (siehe Garmin-Sektion).
+
+## Secrets
+
+WAHOO_CLIENT_ID, WAHOO_CLIENT_SECRET, WAHOO_REFRESH_TOKEN (rotiert),
+GARMIN_TOKENS (base64, rotiert), GH_PAT (classic, kein Ablauf, scope=repo;
+auch von cron-job.org genutzt). STRAVA_* ungenutzt.
+
+## Spezialfälle / Fixes (nicht entfernen!)
+
+- **4iiii-Kalibrierung**: bestimmte aid → watts × 1.247 (4iiii las ~20% zu
+  niedrig, verifiziert). IDs siehe PRIVAT.md.
+- **NAME_FIXES**: Wahoo-Auto-Titel ("Cycling"/"Radfahren") dürfen spezifische
+  Namen nie überschreiben. Am Ende von fetch angewandt.
+- **FREEZE-Regel**: bestehende streams/{id}.json werden NIE überschrieben.
+- **Gemischte IDs**: alte Strava-IDs sind int, Wahoo-IDs sind Strings
+  ("wahoo_..."). ALLE ID-Vergleiche über str() normalisieren — sonst Crashes
+  (int('wahoo_...')) oder Duplikate (int-Key ≠ str-Key). dedup_by_id() entfernt
+  exakte ID-Duplikate.
+- **start_time-Schutz**: der Recovery-/cached-Pfad darf eine echte Startzeit nie
+  mit '00:00' überschreiben (sonst gehen Backfill-Startzeiten verloren).
+- **Dauer**: duration_sec (bewegt) vs elapsed_sec (gesamt); Streams bei ~10000
+  Punkten gecappt → Dauer aus Zeitstempeln, nicht len().
+
+---
+
+## ERKENNTNISSE 06.07.2026 (Debugging-Session)
+
+### Deploy-Timeouts — URSACHE: Artefaktgröße (belegt)
+Symptom: `deploy-pages@v4` hängt in `deployment_queued`, läuft in 10-Min-Timeout.
+- Der Log zeigt durchgehend `deployment_queued` (nie `syncing_files`) → das
+  Deployment kommt nie in die Verarbeitung.
+- Belegt über echte Daten (2000 Deploy-Läufe): Die Fehlerrate STEIGT MIT DER
+  ARTEFAKTGRÖSSE. 0 Fails bei 12 MB (15.06.), ~14 Fails/Tag bei 25 MB (04.07.).
+- Ursache: `path: '.'` deployte das GANZE Repo (~26 MB), inkl. data/streams
+  (~15 MB), die die Website nie lädt.
+- FIX: deploy.yml baut ein `_site/` nur mit Website-Dateien → ~11 MB. Erster
+  Deploy danach wieder 18s (statt 10 Min).
+- WIDERLEGT als Ursache (per Daten/Test): checkout v4-vs-v6, concurrency-Setting,
+  Deploy-Frequenz, Pages-Source-Einstellung, github-pages-Environment-Regeln,
+  PAT-Ablauf (cron lief mit 204 durch). Alles einzeln ausgeschlossen.
+
+### Fetch ist gesund — nicht mit Deploy verwechseln
+Echte Daten: Fetch 207/209 erfolgreich (0 Fails am Wochenende), median 27s. Die
+"vielen Fails" in der Actions-Übersicht waren die DEPLOY-Läufe, nicht der Fetch.
+Bei Fehlerdiagnose immer trennen welcher Workflow rot ist.
+
+### Garmin-Token — Zwei-Token-System & Teufelskreis (behoben)
+- Garmin nutzt OAuth1 (Master, hält ~1 Jahr) + OAuth2 (Access, hält nur ~1h,
+  wird per exchange-Endpunkt aus OAuth1 erneuert).
+- Problem: In der Actions-VM refreshte garth den OAuth2-Token, aber der frische
+  Token landete nicht zuverlässig zurück im Secret — jeder Lauf startete mit dem
+  alten (abgelaufenen) Token, versuchte Refresh über exchange, der bei Drosselung
+  429 gab. Mit totem Token liefert Garmin nur Vortage, keine neuen Tage.
+- FIX in fetch_garmin.py: (1) Token NUR ins Secret zurückschreiben wenn er
+  wirklich gültig ist (schützt den langlebigen OAuth1). (2) 429-Cooldown: nach
+  einem 429 für 6h keinen weiteren Refresh (Marker data/.garmin_cooldown, wird
+  mit-committet) — stoppt das Hämmern, das die Sperre wachhält.
+- Manueller Notfall-Fix falls der Token doch stirbt: garmin_login.py LOKAL
+  ausführen (von Heim-IP, NICHT GitHub — GitHub-IPs sind bei Garmin gedrosselt),
+  erzeugt base64-Blob → Secret GARMIN_TOKENS ersetzen.
+- Die frühere Notiz "Garmin gibt laufenden Tag erst am Folgetag frei" war eine
+  Fehldiagnose — die eigentliche Ursache war stets der Token.
+
+### Deploy-Last gesenkt (updated_at-Fix)
+fetch_activities.py und fetch_garmin.py setzen `updated_at` nur noch neu, wenn
+sich inhaltlich etwas geändert hat. Sonst bleibt die JSON bit-identisch → kein
+Commit → kein Deploy. Verhindert ~96 leere Deploys/Tag. Keepalive-Workflow
+gelöscht (war überflüssig, da der Fetch das Repo ohnehin permanent aktiv hält).
 
 ---
 
 ## Bekannte Fragilitäten / offene Punkte
 
-- garth (Garmin-Lib) ist deprecated — läuft, aber Alternative nötig falls es bricht.
-- Garmin-Login drosselt aggressiv (429 bei zu vielen Logins).
-- Garmin-API gibt laufenden Tag teils verzögert (App zeigt früher als API).
-- FTP-Anhebung 237->~250-260 steht aus (HR-Power-Scatter deutet drauf).
-- Refresh-Tokens (Wahoo, Garmin) rotieren — Workflow schreibt sie zurück.
-- Bei Workflow-Umbenennung: cron-job.org-URL MUSS angepasst werden.
-
----
-
-## Vollständigkeit
-
-Alle 11 Sessions durchgearbeitet. Dies ist die vollständige Projekt-Historie.
+- **garth (Garmin-Lib) ist deprecated** — läuft, aber langfristig Alternative
+  nötig. Token-Handling ist der fragilste Teil des Systems.
+- Deploy-Fehlerrate nach dem Artefakt-Fix (06.07.) über einige Tage beobachten
+  (holen_alle.py) — sollte gegen 0 gehen. Falls nicht, ist es doch GitHub-seitig.
+- FTP-Anhebung 237 → ~250-260 steht aus (HR-Power-Verhältnis deutet drauf).
+- Refresh-Tokens (Wahoo, Garmin) rotieren — Workflow schreibt sie zurück; bei
+  Störung Token manuell erneuern.
