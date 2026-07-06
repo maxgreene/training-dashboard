@@ -213,8 +213,8 @@ def fetch_wahoo_workouts(token):
     return acts
 
 STREAM_KEYS = ['time','latlng','distance','altitude','heartrate','cadence','watts','velocity_smooth','grade_smooth','moving']
-FTP   = 237
-HRMAX = 173
+FTP   = 250
+HRMAX = 172
 
 def api(path):
     req = urllib.request.Request('https://www.strava.com/api/v3' + path, headers=HEADERS)
