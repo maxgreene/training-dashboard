@@ -3,7 +3,8 @@ Holt taegliche Gesundheitsdaten von Garmin Connect (HRV, Ruhe-HR, Schlaf,
 Body Battery, Stress) und schreibt sie nach data/health.json.
 Nutzt gespeicherte Tokens aus dem GitHub Secret GARMIN_TOKENS (base64).
 """
-import os, json, base64, sys
+import os
+import time, json, base64, sys
 from datetime import date, timedelta
 
 PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
@@ -47,13 +48,35 @@ def main():
     try:
         garth.resume(os.path.expanduser('~/.garth'))
         print('Garmin-Tokens geladen')
-        # Access-Token bei Bedarf erneuern (Refresh-Token gueltig bis ~1 Jahr)
-        try:
-            # Ein beliebiger API-Call triggert intern Auto-Refresh wenn noetig
-            garth.client.username
-            print('Token-Refresh OK')
-        except Exception as re:
-            print(f'Token-Refresh-Versuch: {re}')
+        # 429-COOLDOWN: Wenn ein frueherer Refresh mit 429 scheiterte, NICHT bei
+        # jedem Lauf erneut den exchange-Endpunkt hämmern (das haelt Garmins Sperre
+        # wach). Nach 429 fuer COOLDOWN_H Stunden aussetzen. Marker data/.garmin_cooldown
+        # wird mit-committet und ueberlebt zwischen den Laeufen.
+        COOLDOWN_H = 6
+        cd_file = os.path.join('data', '.garmin_cooldown')
+        skip_refresh = False
+        if os.path.exists(cd_file):
+            try:
+                last = float(open(cd_file).read().strip())
+                age_h = (time.time() - last) / 3600
+                if age_h < COOLDOWN_H:
+                    skip_refresh = True
+                    print(f'429-Cooldown aktiv ({age_h:.1f}h/{COOLDOWN_H}h) - Refresh uebersprungen')
+            except Exception:
+                pass
+        if not skip_refresh:
+            try:
+                garth.client.username   # triggert Auto-Refresh wenn noetig
+                print('Token-Refresh OK')
+                if os.path.exists(cd_file):
+                    os.remove(cd_file)   # Erfolg -> Cooldown aufheben
+            except Exception as re:
+                print(f'Token-Refresh-Versuch: {re}')
+                if '429' in str(re):
+                    os.makedirs('data', exist_ok=True)
+                    with open(cd_file, 'w') as fh:
+                        fh.write(str(time.time()))
+                    print(f'429 erkannt -> Cooldown gesetzt fuer {COOLDOWN_H}h (kein Haemmern mehr)')
     except Exception as e:
         print(f'Token-Resume fehlgeschlagen: {e}')
         return
