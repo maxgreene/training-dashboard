@@ -31,8 +31,25 @@ jobs:
         with:
           ref: main
       - uses: actions/configure-pages@v4
+      # Nur Website-relevante Dateien ins Pages-Artefakt packen. data/streams
+      # (~15 MB) wird von der Website NIE geladen (nur activities.json, health.json
+      # und analysis/ einzeln) -> ausschliessen. Halbiert die Artefaktgroesse und
+      # behebt die deployment_queued-Timeouts, die mit der Artefaktgroesse wuchsen.
+      - name: Build site (nur noetige Dateien)
+        run: |
+          mkdir -p _site/data/analysis
+          cp index.html _site/ 2>/dev/null || true
+          cp plan.html _site/ 2>/dev/null || true
+          cp -r data/activities.json _site/data/ 2>/dev/null || true
+          cp -r data/health.json _site/data/ 2>/dev/null || true
+          cp -r data/analysis/. _site/data/analysis/ 2>/dev/null || true
+          # alles andere im Root das die Seite evtl. braucht (css/js/img/favicon)
+          for f in *.css *.js *.png *.ico *.svg *.webmanifest .nojekyll; do
+            [ -e "$f" ] && cp "$f" _site/ 2>/dev/null || true
+          done
+          echo "Artefakt-Inhalt:"; du -sh _site; find _site -type f | wc -l
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - uses: actions/deploy-pages@v4
         id: deployment
