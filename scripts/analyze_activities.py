@@ -7,8 +7,8 @@ DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
 ANALYSIS_VERSION = 11
-FTP   = 237
-HRMAX = 173
+FTP   = 250
+HRMAX = 172
 
 def normalized_power(watts, window=30):
     # Coggan standard: rolling average over ALL data (incl. zeros for coasting/descending)
