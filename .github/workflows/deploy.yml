@@ -39,7 +39,6 @@ jobs:
         run: |
           mkdir -p _site/data/analysis
           cp index.html _site/ 2>/dev/null || true
-          cp plan.html _site/ 2>/dev/null || true
           cp -r data/activities.json _site/data/ 2>/dev/null || true
           cp -r data/health.json _site/data/ 2>/dev/null || true
           cp -r data/analysis/. _site/data/analysis/ 2>/dev/null || true
