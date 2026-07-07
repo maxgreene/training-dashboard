@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-07T08:20:45.868032+00:00",
+  "updated_at": "2026-07-07T09:20:45.798299+00:00",
   "analysis_version": 11,
   "athlete": {
     "id": 13589996,
@@ -9,11 +9,64 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 114,
-    "recent_count": 114,
-    "recent_hours": 77.5
+    "total_activities": 115,
+    "recent_count": 115,
+    "recent_hours": 77.7
   },
   "activities": [
+    {
+      "_wahoo": true,
+      "id": "wahoo_473478793",
+      "wahoo_id": 473478793,
+      "name": "Radfahren",
+      "date": "2026-07-07",
+      "start_time": "10:35",
+      "type": "Ride",
+      "duration_sec": 603,
+      "elapsed_sec": 606,
+      "distance_m": 3447,
+      "elevation_m": 70,
+      "avg_power": 157.0,
+      "max_power": 805,
+      "np": 220,
+      "avg_hr": null,
+      "max_hr": 0,
+      "avg_cadence": 75.2,
+      "kilojoules": 94.7,
+      "tss": 12.5,
+      "gps_ok": false,
+      "has_power": true,
+      "has_hr": false,
+      "has_latlng": false,
+      "power_curve": {
+        "5": 710,
+        "10": 642,
+        "30": 426,
+        "60": 341,
+        "120": 282,
+        "300": 254
+      },
+      "hr_zones": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "power_zones": [
+        18.2,
+        12.0,
+        14.5,
+        18.8,
+        36.5
+      ],
+      "decoupling_pct": null,
+      "streams": {},
+      "_fit_url": "https://cdn.wahooligan.com/wahoo-cloud/production/uploads/workout_file/file/RzMTiHIEVZURIqF53Q0qFA/2026-07-07-083542-ELEMNT_ROAM_E3C3-106-0.fit",
+      "start_date_local": "2026-07-07T10:35:00",
+      "hidden": false,
+      "dup_of": null
+    },
     {
       "_wahoo": true,
       "id": "wahoo_473456088",
