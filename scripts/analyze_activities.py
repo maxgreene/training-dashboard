@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 12
+ANALYSIS_VERSION = 13
 FTP   = 250
 HRMAX = 172
 
@@ -169,6 +169,16 @@ def analyze(aid, streams, act):
         res['np']=normalized_power(pw)
         res['power_curve']=power_curve(pw)
         res['power_zones']=power_zones(pw)
+        # avg_power AUS DEN STREAMS, mit Nullen (Coasting) - konsistent zu NP und
+        # power_curve. Der Wert aus dem Wahoo-Summary ('power_avg') rechnet ohne
+        # Nullen (Bewegungszeit) und liegt dadurch systematisch zu hoch: er kann
+        # sogar ueber NP oder ueber dem eigenen 60-Min-Bestwert liegen, was
+        # physikalisch unmoeglich ist. Beide Werte werden gespeichert.
+        _series=[w if isinstance(w,(int,float)) and w>0 else 0 for w in pw]
+        if _series:
+            res['avg_power']=round(sum(_series)/len(_series),1)
+            _moving=[w for w in _series if w>0]
+            res['avg_power_moving']=round(sum(_moving)/len(_moving),1) if _moving else None
     if hr:
         res['hr_zones']=hr_zones(hr)
     if cad:
@@ -195,6 +205,8 @@ def analyze(aid, streams, act):
 def _writeback(act, res):
     """Schreibt die berechneten Kennzahlen aus der Analyse zurueck ins activities.json."""
     if res.get('np') is not None:     act['np']=res['np']
+    if res.get('avg_power') is not None:        act['avg_power']=res['avg_power']
+    if res.get('avg_power_moving') is not None: act['avg_power_moving']=res['avg_power_moving']
     if res.get('power_curve'):        act['power_curve']=res['power_curve']
     if res.get('power_zones'):        act['power_zones']=res['power_zones']
     if res.get('hr_zones'):           act['hr_zones']=res['hr_zones']
