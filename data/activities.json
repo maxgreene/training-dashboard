@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-09T10:29:22.937982+00:00",
+  "updated_at": "2026-07-09T11:06:21.681191+00:00",
   "analysis_version": 12,
   "athlete": {
     "id": 13589996,
@@ -941,7 +941,7 @@
       "id": "wahoo_471831071",
       "name": "Radfahren",
       "date": "2026-07-02",
-      "start_time": "",
+      "start_time": "00:00",
       "type": "Ride",
       "duration_sec": 925,
       "elapsed_sec": 925,
