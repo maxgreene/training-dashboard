@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 11
+ANALYSIS_VERSION = 12
 FTP   = 250
 HRMAX = 172
 
@@ -18,12 +18,26 @@ def normalized_power(watts, window=30):
     return round(np)
 
 def power_curve(watts):
-    valid = [w for w in watts if w and w > 0]
+    """Mean-Maximal-Power je Zeitfenster.
+
+    WICHTIG: Nullen/None (Coasting) muessen als 0 in der Zeitreihe BLEIBEN.
+    Filtert man sie raus, werden Leistungsphasen ueber Pausen hinweg
+    zusammengeklebt und die Bestwerte systematisch ueberschaetzt.
+    Rolling Sum statt O(n*d)-Neuberechnung pro Fenster.
+    """
+    series = [w if isinstance(w, (int, float)) and w > 0 else 0 for w in watts]
     result = {}
+    n = len(series)
     for d in [5, 10, 30, 60, 120, 300, 600, 1200, 1800, 3600]:
-        if len(valid) > d:
-            best = max(sum(valid[i:i+d])/d for i in range(len(valid)-d))
-            result[str(d)] = round(best)
+        if n < d:
+            continue
+        s = sum(series[:d])
+        best = s
+        for i in range(d, n):
+            s += series[i] - series[i-d]
+            if s > best:
+                best = s
+        result[str(d)] = round(best/d)
     return result
 
 def power_zones(watts):
