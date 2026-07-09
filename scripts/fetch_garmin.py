@@ -4,7 +4,8 @@ Body Battery, Stress) und schreibt sie nach data/health.json.
 Nutzt gespeicherte Tokens aus dem GitHub Secret GARMIN_TOKENS (base64).
 """
 import os
-import time, json, base64, sys
+import time
+import random, json, base64, sys
 from datetime import date, timedelta
 
 PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
@@ -48,37 +49,72 @@ def main():
     try:
         garth.resume(os.path.expanduser('~/.garth'))
         print('Garmin-Tokens geladen')
-        # 429-COOLDOWN: Wenn ein frueherer Refresh mit 429 scheiterte, NICHT bei
-        # jedem Lauf erneut den exchange-Endpunkt hämmern (das haelt Garmins Sperre
-        # wach). Nach 429 fuer COOLDOWN_H Stunden aussetzen. Marker data/.garmin_cooldown
-        # wird mit-committet und ueberlebt zwischen den Laeufen.
-        COOLDOWN_H = 6
+        # 429-BACKOFF (statt starrem 6h-Cooldown):
+        # Der OAuth2-Token lebt nur ~1h. Ein 6h-Cooldown liess ihn zwischendurch
+        # ablaufen und verhinderte die Selbstheilung. Der 429 kommt von Garmins
+        # Ratenbegrenzung auf der GitHub-IP-Range, nicht vom Konto - er ist
+        # zeitfenster-abhaengig. Daher: kurz warten, mit Jitter, und erst bei
+        # wiederholtem Scheitern laenger. Marker speichert "timestamp;fehlversuche".
+        BASE_MIN   = 40      # erste Wartezeit nach 429
+        MAX_MIN    = 240     # Deckel (4h)
+        JITTER     = 0.25    # +-25% Zufall, damit Versuche nicht im Raster landen
         cd_file = os.path.join('data', '.garmin_cooldown')
-        skip_refresh = False
-        if os.path.exists(cd_file):
+
+        def read_marker():
             try:
-                last = float(open(cd_file).read().strip())
-                age_h = (time.time() - last) / 3600
-                if age_h < COOLDOWN_H:
-                    skip_refresh = True
-                    print(f'429-Cooldown aktiv ({age_h:.1f}h/{COOLDOWN_H}h) - Refresh uebersprungen')
+                raw = open(cd_file).read().strip()
+                parts = raw.split(';')
+                ts = float(parts[0])
+                n  = int(parts[1]) if len(parts) > 1 else 1
+                return ts, n
             except Exception:
-                pass
+                return None, 0
+
+        def write_marker(n):
+            os.makedirs('data', exist_ok=True)
+            with open(cd_file, 'w') as fh:
+                fh.write(f'{time.time()};{n}')
+
+        def clear_marker():
+            if os.path.exists(cd_file):
+                try: os.remove(cd_file)
+                except Exception: pass
+
+        # Wartezeit aus Fehlversuchen: 40, 80, 160, 240, 240 ... Minuten
+        last_ts, fails = read_marker()
+        skip_refresh = False
+        if last_ts:
+            wait_min = min(BASE_MIN * (2 ** max(0, fails - 1)), MAX_MIN)
+            wait_min *= (1 + random.uniform(-JITTER, JITTER))
+            age_min = (time.time() - last_ts) / 60
+            if age_min < wait_min:
+                skip_refresh = True
+                print(f'429-Backoff aktiv ({age_min:.0f}min/{wait_min:.0f}min, {fails} Fehlversuche) - Refresh uebersprungen')
+
+        # Refresh NUR wenn der Token wirklich (fast) abgelaufen ist.
+        tok = getattr(garth.client, 'oauth2_token', None)
+        need_refresh = tok is None or tok.expired
+        if not need_refresh:
+            print('OAuth2-Token noch gueltig - kein Refresh noetig')
+
         refresh_ok = False
-        if not skip_refresh:
+        if need_refresh and not skip_refresh:
             try:
-                garth.client.username   # triggert Auto-Refresh wenn noetig
+                garth.client.username   # triggert intern den Auto-Refresh
                 print('Token-Refresh OK')
                 refresh_ok = True
-                if os.path.exists(cd_file):
-                    os.remove(cd_file)   # Erfolg -> Cooldown aufheben
+                clear_marker()
             except Exception as re:
-                print(f'Token-Refresh-Versuch: {re}')
-                if '429' in str(re):
-                    os.makedirs('data', exist_ok=True)
-                    with open(cd_file, 'w') as fh:
-                        fh.write(str(time.time()))
-                    print(f'429 erkannt -> Cooldown gesetzt fuer {COOLDOWN_H}h (kein Haemmern mehr)')
+                msg = str(re)
+                print(f'Token-Refresh-Versuch: {msg}')
+                if '429' in msg:
+                    n = fails + 1
+                    write_marker(n)
+                    nxt = min(BASE_MIN * (2 ** max(0, n - 1)), MAX_MIN)
+                    print(f'429 erkannt -> Backoff gesetzt (~{nxt}min, Fehlversuch {n})')
+                else:
+                    # Anderer Fehler (z.B. 401): Marker nicht setzen, aber melden.
+                    print('Kein 429 - Backoff NICHT gesetzt (Token evtl. ungueltig, Neu-Login noetig)')
     except Exception as e:
         print(f'Token-Resume fehlgeschlagen: {e}')
         return
@@ -193,6 +229,11 @@ def main():
     # Erneuerte Tokens NUR zurueck-exportieren wenn der Token gueltig ist.
     # Bei 429/totem Token NICHT exportieren -> Secret behaelt den letzten guten
     # Stand (schuetzt v.a. den langlebigen OAuth1-Token). Verhindert Teufelskreis.
+    # garth.refresh_oauth2() setzt bei HTTP-Fehler oauth1_token=None. Ohne den
+    # langlebigen OAuth1 waere ein exportierter Blob wertlos -> Export sperren.
+    if getattr(garth.client, 'oauth1_token', None) is None:
+        token_valid = False
+        print('OAuth1-Token fehlt im Speicher -> Secret NICHT ueberschrieben')
     if not token_valid:
         print('Token nicht gueltig (429/abgelaufen) -> Secret NICHT ueberschrieben, alter Stand bleibt')
     try:
