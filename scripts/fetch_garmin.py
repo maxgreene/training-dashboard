@@ -6,7 +6,7 @@ Nutzt gespeicherte Tokens aus dem GitHub Secret GARMIN_TOKENS (base64).
 import os
 import time
 import random, json, base64, sys
-from datetime import date, timedelta
+from datetime import datetime, timezone, date, timedelta
 
 PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
 REFRESH_TAIL = 5            # die letzten N Tage immer neu holen (Sync-Nachlauf)
@@ -94,6 +94,26 @@ def main():
         # Refresh NUR wenn der Token wirklich (fast) abgelaufen ist.
         tok = getattr(garth.client, 'oauth2_token', None)
         need_refresh = tok is None or tok.expired
+
+        # Restlaufzeit des OAuth2-Tokens protokollieren. Ohne diese Zeile raten wir,
+        # wie lange er haelt - und damit auch, wann der exchange-Endpunkt ueberhaupt
+        # gebraucht wird. Der 429 haengt genau daran.
+        try:
+            exp = getattr(tok, 'expires_at', None) if tok else None
+            if exp:
+                rest_min = (float(exp) - time.time()) / 60
+                exp_iso = datetime.fromtimestamp(float(exp), timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+                if rest_min > 0:
+                    print(f'OAuth2-Token laeuft ab: {exp_iso} (noch {rest_min:.0f} min, {rest_min/60:.1f} h)')
+                else:
+                    print(f'OAuth2-Token ABGELAUFEN seit {abs(rest_min):.0f} min ({exp_iso})')
+            # OAuth1 (Master, haelt ~1 Jahr) ebenfalls im Blick behalten
+            o1 = getattr(garth.client, 'oauth1_token', None)
+            o1exp = getattr(o1, 'mfa_expiration_timestamp', None) if o1 else None
+            print(f'OAuth1-Token vorhanden: {o1 is not None}' + (f' (mfa_exp={o1exp})' if o1exp else ''))
+        except Exception as _e:
+            print(f'  (Token-Restlaufzeit nicht lesbar: {_e})')
+
         if not need_refresh:
             print('OAuth2-Token noch gueltig - kein Refresh noetig')
 
