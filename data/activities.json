@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-09T13:23:20.804719+00:00",
-  "analysis_version": 12,
+  "updated_at": "2026-07-09T13:50:36.959494+00:00",
+  "analysis_version": 13,
   "athlete": {
     "id": 13589996,
     "name": "Wolf Harmening",
@@ -11,33 +11,32 @@
   "summary": {
     "total_activities": 121,
     "recent_count": 121,
-    "recent_hours": 81.6
+    "recent_hours": 82.3
   },
   "activities": [
     {
-      "_wahoo": true,
       "id": "wahoo_474179208",
-      "wahoo_id": 474179208,
       "name": "Radfahren",
       "date": "2026-07-09",
       "start_time": "11:16",
       "type": "Ride",
-      "duration_sec": 1310,
-      "elapsed_sec": 4026,
-      "distance_m": 6173,
-      "elevation_m": 157,
-      "avg_power": 159.0,
+      "duration_sec": 4025,
+      "elapsed_sec": 4025,
+      "distance_m": null,
+      "elevation_m": null,
+      "avg_speed_kmh": null,
+      "avg_power": 158.5,
       "max_power": 803,
-      "np": 247,
       "avg_hr": null,
-      "max_hr": 0,
+      "max_hr": null,
       "avg_cadence": 74.1,
-      "kilojoules": 208.6,
-      "tss": 35.7,
+      "kilojoules": null,
       "gps_ok": false,
+      "gps_coverage_pct": null,
       "has_power": true,
       "has_hr": false,
       "has_latlng": false,
+      "np": 247,
       "power_curve": {
         "5": 707,
         "10": 634,
@@ -63,11 +62,12 @@
         39.2
       ],
       "decoupling_pct": null,
+      "power_duration_sec": null,
       "streams": {},
-      "_fit_url": "https://cdn.wahooligan.com/wahoo-cloud/production/uploads/workout_file/file/6RMP46t0qsW3JsQbuxo3SA/2026-07-09-091627-ELEMNT_ROAM_E3C3-113-0.fit",
-      "start_date_local": "2026-07-09T11:16:00",
+      "moving_sec": 4025,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 242.3
     },
     {
       "id": "wahoo_474133391",
@@ -80,7 +80,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 247.3,
+      "avg_power": 211.3,
       "max_power": 884,
       "avg_hr": 133.7,
       "max_hr": 159,
@@ -122,8 +122,8 @@
       "moving_sec": 1270,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.8887,
-      "start_date_local": "2026-07-09T08:10:00"
+      "avg_power_moving": 247.3,
+      "ef_gesamt": 1.8887
     },
     {
       "id": "wahoo_473940073",
@@ -136,7 +136,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 298.6,
+      "avg_power": 196.6,
       "max_power": 789,
       "avg_hr": 123.8,
       "max_hr": 158,
@@ -176,8 +176,8 @@
       "moving_sec": 528,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 2.3238,
-      "start_date_local": "2026-07-08T18:04:00"
+      "avg_power_moving": 298.6,
+      "ef_gesamt": 2.3238
     },
     {
       "id": "wahoo_473839620",
@@ -190,7 +190,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 197.0,
+      "avg_power": 151.5,
       "max_power": 537,
       "avg_hr": 114.6,
       "max_hr": 145,
@@ -231,8 +231,8 @@
       "moving_sec": 2965,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.732,
-      "start_date_local": "2026-07-08T11:51:00"
+      "avg_power_moving": 197.0,
+      "ef_gesamt": 1.732
     },
     {
       "id": "wahoo_473815769",
@@ -245,7 +245,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 169.7,
+      "avg_power": 129.9,
       "max_power": 474,
       "avg_hr": 98.2,
       "max_hr": 129,
@@ -287,8 +287,8 @@
       "moving_sec": 1489,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.6485,
-      "start_date_local": "2026-07-08T10:20:00"
+      "avg_power_moving": 169.7,
+      "ef_gesamt": 1.6485
     },
     {
       "id": "wahoo_473781598",
@@ -301,7 +301,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 162.3,
+      "avg_power": 138.4,
       "max_power": 422,
       "avg_hr": 97.2,
       "max_hr": 131,
@@ -343,8 +343,8 @@
       "moving_sec": 1484,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.6227,
-      "start_date_local": "2026-07-08T07:17:00"
+      "avg_power_moving": 162.3,
+      "ef_gesamt": 1.6227
     },
     {
       "id": "wahoo_473478793",
@@ -357,7 +357,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 233.4,
+      "avg_power": 154.8,
       "max_power": 805,
       "avg_hr": null,
       "max_hr": null,
@@ -398,7 +398,7 @@
       "moving_sec": 605,
       "hidden": false,
       "dup_of": null,
-      "start_date_local": "2026-07-07T10:35:00"
+      "avg_power_moving": 233.4
     },
     {
       "id": "wahoo_473456088",
@@ -411,7 +411,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 244.7,
+      "avg_power": 218.1,
       "max_power": 912,
       "avg_hr": 134.9,
       "max_hr": 155,
@@ -453,8 +453,8 @@
       "moving_sec": 1224,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.8181,
-      "start_date_local": "2026-07-07T08:16:00"
+      "avg_power_moving": 244.7,
+      "ef_gesamt": 1.8181
     },
     {
       "id": "wahoo_473268543",
@@ -467,7 +467,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 193.1,
+      "avg_power": 169.8,
       "max_power": 643,
       "avg_hr": 117.7,
       "max_hr": 136,
@@ -509,8 +509,8 @@
       "moving_sec": 1235,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.6375,
-      "start_date_local": "2026-07-06T17:03:00"
+      "avg_power_moving": 193.1,
+      "ef_gesamt": 1.6375
     },
     {
       "id": "wahoo_473165259",
@@ -523,7 +523,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 201.9,
+      "avg_power": 163.0,
       "max_power": 835,
       "avg_hr": 110.5,
       "max_hr": 149,
@@ -564,8 +564,8 @@
       "moving_sec": 1333,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.87,
-      "start_date_local": "2026-07-06T08:43:00"
+      "avg_power_moving": 201.9,
+      "ef_gesamt": 1.87
     },
     {
       "id": "wahoo_472729161",
@@ -578,7 +578,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 156.3,
+      "avg_power": 117.1,
       "max_power": 512,
       "avg_hr": null,
       "max_hr": null,
@@ -621,7 +621,7 @@
       "moving_sec": 2021,
       "hidden": false,
       "dup_of": null,
-      "start_date_local": "2026-07-04T22:03:00"
+      "avg_power_moving": 156.3
     },
     {
       "id": "wahoo_472668656",
@@ -634,7 +634,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 118.9,
+      "avg_power": 80.3,
       "max_power": 472,
       "avg_hr": null,
       "max_hr": null,
@@ -676,7 +676,7 @@
       "moving_sec": 2508,
       "hidden": false,
       "dup_of": null,
-      "start_date_local": "2026-07-04T18:07:00"
+      "avg_power_moving": 118.9
     },
     {
       "id": "wahoo_472458004",
@@ -689,7 +689,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 203.1,
+      "avg_power": 156.7,
       "max_power": 714,
       "avg_hr": 120.4,
       "max_hr": 160,
@@ -733,8 +733,8 @@
       "moving_sec": 13842,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.6396,
-      "start_date_local": "2026-07-04T05:43:00"
+      "avg_power_moving": 203.1,
+      "ef_gesamt": 1.6396
     },
     {
       "id": "wahoo_472336303",
@@ -747,7 +747,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 180.7,
+      "avg_power": 109.2,
       "max_power": 877,
       "avg_hr": null,
       "max_hr": null,
@@ -788,7 +788,7 @@
       "moving_sec": 851,
       "hidden": false,
       "dup_of": null,
-      "start_date_local": "2026-07-03T20:08:00"
+      "avg_power_moving": 180.7
     },
     {
       "id": "wahoo_472146583",
@@ -801,7 +801,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 154.8,
+      "avg_power": 140.5,
       "max_power": 530,
       "avg_hr": 107.9,
       "max_hr": 139,
@@ -843,8 +843,8 @@
       "moving_sec": 1467,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.4648,
-      "start_date_local": "2026-07-03T08:19:00"
+      "avg_power_moving": 154.8,
+      "ef_gesamt": 1.4648
     },
     {
       "id": "wahoo_471986169",
@@ -857,7 +857,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 184.5,
+      "avg_power": 152.4,
       "max_power": 634,
       "avg_hr": 116.7,
       "max_hr": 156,
@@ -900,8 +900,8 @@
       "moving_sec": 3131,
       "hidden": false,
       "dup_of": null,
-      "ef_gesamt": 1.5518,
-      "start_date_local": "2026-07-02T17:52:00"
+      "avg_power_moving": 184.5,
+      "ef_gesamt": 1.5518
     },
     {
       "_wahoo": true,
@@ -948,7 +948,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 209.4,
+      "avg_power": 149.1,
       "max_power": 630,
       "avg_hr": null,
       "max_hr": null,
@@ -989,7 +989,7 @@
       "moving_sec": 925,
       "hidden": false,
       "dup_of": null,
-      "start_date_local": "2026-07-02T07:09:00"
+      "avg_power_moving": 209.4
     },
     {
       "id": "19124507533",
@@ -1002,7 +1002,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 147.0,
+      "avg_power": 89.9,
       "max_power": 593,
       "avg_hr": null,
       "max_hr": null,
@@ -1036,7 +1036,8 @@
       "streams": {},
       "moving_sec": 1034,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 147.0
     },
     {
       "id": "19122531183",
@@ -1049,7 +1050,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 166.3,
+      "avg_power": 143.2,
       "max_power": 573,
       "avg_hr": 114.3,
       "max_hr": 127,
@@ -1090,6 +1091,7 @@
       "moving_sec": 1145,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 166.3,
       "ef_gesamt": 1.4226
     },
     {
@@ -1103,7 +1105,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 190.4,
+      "avg_power": 171.7,
       "max_power": 849,
       "avg_hr": 121.2,
       "max_hr": 155,
@@ -1145,6 +1147,7 @@
       "moving_sec": 1293,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 190.4,
       "ef_gesamt": 1.5923
     },
     {
@@ -1158,7 +1161,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 173.0,
+      "avg_power": 155.1,
       "max_power": 456,
       "avg_hr": null,
       "max_hr": null,
@@ -1192,7 +1195,8 @@
       "streams": {},
       "moving_sec": 2575,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 173.0
     },
     {
       "id": "19112056237",
@@ -1205,7 +1209,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 163.7,
+      "avg_power": 145.6,
       "max_power": 531,
       "avg_hr": 116.4,
       "max_hr": 133,
@@ -1247,6 +1251,7 @@
       "moving_sec": 1287,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 163.7,
       "ef_gesamt": 1.3884
     },
     {
@@ -1260,7 +1265,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 168.2,
+      "avg_power": 150.9,
       "max_power": 428,
       "avg_hr": 112.4,
       "max_hr": 136,
@@ -1302,6 +1307,7 @@
       "moving_sec": 1505,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 168.2,
       "ef_gesamt": 1.4598
     },
     {
@@ -1315,7 +1321,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 228.4,
+      "avg_power": 198.3,
       "max_power": 768,
       "avg_hr": 140.2,
       "max_hr": 166,
@@ -1359,6 +1365,7 @@
       "moving_sec": 9421,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 228.4,
       "ef_gesamt": 1.6669
     },
     {
@@ -1372,7 +1379,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 172.4,
+      "avg_power": 108.8,
       "max_power": 470,
       "avg_hr": null,
       "max_hr": null,
@@ -1405,7 +1412,8 @@
       "streams": {},
       "moving_sec": 617,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 172.4
     },
     {
       "id": "19089173386",
@@ -1418,7 +1426,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 166.9,
+      "avg_power": 134.4,
       "max_power": 469,
       "avg_hr": null,
       "max_hr": null,
@@ -1452,7 +1460,8 @@
       "streams": {},
       "moving_sec": 725,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 166.9
     },
     {
       "id": "19074517873",
@@ -1465,7 +1474,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 212.3,
+      "avg_power": 144.3,
       "max_power": 656,
       "avg_hr": null,
       "max_hr": null,
@@ -1499,7 +1508,8 @@
       "streams": {},
       "moving_sec": 647,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 212.3
     },
     {
       "id": "19070381573",
@@ -1512,7 +1522,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 138.3,
+      "avg_power": 127.1,
       "max_power": 427,
       "avg_hr": 104.4,
       "max_hr": 131,
@@ -1554,6 +1564,7 @@
       "moving_sec": 1526,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 138.3,
       "ef_gesamt": 1.3545
     },
     {
@@ -1567,7 +1578,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 174.2,
+      "avg_power": 162.8,
       "max_power": 465,
       "avg_hr": 126.6,
       "max_hr": 146,
@@ -1610,6 +1621,7 @@
       "moving_sec": 2108,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 174.2,
       "ef_gesamt": 1.3531
     },
     {
@@ -1623,7 +1635,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 118.0,
+      "avg_power": 85.2,
       "max_power": 368,
       "avg_hr": 96.8,
       "max_hr": 117,
@@ -1664,6 +1676,7 @@
       "moving_sec": 863,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 118.0,
       "ef_gesamt": 1.1642
     },
     {
@@ -1677,7 +1690,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 171.7,
+      "avg_power": 157.7,
       "max_power": 697,
       "avg_hr": 116.2,
       "max_hr": 134,
@@ -1719,6 +1732,7 @@
       "moving_sec": 1421,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 171.7,
       "ef_gesamt": 1.4964
     },
     {
@@ -1732,7 +1746,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 162.5,
+      "avg_power": 113.9,
       "max_power": 435,
       "avg_hr": null,
       "max_hr": null,
@@ -1766,7 +1780,8 @@
       "streams": {},
       "moving_sec": 727,
       "hidden": true,
-      "dup_of": "19045168233"
+      "dup_of": "19045168233",
+      "avg_power_moving": 162.5
     },
     {
       "id": "19045168233",
@@ -1779,7 +1794,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 228.8,
+      "avg_power": 166.8,
       "max_power": 560,
       "avg_hr": 112.1,
       "max_hr": 140,
@@ -1820,6 +1835,7 @@
       "moving_sec": 754,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 228.8,
       "ef_gesamt": 1.9857
     },
     {
@@ -1833,7 +1849,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 197.9,
+      "avg_power": 175.3,
       "max_power": 866,
       "avg_hr": 122.7,
       "max_hr": 141,
@@ -1875,6 +1891,7 @@
       "moving_sec": 1235,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 197.9,
       "ef_gesamt": 1.6024
     },
     {
@@ -1888,7 +1905,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 191.8,
+      "avg_power": 174.6,
       "max_power": 766,
       "avg_hr": 119.5,
       "max_hr": 138,
@@ -1930,6 +1947,7 @@
       "moving_sec": 1364,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 191.8,
       "ef_gesamt": 1.5795
     },
     {
@@ -1943,7 +1961,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 173.6,
+      "avg_power": 170.6,
       "max_power": 326,
       "avg_hr": 118.0,
       "max_hr": 158,
@@ -1985,6 +2003,7 @@
       "moving_sec": 1484,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 173.6,
       "ef_gesamt": 1.4464
     },
     {
@@ -1998,7 +2017,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 188.0,
+      "avg_power": 166.0,
       "max_power": 764,
       "avg_hr": 124.8,
       "max_hr": 143,
@@ -2040,6 +2059,7 @@
       "moving_sec": 1239,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 188.0,
       "ef_gesamt": 1.4771
     },
     {
@@ -2053,7 +2073,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 176.1,
+      "avg_power": 159.1,
       "max_power": 615,
       "avg_hr": 117.7,
       "max_hr": 142,
@@ -2095,6 +2115,7 @@
       "moving_sec": 1380,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 176.1,
       "ef_gesamt": 1.5058
     },
     {
@@ -2108,7 +2129,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 198.0,
+      "avg_power": 152.9,
       "max_power": 868,
       "avg_hr": 121.3,
       "max_hr": 153,
@@ -2152,6 +2173,7 @@
       "moving_sec": 12440,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 198.0,
       "ef_gesamt": 1.6462
     },
     {
@@ -2165,7 +2187,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 178.7,
+      "avg_power": 157.6,
       "max_power": 773,
       "avg_hr": 124.2,
       "max_hr": 138,
@@ -2207,6 +2229,7 @@
       "moving_sec": 1219,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 178.7,
       "ef_gesamt": 1.432
     },
     {
@@ -2220,7 +2243,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 189.4,
+      "avg_power": 177.5,
       "max_power": 532,
       "avg_hr": 127.5,
       "max_hr": 141,
@@ -2262,6 +2285,7 @@
       "moving_sec": 1316,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 189.4,
       "ef_gesamt": 1.4817
     },
     {
@@ -2275,7 +2299,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 126.2,
+      "avg_power": 105.0,
       "max_power": 392,
       "avg_hr": null,
       "max_hr": null,
@@ -2310,7 +2334,8 @@
       "streams": {},
       "moving_sec": 1573,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 126.2
     },
     {
       "id": "18974497882",
@@ -2323,7 +2348,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 117.9,
+      "avg_power": 68.5,
       "max_power": 204,
       "avg_hr": null,
       "max_hr": null,
@@ -2354,7 +2379,8 @@
       "streams": {},
       "moving_sec": 200,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 117.9
     },
     {
       "id": "18973089866",
@@ -2367,7 +2393,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 88.5,
+      "avg_power": 38.8,
       "max_power": 331,
       "avg_hr": null,
       "max_hr": null,
@@ -2402,7 +2428,8 @@
       "streams": {},
       "moving_sec": 1254,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 88.5
     },
     {
       "id": "18972535434",
@@ -2415,7 +2442,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 173.9,
+      "avg_power": 119.5,
       "max_power": 537,
       "avg_hr": null,
       "max_hr": null,
@@ -2449,7 +2476,8 @@
       "streams": {},
       "moving_sec": 744,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 173.9
     },
     {
       "id": "18967590290",
@@ -2462,7 +2490,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 138.3,
+      "avg_power": 127.8,
       "max_power": 539,
       "avg_hr": null,
       "max_hr": null,
@@ -2497,7 +2525,8 @@
       "streams": {},
       "moving_sec": 1678,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 138.3
     },
     {
       "id": "18959033041",
@@ -2510,7 +2539,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 208.7,
+      "avg_power": 136.7,
       "max_power": 721,
       "avg_hr": 113.1,
       "max_hr": 137,
@@ -2551,6 +2580,7 @@
       "moving_sec": 704,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 208.7,
       "ef_gesamt": 1.8573
     },
     {
@@ -2564,7 +2594,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 178.0,
+      "avg_power": 162.5,
       "max_power": 815,
       "avg_hr": 120.1,
       "max_hr": 147,
@@ -2606,6 +2636,7 @@
       "moving_sec": 1404,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 178.0,
       "ef_gesamt": 1.4661
     },
     {
@@ -2619,7 +2650,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 188.3,
+      "avg_power": 152.1,
       "max_power": 741,
       "avg_hr": null,
       "max_hr": null,
@@ -2655,7 +2686,8 @@
       "streams": {},
       "moving_sec": 6128,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 188.3
     },
     {
       "id": "18963359314",
@@ -2668,7 +2700,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 213.3,
+      "avg_power": 168.1,
       "max_power": 1064,
       "avg_hr": 137.8,
       "max_hr": 167,
@@ -2712,6 +2744,7 @@
       "moving_sec": 14717,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 213.3,
       "ef_gesamt": 1.5781
     },
     {
@@ -2764,7 +2797,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 186.2,
+      "avg_power": 169.2,
       "max_power": 716,
       "avg_hr": 128.7,
       "max_hr": 145,
@@ -2806,6 +2839,7 @@
       "moving_sec": 1296,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 186.2,
       "ef_gesamt": 1.472
     },
     {
@@ -2819,7 +2853,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 176.6,
+      "avg_power": 158.8,
       "max_power": 832,
       "avg_hr": 123.1,
       "max_hr": 148,
@@ -2861,6 +2895,7 @@
       "moving_sec": 1453,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 176.6,
       "ef_gesamt": 1.4285
     },
     {
@@ -2952,7 +2987,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 211.9,
+      "avg_power": 174.0,
       "max_power": 670,
       "avg_hr": 134.6,
       "max_hr": 155,
@@ -2994,6 +3029,7 @@
       "moving_sec": 1251,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 211.9,
       "ef_gesamt": 1.5627
     },
     {
@@ -3007,7 +3043,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 222.6,
+      "avg_power": 197.3,
       "max_power": 850,
       "avg_hr": 135.4,
       "max_hr": 150,
@@ -3049,6 +3085,7 @@
       "moving_sec": 1347,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 222.6,
       "ef_gesamt": 1.645
     },
     {
@@ -3062,7 +3099,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 155.4,
+      "avg_power": 95.1,
       "max_power": 419,
       "avg_hr": null,
       "max_hr": null,
@@ -3095,7 +3132,8 @@
       "streams": {},
       "moving_sec": 344,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 155.4
     },
     {
       "id": "18879516218",
@@ -3108,7 +3146,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 193.6,
+      "avg_power": 161.9,
       "max_power": 818,
       "avg_hr": 127.4,
       "max_hr": 148,
@@ -3150,6 +3188,7 @@
       "moving_sec": 1282,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 193.6,
       "ef_gesamt": 1.5158
     },
     {
@@ -3163,7 +3202,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 170.3,
+      "avg_power": 121.5,
       "max_power": 442,
       "avg_hr": 69.3,
       "max_hr": 112,
@@ -3204,6 +3243,7 @@
       "moving_sec": 1678,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 170.3,
       "ef_gesamt": 2.6908
     },
     {
@@ -3217,7 +3257,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 202.6,
+      "avg_power": 163.4,
       "max_power": 976,
       "avg_hr": 137.0,
       "max_hr": 165,
@@ -3259,6 +3299,7 @@
       "moving_sec": 1433,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 202.6,
       "ef_gesamt": 1.5288
     },
     {
@@ -3272,7 +3313,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 174.0,
+      "avg_power": 146.5,
       "max_power": 942,
       "avg_hr": 121.5,
       "max_hr": 162,
@@ -3314,6 +3355,7 @@
       "moving_sec": 1475,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 174.0,
       "ef_gesamt": 1.441
     },
     {
@@ -3327,7 +3369,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 146.5,
+      "avg_power": 126.6,
       "max_power": 441,
       "avg_hr": 117.6,
       "max_hr": 136,
@@ -3369,6 +3411,7 @@
       "moving_sec": 1553,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 146.5,
       "ef_gesamt": 1.2461
     },
     {
@@ -3382,7 +3425,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 158.1,
+      "avg_power": 136.6,
       "max_power": 470,
       "avg_hr": 117.9,
       "max_hr": 138,
@@ -3424,6 +3467,7 @@
       "moving_sec": 1541,
       "hidden": true,
       "dup_of": "18846307093",
+      "avg_power_moving": 158.1,
       "ef_gesamt": 1.3181
     },
     {
@@ -3437,7 +3481,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 168.9,
+      "avg_power": 139.3,
       "max_power": 746,
       "avg_hr": 120.8,
       "max_hr": 141,
@@ -3479,6 +3523,7 @@
       "moving_sec": 1334,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 168.9,
       "ef_gesamt": 1.3884
     },
     {
@@ -3492,7 +3537,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 153.8,
+      "avg_power": 131.1,
       "max_power": 544,
       "avg_hr": null,
       "max_hr": null,
@@ -3527,7 +3572,8 @@
       "streams": {},
       "moving_sec": 1567,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 153.8
     },
     {
       "id": "18826432930",
@@ -3540,7 +3586,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 177.8,
+      "avg_power": 126.4,
       "max_power": 577,
       "avg_hr": 125.3,
       "max_hr": 159,
@@ -3584,6 +3630,7 @@
       "moving_sec": 43127,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 177.8,
       "ef_gesamt": 1.374
     },
     {
@@ -3597,7 +3644,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 193.9,
+      "avg_power": 126.2,
       "max_power": 401,
       "avg_hr": null,
       "max_hr": null,
@@ -3631,7 +3678,8 @@
       "streams": {},
       "moving_sec": 1277,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 193.9
     },
     {
       "id": "18810169067",
@@ -3644,7 +3692,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 185.7,
+      "avg_power": 122.2,
       "max_power": 671,
       "avg_hr": null,
       "max_hr": null,
@@ -3678,7 +3726,8 @@
       "streams": {},
       "moving_sec": 846,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 185.7
     },
     {
       "id": "18814812469",
@@ -3691,7 +3740,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 128.2,
+      "avg_power": 51.8,
       "max_power": 504,
       "avg_hr": null,
       "max_hr": null,
@@ -3725,7 +3774,8 @@
       "streams": {},
       "moving_sec": 1061,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 128.2
     },
     {
       "id": "18772578420",
@@ -3738,7 +3788,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 194.0,
+      "avg_power": 162.1,
       "max_power": 649,
       "avg_hr": 130.0,
       "max_hr": 153,
@@ -3782,6 +3832,7 @@
       "moving_sec": 4163,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 194.0,
       "ef_gesamt": 1.45
     },
     {
@@ -3795,7 +3846,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 168.6,
+      "avg_power": 145.2,
       "max_power": 479,
       "avg_hr": 118.0,
       "max_hr": 142,
@@ -3837,6 +3888,7 @@
       "moving_sec": 1527,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 168.6,
       "ef_gesamt": 1.398
     },
     {
@@ -3850,7 +3902,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 178.5,
+      "avg_power": 152.6,
       "max_power": 547,
       "avg_hr": 121.5,
       "max_hr": 140,
@@ -3892,6 +3944,7 @@
       "moving_sec": 1337,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 178.5,
       "ef_gesamt": 1.4793
     },
     {
@@ -3937,7 +3990,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 170.7,
+      "avg_power": 153.3,
       "max_power": 554,
       "avg_hr": 128.0,
       "max_hr": 144,
@@ -3978,6 +4031,7 @@
       "moving_sec": 1467,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 170.7,
       "ef_gesamt": 1.3402
     },
     {
@@ -3991,7 +4045,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 164.0,
+      "avg_power": 139.7,
       "max_power": 625,
       "avg_hr": 123.0,
       "max_hr": 135,
@@ -4033,6 +4087,7 @@
       "moving_sec": 1280,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 164.0,
       "ef_gesamt": 1.3188
     },
     {
@@ -4046,7 +4101,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 201.5,
+      "avg_power": 176.8,
       "max_power": 823,
       "avg_hr": 131.5,
       "max_hr": 162,
@@ -4088,6 +4143,7 @@
       "moving_sec": 1327,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 201.5,
       "ef_gesamt": 1.5323
     },
     {
@@ -4101,7 +4157,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 131.0,
+      "avg_power": 123.2,
       "max_power": 323,
       "avg_hr": null,
       "max_hr": null,
@@ -4135,7 +4191,8 @@
       "streams": {},
       "moving_sec": 1095,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 131.0
     },
     {
       "id": "18729026745",
@@ -4148,7 +4205,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 97.5,
+      "avg_power": 46.7,
       "max_power": 269,
       "avg_hr": null,
       "max_hr": null,
@@ -4182,7 +4239,8 @@
       "streams": {},
       "moving_sec": 887,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 97.5
     },
     {
       "id": "18717251723",
@@ -4195,7 +4253,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 64.9,
+      "avg_power": 48.5,
       "max_power": 360,
       "avg_hr": 75.9,
       "max_hr": 118,
@@ -4238,6 +4296,7 @@
       "moving_sec": 3455,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 64.9,
       "ef_gesamt": 0.7527
     },
     {
@@ -4251,7 +4310,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 177.4,
+      "avg_power": 122.6,
       "max_power": 380,
       "avg_hr": null,
       "max_hr": null,
@@ -4282,7 +4341,8 @@
       "streams": {},
       "moving_sec": 67,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 177.4
     },
     {
       "id": "18711555120",
@@ -4373,7 +4433,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 148.2,
+      "avg_power": 116.5,
       "max_power": 941,
       "avg_hr": 126.4,
       "max_hr": 165,
@@ -4417,6 +4477,7 @@
       "moving_sec": 12522,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 148.2,
       "ef_gesamt": 1.1869
     },
     {
@@ -4730,7 +4791,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 169.2,
+      "avg_power": 148.6,
       "max_power": 489,
       "avg_hr": 128.0,
       "max_hr": 146,
@@ -4771,6 +4832,7 @@
       "moving_sec": 1189,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 169.2,
       "ef_gesamt": 1.3103
     },
     {
@@ -4784,7 +4846,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 214.9,
+      "avg_power": 163.5,
       "max_power": 634,
       "avg_hr": 124.2,
       "max_hr": 143,
@@ -4825,6 +4887,7 @@
       "moving_sec": 753,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 214.9,
       "ef_gesamt": 1.6835
     },
     {
@@ -4838,7 +4901,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 178.2,
+      "avg_power": 131.8,
       "max_power": 711,
       "avg_hr": 126.1,
       "max_hr": 157,
@@ -4882,6 +4945,7 @@
       "moving_sec": 14414,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 178.2,
       "ef_gesamt": 1.3655
     },
     {
@@ -4895,7 +4959,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 205.2,
+      "avg_power": 121.5,
       "max_power": 623,
       "avg_hr": 116.3,
       "max_hr": 147,
@@ -4936,6 +5000,7 @@
       "moving_sec": 659,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 205.2,
       "ef_gesamt": 1.7995
     },
     {
@@ -4949,7 +5014,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 165.7,
+      "avg_power": 147.8,
       "max_power": 681,
       "avg_hr": 131.2,
       "max_hr": 150,
@@ -4991,6 +5056,7 @@
       "moving_sec": 1376,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 165.7,
       "ef_gesamt": 1.284
     },
     {
@@ -5082,7 +5148,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 180.7,
+      "avg_power": 179.2,
       "max_power": 332,
       "avg_hr": 129.5,
       "max_hr": 174,
@@ -5125,6 +5191,7 @@
       "moving_sec": 2062,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 180.7,
       "ef_gesamt": 1.3615
     },
     {
@@ -5333,7 +5400,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 154.5,
+      "avg_power": 154.4,
       "max_power": 257,
       "avg_hr": 121.7,
       "max_hr": 148,
@@ -5377,6 +5444,7 @@
       "moving_sec": 5400,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 154.5,
       "ef_gesamt": 1.3031
     },
     {
@@ -5589,6 +5657,7 @@
       "moving_sec": 3416,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 160.2,
       "ef_gesamt": 1.3121
     },
     {
@@ -5707,7 +5776,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 199.8,
+      "avg_power": 182.5,
       "max_power": 778,
       "avg_hr": 146.8,
       "max_hr": 162,
@@ -5751,6 +5820,7 @@
       "moving_sec": 8587,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 199.8,
       "ef_gesamt": 1.353
     },
     {
@@ -5875,7 +5945,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 231.0,
+      "avg_power": 168.4,
       "max_power": 625,
       "avg_hr": 128.3,
       "max_hr": 153,
@@ -5916,6 +5986,7 @@
       "moving_sec": 790,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 231.0,
       "ef_gesamt": 1.7705
     },
     {
@@ -5929,7 +6000,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 160.8,
+      "avg_power": 101.3,
       "max_power": 502,
       "avg_hr": 101.9,
       "max_hr": 140,
@@ -5970,6 +6041,7 @@
       "moving_sec": 827,
       "hidden": true,
       "dup_of": "18408238477",
+      "avg_power_moving": 160.8,
       "ef_gesamt": 1.5486
     },
     {
@@ -6026,6 +6098,7 @@
       "moving_sec": 2701,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 139.7,
       "ef_gesamt": 1.1933
     },
     {
@@ -6039,7 +6112,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 178.0,
+      "avg_power": 153.0,
       "max_power": 666,
       "avg_hr": null,
       "max_hr": null,
@@ -6074,7 +6147,8 @@
       "streams": {},
       "moving_sec": 1486,
       "hidden": false,
-      "dup_of": null
+      "dup_of": null,
+      "avg_power_moving": 178.0
     },
     {
       "id": "18395123785",
@@ -6087,7 +6161,7 @@
       "distance_m": null,
       "elevation_m": null,
       "avg_speed_kmh": null,
-      "avg_power": 213.1,
+      "avg_power": 194.0,
       "max_power": 686,
       "avg_hr": 143.0,
       "max_hr": 161,
@@ -6129,6 +6203,7 @@
       "moving_sec": 1299,
       "hidden": false,
       "dup_of": null,
+      "avg_power_moving": 213.1,
       "ef_gesamt": 1.4938
     },
     {
