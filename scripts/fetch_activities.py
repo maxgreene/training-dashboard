@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # fetch_activities.py
-import os, json, urllib.request, urllib.error
+import os
+import re, json, urllib.request, urllib.error
 from datetime import datetime, timezone
 
 TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt seit 30.06.2026
@@ -475,11 +476,16 @@ def main():
                 max_w = max(w_pos) if w_pos else None
                 avg_h = round(sum(h_pos)/len(h_pos), 1) if h_pos else None
                 max_h = max(h_pos) if h_pos else None
-                date_str = sd.get('date', '')
-                name     = sd.get('name', 'Ride')
-                # Vorhandene (Backfill-)Startzeit + Metadaten aus existing bewahren,
-                # sonst wuerde die Rekonstruktion sie mit 00:00 / None ueberschreiben.
+                # Vorhandene Daten aus existing ZUERST holen (werden als Fallback gebraucht).
                 prev = existing.get(str(aid), {})
+                # Wahoo-Stream-Dateien enthalten nur {'streams': ...} - KEIN date/name.
+                # Ohne Fallback wuerde start_date_local zu 'T22:03:00Z' (Datum fehlt)
+                # und date danach auf diesen Muell gesetzt -> 'Invalid Date' im Dashboard.
+                date_str = sd.get('date') or prev.get('date') or ''
+                if not re.match(r'^\d{4}-\d{2}-\d{2}$', str(date_str)):
+                    print(f"  ! skip {aid}: kein valides Datum (sd={sd.get('date')!r} prev={prev.get('date')!r})")
+                    continue
+                name     = sd.get('name') or prev.get('name') or 'Ride'
                 prev_st = prev.get('start_time')
                 sdl_time = f"T{prev_st}:00Z" if (prev_st and prev_st != '00:00') else 'T00:00:00Z'
                 fake_act = {
