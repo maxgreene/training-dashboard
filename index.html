@@ -246,6 +246,24 @@ canvas.chart{width:100%;display:block;}
 /* 4DP Mikro-Ringe in der Fahrt-Kachel (rechts) */
 .dp4{flex-shrink:0;line-height:0;margin-left:4px;}
 .dp4 svg{transform:rotate(-90deg);display:block;}
+
+/* FTP-300 Fortschritts-Widget */
+.ftp3{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:18px}
+.ftp3-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.ftp3-hd .t{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--t1)}
+.ftp3-hd .s{font-size:11px;color:var(--t4)}
+.ftp3-grid{display:grid;grid-template-columns:minmax(240px,1fr) minmax(280px,1.4fr);gap:24px}
+@media(max-width:820px){.ftp3-grid{grid-template-columns:1fr}}
+.ftp3-lbl{font-size:10px;letter-spacing:.05em;color:var(--t4);text-transform:uppercase;margin-bottom:8px}
+/* Easy-Balken */
+.ez-big{font-size:40px;font-weight:800;line-height:1;font-family:'JetBrains Mono',monospace}
+.ez-unit{font-size:16px;font-weight:600;color:var(--t4)}
+.ez-bar{position:relative;height:16px;background:#222;border-radius:3px;margin:12px 0 6px;overflow:hidden}
+.ez-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.ez-target{position:absolute;top:-3px;bottom:-3px;background:rgba(52,211,153,.16);border-left:1px solid #34d399;border-right:1px solid #34d399}
+.ez-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--t5);font-family:'JetBrains Mono',monospace}
+.ez-note{font-size:11px;color:var(--t3);margin-top:10px;line-height:1.5}
+.ez-delta{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:4px}
 </style>
 </head>
 <body>
@@ -611,6 +629,107 @@ function adaptDay(d, weekIdx, week){
           reason:'Form grün', boosted:true};
 }
 
+
+// ===== FTP-300 Fortschritts-Widget =====
+// Zwei Kennzahlen, die den Aufbau steuern, lange bevor die FTP reagiert:
+//  (a) Easy-Anteil: Zeit in Z1+Z2 (<75% FTP) am Gesamtvolumen. Ziel 75-80%.
+//  (b) 20-Min-Bestleistung (power_curve['1200']) als FTP-Indikator.
+//      Fuer FTP 300 sind ~316W noetig (FTP = 20min x 0.95).
+const FTP_GOAL = 300;
+const P20_GOAL = Math.round(FTP_GOAL/0.95);   // 316 W
+
+function easyShareRange(days, offset){
+  offset = offset||0;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const hi = new Date(now); hi.setDate(hi.getDate()-offset);
+  const lo = new Date(hi);  lo.setDate(lo.getDate()-days);
+  let ez=0, tot=0, n=0, hrs=0;
+  allActivities.forEach(a=>{
+    if(!a.date) return;
+    const d=new Date(a.date+'T00:00:00');
+    if(d<=lo || d>hi) return;
+    const pz=a.power_zones, dur=actDur(a);
+    if(pz && pz.length===5 && dur){
+      ez  += (pz[0]+pz[1])/100*dur;
+      tot += dur; n++; hrs += dur/3600;
+    }
+  });
+  return tot ? {pct: 100*ez/tot, hours: hrs, rides: n} : null;
+}
+
+function best20(days){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const lo=new Date(now); lo.setDate(lo.getDate()-days);
+  let best=0, when=null;
+  allActivities.forEach(a=>{
+    const p=a.power_curve && a.power_curve['1200'];
+    if(!p||!a.date) return;
+    const d=new Date(a.date+'T00:00:00');
+    if(d<lo) return;
+    if(p>best){best=p; when=a.date;}
+  });
+  return best?{w:best,date:when}:null;
+}
+
+function ftp300Widget(){
+  const cur  = easyShareRange(28,0);
+  const prev = easyShareRange(28,28);
+  const p20  = best20(42);          // beste 20min der letzten 6 Wochen
+  if(!cur) return '';
+
+  // Easy-Anteil
+  const pct=cur.pct;
+  const col = pct>=75 ? '#34d399' : pct>=65 ? '#fbbf24' : '#f97316';
+  let delta='';
+  if(prev){
+    const dv=pct-prev.pct;
+    const dcol = dv>=0 ? '#34d399' : '#ef4444';
+    delta=`<div class="ez-delta" style="color:${dcol}">${dv>=0?'▲':'▼'} ${Math.abs(dv).toFixed(0)} Pp. vs. Vormonat (${prev.pct.toFixed(0)}%)</div>`;
+  }
+  const note = pct>=75
+    ? 'Verteilung passt. Harte Einheiten koennen wirken.'
+    : 'Zu viel Mittelintensitaet. Commutes bewusst unter 65% FTP fahren, lange Ausfahrten ruhiger.';
+
+  // 20-Min-Balken
+  let p20html='<div style="font-size:12px;color:var(--t4)">Noch keine 20-Min-Bestleistung erfasst.</div>';
+  if(p20){
+    const prog=Math.min(100, 100*p20.w/P20_GOAL);
+    const ftpEst=Math.round(p20.w*0.95);
+    p20html=`
+      <div><span class="ez-big" style="color:#60a5fa">${p20.w}</span><span class="ez-unit"> W</span>
+        <span style="font-size:11px;color:var(--t4);margin-left:8px">beste 20 Min (6 Wo) · ${fmtDate(p20.date)}</span></div>
+      <div class="ez-bar">
+        <div class="ez-fill" style="width:${prog}%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div>
+      </div>
+      <div class="ez-scale"><span>0</span><span>Ziel ${P20_GOAL} W → FTP ${FTP_GOAL}</span></div>
+      <div class="ez-note">Entspricht FTP ≈ <b style="color:var(--t1)">${ftpEst} W</b>. Noch <b style="color:var(--t1)">${Math.max(0,P20_GOAL-p20.w)} W</b> bis zum Ziel.
+        Werte aus Ausfahrten sind eine Untergrenze — ein echter 20-Min-Test auf der Rolle misst sauberer.</div>`;
+  }
+
+  return `
+  <div class="ftp3">
+    <div class="ftp3-hd"><span class="t">WEG ZU FTP ${FTP_GOAL}</span><span class="s">Steuergroessen des Aufbaus</span></div>
+    <div class="ftp3-grid">
+      <div>
+        <div class="ftp3-lbl">Easy-Anteil · letzte 4 Wochen</div>
+        <div><span class="ez-big" style="color:${col}">${pct.toFixed(0)}</span><span class="ez-unit"> %</span>
+          <span style="font-size:11px;color:var(--t4);margin-left:8px">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten</span></div>
+        <div class="ez-bar">
+          <div class="ez-fill" style="width:${pct}%;background:${col}"></div>
+          <div class="ez-target" style="left:75%;right:20%"></div>
+        </div>
+        <div class="ez-scale"><span>0%</span><span style="color:#34d399">Ziel 75–80%</span><span>100%</span></div>
+        ${delta}
+        <div class="ez-note">${note}</div>
+      </div>
+      <div>
+        <div class="ftp3-lbl">20-Min-Bestleistung · FTP-Indikator</div>
+        ${p20html}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPlan(){
   const el=document.getElementById('page-plan');
   if(!el)return;
@@ -635,7 +754,7 @@ function renderPlan(){
     return allActivities.some(a=>a.date===key);
   }
 
-  let h='<div class="plan-wrap">';
+  let h=ftp300Widget()+'<div class="plan-wrap">';
 
   PLAN_WEEKS.forEach((week)=>{
     // Phase header
@@ -836,7 +955,7 @@ function renderSummary(){
     <div class="stat"><div class="stat-label">Stunden</div><div class="stat-val">${hours.toFixed(1)}<span> h</span></div><div class="stat-sub">Gesamtvolumen</div></div>
     <div class="stat"><div class="stat-label">Ø Watt</div><div class="stat-val">${avgP?Math.round(avgP):'—'}<span> W</span></div><div class="stat-sub">mit Powermeter</div></div>
     <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP||'—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
-    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val">~240<span> W</span></div><div class="stat-sub">2,96 W/kg</div></div>`;
+    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val">~${FTP}<span> W</span></div><div class="stat-sub">${(FTP/81).toFixed(2).replace('.',',')} W/kg</div></div>`;
 }
 
 function renderActivityList(){
