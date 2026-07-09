@@ -242,6 +242,10 @@ canvas.chart{width:100%;display:block;}
   .stat{min-width:45%;}
   .act-metrics{display:none;}
 }
+
+/* 4DP Mikro-Ringe in der Fahrt-Kachel (rechts) */
+.dp4{flex-shrink:0;line-height:0;margin-left:4px;}
+.dp4 svg{transform:rotate(-90deg);display:block;}
 </style>
 </head>
 <body>
@@ -504,6 +508,39 @@ function fmtDist(m){return(m/1000).toFixed(1)+' km';}
 function fmtStart(a){let t=a.start_time;if((!t||t==='00:00')&&a.start_date_local&&a.start_date_local.length>=16){t=a.start_date_local.slice(11,16);}return (!t||t==='00:00')?'':t;}
     function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
 function actDur(a){return a.duration_sec||a.power_duration_sec;}
+// --- 4DP Mikro-Ringe (NM/AC/MAP/FTP), Benchmarks aus FTP abgeleitet ---
+// NM(5s)=4.8xFTP, AC(60s)=3.2xFTP, MAP(300s)=1.6xFTP, FTP(1200s)=1.0xFTP
+const DP4 = [
+  {k:'5',    bench:FTP*4.8, col:'#a855f7', lbl:'NM'},
+  {k:'60',   bench:FTP*3.2, col:'#ef4444', lbl:'AC'},
+  {k:'300',  bench:FTP*1.6, col:'#f59e0b', lbl:'MAP'},
+  {k:'1200', bench:FTP*1.0, col:'#3b82f6', lbl:'FTP'},
+];
+function dp4Rings(a, size){
+  const pc = a.power_curve;
+  if(!pc || !a.has_power) return '';
+  size = size || 36;
+  const cx=size/2, cy=size/2, sw=3, gap=1.2;
+  let out='', tip=[];
+  DP4.forEach((d,i)=>{
+    const r=(size/2 - sw/2) - i*(sw+gap);
+    if(r < sw*0.8) return;
+    const C=2*Math.PI*r;
+    out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#262626" stroke-width="${sw}"/>`;
+    const v = pc[d.k];
+    if(v){
+      const pct=Math.min(1, v/d.bench);
+      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.col}" stroke-width="${sw}"`
+           + ` stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct)).toFixed(1)}" stroke-linecap="round"/>`;
+      tip.push(`${d.lbl}: ${v}W (${Math.round(100*v/d.bench)}%)`);
+    } else {
+      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.col}" stroke-width="1"`
+           + ` stroke-dasharray="1.5 2.5" opacity="0.45"/>`;
+      tip.push(`${d.lbl}: n/a (Fahrt zu kurz)`);
+    }
+  });
+  return `<div class="dp4" title="${tip.join('\n')}"><svg width="${size}" height="${size}">${out}</svg></div>`;
+}
 function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
 
 // ── PLAN ──
@@ -819,6 +856,7 @@ function renderActivityList(){
             ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
           </div>
           <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
+          ${dp4Rings(a)}
         </div>
         ${zstrip(zones)}
       </div>
