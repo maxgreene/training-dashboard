@@ -264,6 +264,14 @@ canvas.chart{width:100%;display:block;}
 .ez-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--t5);font-family:'JetBrains Mono',monospace}
 .ez-note{font-size:11px;color:var(--t3);margin-top:10px;line-height:1.5}
 .ez-delta{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:4px}
+
+/* Test-Verlauf im FTP-Widget */
+.tst{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.tst-row{display:flex;align-items:flex-end;gap:14px}
+.tst-spark{flex-shrink:0}
+.tst-list{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--t3);line-height:1.65}
+.tst-list b{color:var(--t1);font-weight:700}
+.tst-empty{font-size:11px;color:var(--t5);font-style:italic}
 </style>
 </head>
 <body>
@@ -488,7 +496,87 @@ const PLAN_WEEKS=[
       {date:"18.07",dow:"Sa",type:"aus",title:"Ausfahrt locker",desc:"nach Bedarf · kein Druck"},
       {date:"19.07",dow:"So",type:"rest",title:"Pause",desc:"",dimmed:true},
     ]
-  },
+  },,
+  {lbl:"FTP-300 · W1",dates:"13.–19. Jul",vol:"8.5h",phase:"FTP-300 AUFBAU · BLOCK 1",cp:{lbl:"NULLPUNKT · 20-MIN-TEST",desc:"Sauberer Ausgangswert auf der Rolle. Danach FTP im Dashboard setzen."},
+    days:[
+      {date:"13.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"14.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"15.07",dow:"Mi",type:"test",title:"Commute ×2 + 20-Min-Test",desc:"Rolle · Nullpunkt · nach 15min Einfahren all-out",protected:true},
+      {date:"16.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"17.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"18.07",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h · IF <0.68 · Puls unter 75% HRmax"},
+      {date:"19.07",dow:"So",type:"rest",title:"Ruhetag",desc:"kein Rad ausser Pflicht-Commute"}
+    ]},
+  {lbl:"FTP-300 · W2",dates:"20.–26. Jul",vol:"9.0h",
+    days:[
+      {date:"20.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"21.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"22.07",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×10min Schwelle",desc:"95–100% FTP · 5min Pause"},
+      {date:"23.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"24.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"25.07",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h30 · IF <0.68"},
+      {date:"26.07",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
+    ]},
+  {lbl:"FTP-300 · W3",dates:"27.–02. Aug",vol:"9.5h",
+    days:[
+      {date:"27.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"28.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"29.07",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 4×10min Schwelle",desc:"95–100% FTP · 5min Pause"},
+      {date:"30.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"31.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"01.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
+      {date:"02.08",dow:"So",type:"aus",title:"Kurz intensiv",desc:"75min mit 3×8min Sweet Spot (88–93%)"}
+    ]},
+  {lbl:"FTP-300 · W4",dates:"03.–09. Aug",vol:"6.0h",protected:true,
+    days:[
+      {date:"03.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"04.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"05.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle locker",desc:"45min Z2 · keine Intervalle"},
+      {date:"06.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"07.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"08.08",dow:"Sa",type:"aus",title:"Ausfahrt Z2 kurz",desc:"2h · sehr locker"},
+      {date:"09.08",dow:"So",type:"rest",title:"Ruhetag",desc:"Entlastungswoche"}
+    ]},
+  {lbl:"FTP-300 · W5",dates:"10.–16. Aug",vol:"9.5h",phase:"FTP-300 AUFBAU · BLOCK 2",
+    days:[
+      {date:"10.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"11.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"12.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×12min Schwelle",desc:"98–102% FTP · 6min Pause"},
+      {date:"13.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"14.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"15.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h30 · IF <0.68"},
+      {date:"16.08",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
+    ]},
+  {lbl:"FTP-300 · W6",dates:"17.–23. Aug",vol:"10.0h",
+    days:[
+      {date:"17.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"18.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"19.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 2×20min Schwelle",desc:"95–98% FTP · 8min Pause"},
+      {date:"20.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"21.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"22.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
+      {date:"23.08",dow:"So",type:"aus",title:"Kurz intensiv",desc:"75min mit 4×8min Sweet Spot"}
+    ]},
+  {lbl:"FTP-300 · W7",dates:"24.–30. Aug",vol:"10.0h",
+    days:[
+      {date:"24.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"25.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"26.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×15min Schwelle",desc:"96–100% FTP · 6min Pause"},
+      {date:"27.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"28.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"29.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
+      {date:"30.08",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
+    ]},
+  {lbl:"FTP-300 · W8",dates:"31.–06. Sep",vol:"6.5h",cp:{lbl:"CHECKPOINT · RETEST",desc:"Vergleich zum Nullpunkt. Erwartung +10–20W nach 8 Wochen."},protected:true,
+    days:[
+      {date:"31.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"01.09",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"02.09",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle locker",desc:"45min Z2 · Beine oeffnen"},
+      {date:"03.09",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"04.09",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
+      {date:"05.09",dow:"Sa",type:"test",title:"20-Min-Retest",desc:"Rolle · gleiche Bedingungen wie W1",protected:true},
+      {date:"06.09",dow:"So",type:"rest",title:"Ruhetag",desc:"Entlastung + Retest"}
+    ]}
 ];
 
 
@@ -590,9 +678,9 @@ function adaptDay(d, weekIdx, week){
   const weekDates=week.days.map(x=>_dateObj(x.date)).filter(Boolean);
   const wkStart=weekDates[0], wkEnd=weekDates[weekDates.length-1];
   const inThisWeek = wkStart&&wkEnd&&now>=wkStart&&now<=wkEnd;
-  // laufende Woche ODER naechste 7 Tage
+  // laufende Woche ODER die naechsten FUTURE_WEEKS_SHOWN Wochen
   const daysAhead=Math.round((dt-now)/86400000);
-  if(daysAhead>7) return null;
+  if(daysAhead>FUTURE_WEEKS_SHOWN*7) return null;
 
   // Taper-Schutz: geschuetzte Einheiten nie abschwaechen
   if(d.protected||week.protected) return null;
@@ -636,6 +724,7 @@ function adaptDay(d, weekIdx, week){
 //  (b) 20-Min-Bestleistung (power_curve['1200']) als FTP-Indikator.
 //      Fuer FTP 300 sind ~316W noetig (FTP = 20min x 0.95).
 const FTP_GOAL = 300;
+const FUTURE_WEEKS_SHOWN = 2;   // wie weit der Plan nach vorne blickt (Wochen)
 const P20_GOAL = Math.round(FTP_GOAL/0.95);   // 316 W
 
 function easyShareRange(days, offset){
@@ -669,6 +758,67 @@ function best20(days){
     if(p>best){best=p; when=a.date;}
   });
   return best?{w:best,date:when}:null;
+}
+
+
+// ===== Echte Rollentests (manuell gepflegt) =====
+// kind: 'ramp' (Rampentest) | '4dp' (Sufferfest/SYSTM) | '20min'
+// ftp/map: gemessene Werte. Ist "id" gesetzt und ein Wert fehlt, wird er aus
+// der power_curve der Aktivitaet abgeleitet (20min x 0.95 bzw. 5min = MAP).
+const TESTS = [
+  {date:'2026-05-21', kind:'ramp', id:'18599770325', ftp:237, map:313, note:'Rampentest'},
+  // Naechster Eintrag hier ergaenzen, z.B.:
+  // {date:'2026-07-15', kind:'20min', id:'wahoo_...', note:'Nullpunkt FTP-300-Block'},
+];
+
+function testValues(t){
+  let ftp=t.ftp, map=t.map;
+  if(t.id){
+    const a=allActivities.find(x=>String(x.id)===String(t.id));
+    const pc=a&&a.power_curve;
+    if(pc){
+      if(ftp==null && pc['1200']) ftp=Math.round(pc['1200']*0.95);
+      if(map==null && pc['300'])  map=pc['300'];
+    }
+  }
+  return {ftp,map};
+}
+
+function testSparkline(){
+  const pts=TESTS.map(t=>({...t,...testValues(t)})).filter(t=>t.ftp).sort((a,b)=>a.date<b.date?-1:1);
+  if(!pts.length) return '<div class="tst"><div class="tst-empty">Noch keine Rollentests erfasst.</div></div>';
+
+  const W=170,H=52,pad=6;
+  const goal=FTP_GOAL;
+  const lo=Math.min(goal, ...pts.map(p=>p.ftp))-10;
+  const hi=Math.max(goal, ...pts.map(p=>p.ftp))+10;
+  const x=i=> pts.length===1 ? W/2 : pad+i*(W-2*pad)/(pts.length-1);
+  const y=v=> H-pad-((v-lo)/(hi-lo))*(H-2*pad);
+
+  let svg=`<svg width="${W}" height="${H}">`;
+  // Ziellinie
+  svg+=`<line x1="0" y1="${y(goal).toFixed(1)}" x2="${W}" y2="${y(goal).toFixed(1)}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`;
+  if(pts.length>1){
+    const dd=pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(p.ftp).toFixed(1)}`).join(' ');
+    svg+=`<path d="${dd}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  pts.forEach((p,i)=>{ svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(p.ftp).toFixed(1)}" r="3" fill="#60a5fa"/>`; });
+  svg+='</svg>';
+
+  const KIND={ramp:'Rampe','4dp':'4DP','20min':'20-Min'};
+  const rows=pts.slice().reverse().slice(0,3).map(p=>
+    `<div>${fmtDate(p.date)} · ${KIND[p.kind]||p.kind} · FTP <b>${p.ftp} W</b>${p.map?` · MAP ${p.map} W`:''}</div>`
+  ).join('');
+  const first=pts[0], last=pts[pts.length-1];
+  const gain = pts.length>1 ? `<div style="color:#34d399">▲ ${last.ftp-first.ftp} W seit ${fmtDate(first.date)}</div>` : '';
+
+  return `<div class="tst">
+    <div class="ftp3-lbl">Rollentests · gemessene FTP</div>
+    <div class="tst-row">
+      <div class="tst-spark">${svg}</div>
+      <div class="tst-list">${rows}${gain}</div>
+    </div>
+  </div>`;
 }
 
 function ftp300Widget(){
@@ -727,6 +877,7 @@ function ftp300Widget(){
         ${p20html}
       </div>
     </div>
+    ${testSparkline()}
   </div>`;
 }
 
@@ -756,10 +907,32 @@ function renderPlan(){
 
   let h=ftp300Widget()+'<div class="plan-wrap">';
 
-  PLAN_WEEKS.forEach((week)=>{
-    // Phase header
-    if(week.phase){
-      h+=`<div class="plan-phase"><div class="plan-phase-line"></div><div class="plan-phase-label">${week.phase}</div><div class="plan-phase-line"></div></div>`;
+  // Anzeigereihenfolge: Zukunft oben, Vergangenheit unten.
+  // Nur FUTURE_WEEKS_SHOWN Wochen nach vorne zeigen - alles weiter Entfernte
+  // ist ohnehin Spekulation und wird erst sichtbar, wenn es naeher rueckt.
+  const horizon=new Date(now); horizon.setDate(horizon.getDate()+FUTURE_WEEKS_SHOWN*7);
+
+  // Effektive Phase pro Woche vorwaerts propagieren (phase steht nur an der
+  // ERSTEN Woche einer Phase). Sonst landet der Header nach dem Umdrehen falsch.
+  let _ph=null;
+  const weeksAll=PLAN_WEEKS.map(w=>{
+    if(w.phase) _ph=w.phase;
+    const ds=w.days.map(x=>dateObj(x.date)).filter(Boolean);
+    return {...w, _effPhase:_ph, _start:ds[0]||null, _end:ds[ds.length-1]||null};
+  });
+
+  // Wochen ausblenden, die komplett jenseits des Horizonts liegen
+  const weeksVisible=weeksAll.filter(w=> !w._start || w._start<=horizon );
+
+  // Umdrehen: neueste zuerst
+  const weeksOrdered=weeksVisible.slice().reverse();
+
+  let _lastPhase=null;
+  weeksOrdered.forEach((week)=>{
+    // Phase-Header immer VOR der ersten angezeigten Woche einer Phase
+    if(week._effPhase && week._effPhase!==_lastPhase){
+      h+=`<div class="plan-phase"><div class="plan-phase-line"></div><div class="plan-phase-label">${week._effPhase}</div><div class="plan-phase-line"></div></div>`;
+      _lastPhase=week._effPhase;
     }
     // Checkpoint
     if(week.cp){
