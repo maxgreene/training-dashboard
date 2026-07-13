@@ -1809,14 +1809,21 @@ function renderTodayBanner(){
 let _statusData = {act:null, health:null};
 
 function relTime(iso){
+  // h (Stunden seit Fetch) treibt die Ampel-Logik. txt zeigt Tag + Uhrzeit
+  // im Klartext statt 'vor X Min'.
   if(!iso) return {txt:'nie', h:Infinity};
   const then=new Date(iso), now=new Date();
   const h=(now-then)/3600000;
-  let txt;
-  if(h<1)       txt='vor '+Math.round(h*60)+' Min';
-  else if(h<24) txt='vor '+Math.round(h)+' Std';
-  else          txt='vor '+Math.round(h/24)+' Tg';
-  return {txt, h};
+  const t=new Date(iso);
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const day0=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  const dd=Math.round((today-day0)/86400000);
+  const uhr=t.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  let tag;
+  if(dd<=0) tag='heute';
+  else if(dd===1) tag='gestern';
+  else tag=t.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  return {txt: tag+' '+uhr, h};
 }
 
 function dayFreshness(dateStr){
