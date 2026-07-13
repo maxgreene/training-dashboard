@@ -593,18 +593,8 @@ function showPage(name,btn){
     if(name==='rides'||name==='health'){
       window.scrollTo({top:0,behavior:'smooth'});
     } else if(name==='plan'){
-      // Scroll to the week card containing today (or last done day)
-      const today=document.querySelector('.today-c');
-      const lastDone=[...document.querySelectorAll('.pday.done')].pop();
-      const dayEl=today||lastDone;
-      const weekCard=dayEl?dayEl.closest('.wcard'):null;
-      const target=weekCard||dayEl;
-      if(target){
-        const y=target.getBoundingClientRect().top+window.scrollY-80;
-        window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
-      } else {
-        window.scrollTo({top:0,behavior:'smooth'});
-      }
+      // Kein Auto-Scroll: der aktuelle Tag steht seit der Umkehr ohnehin oben.
+      window.scrollTo({top:0,behavior:'smooth'});
     }
   });
 }
@@ -958,7 +948,9 @@ function renderPlan(){
     const tssTag=weekTss>0?` <span style="font-size:10px;color:#666;font-family:'JetBrains Mono',monospace">TSS ${Math.round(weekTss)}</span>`:'';
     h+=`<div class="wcard-hdr"><span class="wcard-label">${week.lbl}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}${tssTag}</span></div>`;
 
-    if(week.days) week.days.forEach((d,di)=>{
+    // Tage innerhalb der Woche umgedreht: jüngster/aktueller Tag oben,
+    // konsistent zur umgekehrten Wochenreihenfolge.
+    if(week.days) week.days.slice().reverse().forEach((d,di)=>{
       const done=isDone(d);
       const dt=dateObj(d.date);
       const isToday=d.date===todayStr;
@@ -1077,13 +1069,7 @@ function renderPlan(){
 
   h+='</div>';
   el.innerHTML=h;
-  // Scroll to today or last done day
-  requestAnimationFrame(()=>{
-    const today=el.querySelector('.today-c');
-    const lastDone=[...el.querySelectorAll('.pday.done')].pop();
-    const target=today||lastDone;
-    if(target) target.scrollIntoView({behavior:'smooth',block:'center'});
-  });
+  // Kein Auto-Scroll nach dem Rendern: aktueller Tag steht oben.
 }
 
 function togglePlanDet(row){
