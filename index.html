@@ -272,6 +272,22 @@ canvas.chart{width:100%;display:block;}
 .tst-list{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--t3);line-height:1.65}
 .tst-list b{color:var(--t1);font-weight:700}
 .tst-empty{font-size:11px;color:var(--t5);font-style:italic}
+
+/* Status-Ampel in der Kopfzeile */
+.nav-status{position:relative;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);user-select:none}
+.nav-status .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.nav-status .dot.ok{background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.5)}
+.nav-status .dot.warn{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5)}
+.nav-status .dot.err{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.6)}
+.status-panel{position:absolute;top:26px;right:0;background:var(--bg2,#1a1a1a);border:1px solid var(--border,#2a2a2a);border-radius:8px;padding:12px 14px;min-width:230px;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.status-panel.open{display:block}
+.sp-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:5px 0;font-size:11px}
+.sp-row .lbl{color:var(--t3,#888);display:flex;align-items:center;gap:6px}
+.sp-row .val{color:var(--t1,#e6edf3);font-weight:600;text-align:right}
+.sp-row .val.warn{color:#fbbf24}
+.sp-row .val.err{color:#ef4444}
+.sp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sp-hint{font-size:10px;color:var(--t5,#555);margin-top:8px;padding-top:8px;border-top:1px solid var(--border,#2a2a2a);line-height:1.5}
 </style>
 </head>
 <body>
@@ -282,7 +298,11 @@ canvas.chart{width:100%;display:block;}
     <button class="tab" onclick="showPage('rides',this)">Rides</button>
     <button class="tab" onclick="showPage('health',this)">Form</button>
   </div>
-  <div class="nav-meta" id="updated-at"></div>
+  <div class="nav-status" id="nav-status" onclick="toggleStatusPanel(event)">
+    <span class="dot ok" id="status-dot"></span>
+    <span id="status-summary">…</span>
+    <div class="status-panel" id="status-panel"></div>
+  </div>
 </nav>
 <main>
   <div id="loading">Lade Daten…</div>
@@ -1782,14 +1802,107 @@ function renderTodayBanner(){
 }
 
 // ── LOAD ──
+
+// ===== Daten-Status: pro Quelle Stand + Warnung =====
+// Health kommt taeglich (Garmin) -> ab >36h Warnung, >60h Fehler.
+// Aktivitaeten kommen unregelmaessig -> nur informativ, kein Fehler.
+let _statusData = {act:null, health:null};
+
+function relTime(iso){
+  if(!iso) return {txt:'nie', h:Infinity};
+  const then=new Date(iso), now=new Date();
+  const h=(now-then)/3600000;
+  let txt;
+  if(h<1)       txt='vor '+Math.round(h*60)+' Min';
+  else if(h<24) txt='vor '+Math.round(h)+' Std';
+  else          txt='vor '+Math.round(h/24)+' Tg';
+  return {txt, h};
+}
+
+function dayFreshness(dateStr){
+  // dateStr = 'YYYY-MM-DD' des neuesten Datentags.
+  // Echte KALENDERTAGE-Differenz (nicht stundenbasiert), damit 'gestern'
+  // auch wirklich gestern heisst und nicht faelschlich 'heute'.
+  if(!dateStr) return {txt:'—', days:Infinity};
+  const p=dateStr.split('-').map(Number);
+  const then=new Date(p[0], p[1]-1, p[2]);      // lokale Mitternacht des Datentags
+  const n=new Date(); const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  const days=Math.round((today - then)/86400000);
+  let txt;
+  if(days<=0) txt='heute';
+  else if(days===1) txt='gestern';
+  else txt='vor '+days+' Tagen';
+  return {txt, days};
+}
+
+function computeStatus(){
+  const a=_statusData.act, hEl=_statusData.health;
+  // Fetch-Frische aus activities.updated_at (laeuft der Abruf ueberhaupt?)
+  const fetch=relTime(a&&a.updated_at);
+  // Health-Datentag (kommt taeglich -> guter Haenger-Indikator)
+  const health=dayFreshness(hEl&&hEl.newestDay);
+  // neueste Aktivitaet (unregelmaessig -> informativ)
+  const act=dayFreshness(a&&a.newestDay);
+
+  // Gesamt-Ampel. Health kommt taeglich, aktueller Tag oft erst mittags
+  // synchronisiert -> heute/gestern ok, 2 Tage warnen, 3+ Fehler.
+  // Fetch laeuft alle 15 Min -> >2h verspaetet, >6h eindeutig tot.
+  let level='ok';
+  if(health.days>=3 || fetch.h>=6) level='err';
+  else if(health.days>=2 || fetch.h>=2) level='warn';
+
+  return {fetch, health, act, level};
+}
+
+function renderStatus(){
+  const s=computeStatus();
+  const dot=document.getElementById('status-dot');
+  const sum=document.getElementById('status-summary');
+  if(dot) dot.className='dot '+s.level;
+  // Kompakte Zusammenfassung in der Kopfzeile
+  if(sum){
+    const label = s.level==='err' ? 'Daten hängen' : s.level==='warn' ? 'Daten verspätet' : 'aktuell';
+    sum.textContent = label;
+  }
+  // Ausfuehrliches Panel
+  const panel=document.getElementById('status-panel');
+  if(!panel) return;
+  const cH = s.health.days>=3?'err':s.health.days>=2?'warn':'';
+  const cF = s.fetch.h>=6?'err':s.fetch.h>=2?'warn':'';
+  const dotC = lvl => lvl==='err'?'#ef4444':lvl==='warn'?'#fbbf24':'#34d399';
+  let hint='';
+  if(s.health.days>=2)
+    hint='Health hängt. Garmin-Token prüfen: refresh.log auf ukb457, oder GitHub-Fetch-Log.';
+  else if(s.fetch.h>=6)
+    hint='Fetch läuft nicht. cron-job.org-Trigger und GitHub-Actions prüfen.';
+  else
+    hint='Fetch alle 15 Min · Health täglich · Aktivitäten nach dem Fahren.';
+  panel.innerHTML=`
+    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC(cF||'ok')}"></span>Letzter Fetch</span><span class="val ${cF}">${s.fetch.txt}</span></div>
+    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC(cH||'ok')}"></span>Health-Daten</span><span class="val ${cH}">${s.health.txt}</span></div>
+    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC('ok')}"></span>Letzte Aktivität</span><span class="val">${s.act.txt}</span></div>
+    <div class="sp-hint">${hint}</div>`;
+}
+
+function toggleStatusPanel(ev){
+  ev.stopPropagation();
+  const p=document.getElementById('status-panel');
+  if(p) p.classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  const p=document.getElementById('status-panel');
+  const s=document.getElementById('nav-status');
+  if(p&&s&&!s.contains(e.target)) p.classList.remove('open');
+});
+
 async function loadData(){
   try{
     const r=await fetch('data/activities.json?_='+Date.now());
     const data=await r.json();
     document.getElementById('loading').style.display='none';
     allActivities=(data.activities||[]).filter(a=>!a.hidden);
-    const upd=new Date(data.updated_at);
-    document.getElementById('updated-at').textContent='Stand: '+upd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    _statusData.act={updated_at:data.updated_at, newestDay:(allActivities[0]&&allActivities[0].date)||null};
+    renderStatus();
     renderSummary();
     renderActivityList();
     if(window.Chart) renderEFChart();
@@ -1800,6 +1913,10 @@ async function loadData(){
       const hr2=await fetch('data/health.json?_='+Date.now());
       const hdata=await hr2.json();
       allHealth=hdata.days||[];
+      // Status: neuesten Health-Tag (Garmin liefert taeglich) fuer die Ampel
+      const _newestHealth=(allHealth||[]).map(x=>x.date).sort().pop()||null;
+      _statusData.health={updated_at:hdata.updated_at, newestDay:_newestHealth};
+      renderStatus();
       computeLoadModel();
       renderHealthBanner();
       renderHealthList();
