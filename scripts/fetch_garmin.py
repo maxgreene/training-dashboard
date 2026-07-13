@@ -5,7 +5,7 @@ Nutzt gespeicherte Tokens aus dem GitHub Secret GARMIN_TOKENS (base64).
 """
 import os
 import time
-import random, json, base64, sys
+import json, base64, sys
 from datetime import datetime, timezone, date, timedelta
 
 PLAN_START = '2026-05-04'   # ab hier wird (einmalig) alles geholt
@@ -49,108 +49,29 @@ def main():
     try:
         garth.resume(os.path.expanduser('~/.garth'))
         print('Garmin-Tokens geladen')
-        # 429-BACKOFF (statt starrem 6h-Cooldown):
-        # Der OAuth2-Token lebt nur ~1h. Ein 6h-Cooldown liess ihn zwischendurch
-        # ablaufen und verhinderte die Selbstheilung. Der 429 kommt von Garmins
-        # Ratenbegrenzung auf der GitHub-IP-Range, nicht vom Konto - er ist
-        # zeitfenster-abhaengig. Daher: kurz warten, mit Jitter, und erst bei
-        # wiederholtem Scheitern laenger. Marker speichert "timestamp;fehlversuche".
-        BASE_MIN   = 40      # erste Wartezeit nach 429
-        MAX_MIN    = 240     # Deckel (4h)
-        JITTER     = 0.25    # +-25% Zufall, damit Versuche nicht im Raster landen
-        cd_file = os.path.join('data', '.garmin_cooldown')
 
-        def read_marker():
-            try:
-                raw = open(cd_file).read().strip()
-                parts = raw.split(';')
-                ts = float(parts[0])
-                n  = int(parts[1]) if len(parts) > 1 else 1
-                return ts, n
-            except Exception:
-                return None, 0
-
-        def write_marker(n):
-            os.makedirs('data', exist_ok=True)
-            with open(cd_file, 'w') as fh:
-                fh.write(f'{time.time()};{n}')
-
-        def clear_marker():
-            if os.path.exists(cd_file):
-                try: os.remove(cd_file)
-                except Exception: pass
-
-        # Wartezeit aus Fehlversuchen: 40, 80, 160, 240, 240 ... Minuten
-        last_ts, fails = read_marker()
-        skip_refresh = False
-        if last_ts:
-            wait_min = min(BASE_MIN * (2 ** max(0, fails - 1)), MAX_MIN)
-            wait_min *= (1 + random.uniform(-JITTER, JITTER))
-            age_min = (time.time() - last_ts) / 60
-            if age_min < wait_min:
-                skip_refresh = True
-                print(f'429-Backoff aktiv ({age_min:.0f}min/{wait_min:.0f}min, {fails} Fehlversuche) - Refresh uebersprungen')
-
-        # Refresh NUR wenn der Token wirklich (fast) abgelaufen ist.
+        # HINWEIS: Der Token-Refresh (exchange) laeuft NICHT mehr hier.
+        # Garmins exchange-Endpunkt blockt GitHub-Runner-IPs mit 429.
+        # Ein Cron auf dem Lab-Server ukb457 (unverdaechtige IP) erneuert den
+        # Token und schiebt ihn ins Secret GARMIN_TOKENS. Dieser Workflow LIEST
+        # den Token nur noch und holt Daten. Kein Refresh, kein Backoff, kein
+        # Zurueckschreiben - all das kann von GitHub-IPs aus nicht zuverlaessig.
         tok = getattr(garth.client, 'oauth2_token', None)
-        need_refresh = tok is None or tok.expired
-
-        # Restlaufzeit des OAuth2-Tokens protokollieren. Ohne diese Zeile raten wir,
-        # wie lange er haelt - und damit auch, wann der exchange-Endpunkt ueberhaupt
-        # gebraucht wird. Der 429 haengt genau daran.
         try:
             exp = getattr(tok, 'expires_at', None) if tok else None
             if exp:
                 rest_min = (float(exp) - time.time()) / 60
                 exp_iso = datetime.fromtimestamp(float(exp), timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
                 if rest_min > 0:
-                    print(f'OAuth2-Token laeuft ab: {exp_iso} (noch {rest_min:.0f} min, {rest_min/60:.1f} h)')
+                    print(f'OAuth2-Token laeuft ab: {exp_iso} (noch {rest_min:.0f} min) - vom Server gepflegt')
                 else:
                     print(f'OAuth2-Token ABGELAUFEN seit {abs(rest_min):.0f} min ({exp_iso})')
-            # OAuth1 (Master, haelt ~1 Jahr) ebenfalls im Blick behalten
-            o1 = getattr(garth.client, 'oauth1_token', None)
-            o1exp = getattr(o1, 'mfa_expiration_timestamp', None) if o1 else None
-            print(f'OAuth1-Token vorhanden: {o1 is not None}' + (f' (mfa_exp={o1exp})' if o1exp else ''))
+                    print('  -> Server-Refresh (ukb457) haengt? Log dort pruefen: ~/garmin-refresh/refresh.log')
         except Exception as _e:
             print(f'  (Token-Restlaufzeit nicht lesbar: {_e})')
-
-        if not need_refresh:
-            print('OAuth2-Token noch gueltig - kein Refresh noetig')
-
-        refresh_ok = False
-        if need_refresh and not skip_refresh:
-            try:
-                garth.client.username   # triggert intern den Auto-Refresh
-                print('Token-Refresh OK')
-                refresh_ok = True
-                clear_marker()
-            except Exception as re:
-                msg = str(re)
-                print(f'Token-Refresh-Versuch: {msg}')
-                if '429' in msg:
-                    n = fails + 1
-                    write_marker(n)
-                    nxt = min(BASE_MIN * (2 ** max(0, n - 1)), MAX_MIN)
-                    print(f'429 erkannt -> Backoff gesetzt (~{nxt}min, Fehlversuch {n})')
-                else:
-                    # Anderer Fehler (z.B. 401): Marker nicht setzen, aber melden.
-                    print('Kein 429 - Backoff NICHT gesetzt (Token evtl. ungueltig, Neu-Login noetig)')
     except Exception as e:
         print(f'Token-Resume fehlgeschlagen: {e}')
         return
-
-    # Token-Gueltigkeit pruefen: nur wenn der OAuth2-Token jetzt gueltig ist,
-    # duerfen wir ihn spaeter ins Secret zurueckschreiben. Sonst wuerden wir das
-    # Secret mit einem toten Token ueberschreiben (Teufelskreis).
-    token_valid = False
-    try:
-        tok = getattr(garth.client, 'oauth2_token', None)
-        if tok is not None and not tok.expired:
-            token_valid = True
-    except Exception:
-        pass
-    if 'refresh_ok' in dir() and refresh_ok:
-        token_valid = True
 
     # Bestehende Daten laden (merge)
     existing = {}
@@ -246,36 +167,8 @@ def main():
         json.dump(out, f, indent=2)
     print(f'Garmin: {fetched} Tage aktualisiert, {len(days)} gesamt')
 
-    # Erneuerte Tokens NUR zurueck-exportieren wenn der Token gueltig ist.
-    # Bei 429/totem Token NICHT exportieren -> Secret behaelt den letzten guten
-    # Stand (schuetzt v.a. den langlebigen OAuth1-Token). Verhindert Teufelskreis.
-    # garth.refresh_oauth2() setzt bei HTTP-Fehler oauth1_token=None. Ohne den
-    # langlebigen OAuth1 waere ein exportierter Blob wertlos -> Export sperren.
-    if getattr(garth.client, 'oauth1_token', None) is None:
-        token_valid = False
-        print('OAuth1-Token fehlt im Speicher -> Secret NICHT ueberschrieben')
-    if not token_valid:
-        print('Token nicht gueltig (429/abgelaufen) -> Secret NICHT ueberschrieben, alter Stand bleibt')
-    try:
-        if not token_valid:
-            raise RuntimeError('skip-export')
-        tdir = os.path.expanduser('~/.garth')
-        garth.client.dump(tdir)
-        tokens = {}
-        for fname in os.listdir(tdir):
-            fp = os.path.join(tdir, fname)
-            if os.path.isfile(fp):
-                with open(fp) as fh:
-                    tokens[fname] = fh.read()
-        blob = base64.b64encode(json.dumps(tokens).encode()).decode()
-        # In GITHUB_OUTPUT schreiben, damit der Workflow das Secret updaten kann
-        gh_out = os.environ.get('GITHUB_OUTPUT')
-        if gh_out:
-            with open(gh_out, 'a') as fh:
-                fh.write(f'garmin_tokens={blob}\n')
-            print('Erneuerte Tokens exportiert (fuer Secret-Update)')
-    except Exception as e:
-        print(f'Token-Export uebersprungen: {e}')
+    # Token-Export entfaellt: Der Server (ukb457) pflegt das Secret GARMIN_TOKENS.
+    # Dieser Workflow schreibt es NICHT mehr zurueck.
 
     # Letzte 5 Tage zur Kontrolle
     for d in days[:5]:
