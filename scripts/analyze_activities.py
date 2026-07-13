@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 13
+ANALYSIS_VERSION = 14
 FTP   = 250
 HRMAX = 172
 
@@ -136,6 +136,42 @@ def detect_climbs(ts, alt, grd, min_grade=3.0, min_dur=30):
     return climbs
 
 
+def strip_frozen_hr(hr, min_len=180, min_bpm=50):
+    """Setzt eingefrorene HF-Phasen auf None.
+
+    Ein defekter oder abgerutschter HF-Sensor wiederholt oft seinen letzten
+    Wert. Eine ueber >=min_len Sekunden EXAKT identische, plausible HF ist
+    physiologisch unmoeglich (echte HF schwankt immer, auch bei konstanter
+    Leistung) und verfaelscht EF/Decoupling.
+
+    Nur PLAUSIBLE HF-Werte (>=min_bpm) werden geprueft: HF=0 oder sehr niedrige
+    Werte sind "kein Signal" (Sensor noch nicht verbunden), keine eingefrorene
+    echte HF - die zaehlen ohnehin nicht in die Analyse und werden ignoriert.
+    min_len=180s (3 Min): kurze stabile Plateaus bei ruhiger Fahrt bleiben
+    erhalten, nur echte Sensor-Ausfaelle werden entfernt.
+
+    Leistung/Power bleibt unberuehrt.
+    """
+    if not hr:
+        return hr, 0
+    out = list(hr)
+    n = len(out)
+    i = 0
+    stripped = 0
+    while i < n:
+        if out[i] is None or out[i] < min_bpm:
+            i += 1; continue
+        j = i
+        while j < n and out[j] == out[i]:
+            j += 1
+        if j - i >= min_len:
+            for k in range(i, j):
+                out[k] = None
+            stripped += j - i
+        i = j
+    return out, stripped
+
+
 def analyze(aid, streams, act):
     ts  = streams.get('time',[])
     pw  = streams.get('watts',[])
@@ -146,6 +182,13 @@ def analyze(aid, streams, act):
     grd = streams.get('grade_smooth',[])
     lat = streams.get('latlng',[])
     if not ts: return None
+    # Eingefrorene HF-Phasen (toter Sensor) aus der HF-Serie entfernen, bevor
+    # irgendeine HF-basierte Kennzahl gerechnet wird. Betrifft EF, Decoupling,
+    # Scatter, HF-Zonen. Power bleibt unangetastet.
+    if hr:
+        hr, _frozen_s = strip_frozen_hr(hr)
+        if _frozen_s:
+            print(f"    HF-Ausfall bereinigt: {_frozen_s}s eingefrorene HF entfernt")
     dur = int(ts[-1] - ts[0]) if len(ts) >= 2 else (ts[-1] if ts else 0)
     step = max(1, len(ts)//1500)  # target ~1500 pts per chart
     chart = {
