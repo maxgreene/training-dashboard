@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-14T06:45:35.854853+00:00",
+  "updated_at": "2026-07-14T07:01:04.713540+00:00",
   "analysis_version": 14,
   "athlete": {
     "id": 13589996,
@@ -9,11 +9,67 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 129,
-    "recent_count": 129,
-    "recent_hours": 107.0
+    "total_activities": 130,
+    "recent_count": 130,
+    "recent_hours": 107.2
   },
   "activities": [
+    {
+      "_wahoo": true,
+      "id": "wahoo_475842335",
+      "wahoo_id": 475842335,
+      "name": "GA1",
+      "date": "2026-07-14",
+      "start_time": "08:34",
+      "type": "Ride",
+      "duration_sec": 809,
+      "elapsed_sec": 827,
+      "distance_m": 3602,
+      "elevation_m": 93,
+      "avg_power": 138.6,
+      "max_power": 822,
+      "np": 244,
+      "avg_hr": 108.0,
+      "max_hr": 143,
+      "avg_cadence": 62.0,
+      "kilojoules": 113.2,
+      "tss": 21.7,
+      "gps_ok": true,
+      "has_power": true,
+      "has_hr": true,
+      "has_latlng": true,
+      "power_curve": {
+        "5": 764,
+        "10": 669,
+        "30": 478,
+        "60": 353,
+        "120": 272,
+        "300": 199,
+        "600": 179
+      },
+      "hr_zones": [
+        59.3,
+        39.4,
+        1.2,
+        0.0,
+        0.0
+      ],
+      "power_zones": [
+        32.3,
+        18.7,
+        11.2,
+        10.0,
+        27.8
+      ],
+      "decoupling_pct": 15.25,
+      "streams": {},
+      "_fit_url": "https://cdn.wahooligan.com/wahoo-cloud/production/uploads/workout_file/file/HGl7hzqPmMAM_GldFtfTIQ/2026-07-14-063403-ELEMNT_ROAM_E3C3-122-0.fit",
+      "start_date_local": "2026-07-14T08:34:00",
+      "hidden": false,
+      "dup_of": null,
+      "avg_power_moving": 212.0,
+      "ef_gesamt": 1.8975
+    },
     {
       "_wahoo": true,
       "id": "wahoo_475582881",
