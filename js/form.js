@@ -71,8 +71,12 @@ function renderFF() {
   _ff = new Chart($('#ff-canvas'), {
     data: {
       datasets: [
+        // TSS auf EIGENE Achse: die Tagesspitzen gehen bis ~380 und wuerden
+        // die gemeinsame Achse auf 400 zwingen. CTL (~70) und ATL (~120)
+        // waeren dann ins untere Drittel gequetscht.
         { type: 'bar', label: 'TSS', data: m.map(r => ({ x: X(r), y: r.tss })),
-          backgroundColor: 'rgba(255,255,255,.10)', yAxisID: 'y', barThickness: 2, order: 3 },
+          backgroundColor: 'rgba(255,255,255,.10)', yAxisID: 'yTss',
+          barThickness: 2, order: 3 },
         { type: 'line', label: 'CTL (Fitness)', data: m.map(r => ({ x: X(r), y: r.ctl })),
           borderColor: '#4a9eff', backgroundColor: 'rgba(74,158,255,.12)',
           borderWidth: 2, pointRadius: 0, fill: true, yAxisID: 'y', order: 1 },
@@ -88,7 +92,8 @@ function renderFF() {
       interaction: { mode: 'index', intersect: false },
       scales: {
         x: timeScale(T),
-        y: { position: 'left', title: { display: true, text: 'CTL / ATL / TSS',
+        y: { position: 'left', beginAtZero: true,
+             title: { display: true, text: 'CTL / ATL',
              color: CSSVAR('--t5'), font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
              grid: { color: 'rgba(255,255,255,.05)' } },
@@ -96,6 +101,10 @@ function renderFF() {
               color: CSSVAR('--t5'), font: { size: 10 } },
               ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
               grid: { drawOnChartArea: false } },
+        // Unsichtbar, Maximum bewusst hoch: die Balken bleiben Kontext am
+        // unteren Rand und ueberdecken die Linien nicht.
+        yTss: { display: false, min: 0,
+                max: Math.max(100, ...m.map(r => r.tss)) * 3 },
       },
       plugins: {
         legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } },
