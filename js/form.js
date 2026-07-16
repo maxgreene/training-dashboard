@@ -203,9 +203,8 @@ function renderForm() {
     <div class="card">
       <div class="card-hd"><span class="t">BELASTUNG</span>${kpi}</div>
       <div id="ff-box"></div>
-      <div class="ez-hint">CTL = ${CFG.ui.load.ctlTau}-Tage-Mittel der TSS (Fitness), ATL = ${CFG.ui.load.atlTau} Tage
-        (Ermüdung), TSB = CTL − ATL (Form). Positiv heißt frisch. Das Modell kennt nur TSS —
-        es weiß nichts über Schlaf, Stress oder leere Beine nach einem Rennen.</div>
+      <div class="ez-hint">CTL ${CFG.ui.load.ctlTau} d = Fitness · ATL ${CFG.ui.load.atlTau} d = Ermüdung ·
+        TSB = CTL − ATL · TSB ↑ = frisch</div>
     </div>
 
     <div class="card">
@@ -221,9 +220,7 @@ function renderForm() {
         <span class="hval">${cmp(x.resting_hr, bRhr, false)}</span>
         <span class="hval"><b>${x.sleep_h != null ? x.sleep_h + ' h' : '—'}</b></span>
         <span class="hval"><b>${x.stress_avg ?? '—'}</b></span></div>`).join('')}
-      <div class="ez-hint" style="margin-top:8px">HRV und Ruhepuls messen das vegetative
-        Nervensystem. Über Muskelglykogen und müde Beine sagen sie nichts — nach einem harten
-        Rennen kann die HRV längst wieder gut sein, während die Beine leer sind.</div>
+      <div class="ez-hint" style="margin-top:8px">HRV ↑ = besser · RHR ↓ = besser · beides vegetativ, nicht muskulär</div>
     </div>`;
 
   renderFF();
