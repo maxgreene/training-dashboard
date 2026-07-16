@@ -8,7 +8,7 @@ TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt 
 HEADERS = {'Authorization': 'Bearer ' + TOKEN} if TOKEN else {}
 DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
-ANALYSIS_VERSION = 14
+ANALYSIS_VERSION = 15
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
 
@@ -186,21 +186,11 @@ def fetch_wahoo_workouts(token):
                 'elapsed_sec':  int(float(s.get('duration_total_accum')  or w.get('minutes',0)*60 or 0)),
                 'distance_m':   round(float(s.get('distance_accum') or 0)),
                 'elevation_m':  round(float(s.get('ascent_accum')   or 0)),
-                'avg_power':    f(s,'power_avg'),
-                'max_power':    None,
-                'np':           f(s,'power_bike_np_last'),
-                'avg_hr':       f(s,'heart_rate_avg'),
-                'max_hr':       None,
-                'avg_cadence':  f(s,'cadence_avg'),
+                # Kennzahlen setzt AUSSCHLIESSLICH analyze_activities.py aus den
+                # Sekundendaten. Wahoos Summary-Werte sind hier bewusst nicht
+                # uebernommen: avg_power rechnet ohne Nullen (zu hoch), tss mit
+                # dem FTP aus der Wahoo-App (falsch oder fehlend).
                 'kilojoules':   round(float(s.get('work_accum') or 0)/1000, 1) if s.get('work_accum') else None,
-                'tss':          f(s,'power_bike_tss_last'),
-                'gps_ok':       False,
-                'has_power':    bool(s.get('power_avg')),
-                'has_hr':       bool(s.get('heart_rate_avg')),
-                'has_latlng':   False,
-                'power_curve':  {}, 'hr_zones': [], 'power_zones': [],
-                'decoupling_pct': None,
-                'streams':      {},
                 '_fit_url':     fit_url,
             })
         # Wahoo liefert neueste zuerst: wenn die ganze Seite vor Plan-Start liegt, stoppen
