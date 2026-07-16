@@ -8,19 +8,22 @@
 /* Impulse-Response nach Banister: CTL = Exponentialmittel der TSS ueber
  * CTL_TAU Tage (Fitness), ATL ueber ATL_TAU (Ermuedung), TSB = CTL - ATL
  * (Form). Die Zeitkonstanten sind Konvention, keine Messung. */
-const CTL_TAU = 42, ATL_TAU = 7;
-
 function loadModel() {
   if (!DATA.acts.length) return [];
+  const L = CFG.ui.load;
   const byDay = {};
   DATA.acts.forEach(a => { byDay[a.date] = (byDay[a.date] || 0) + (a.tss || 0); });
+  // Korrekte Abklingkonstanten (nicht 1/tau, sondern 1-exp(-1/tau)).
+  const kC = 1 - Math.exp(-1 / L.ctlTau), kA = 1 - Math.exp(-1 / L.atlTau);
   const out = [];
-  let ctl = 0, atl = 0;
+  let ctl = L.seedCtl, atl = L.seedAtl, i = 0;
   for (let dt = d(DATA.acts[DATA.acts.length - 1].date); dt <= today(); dt = addDays(dt, 1)) {
     const tss = byDay[iso(dt)] || 0;
-    ctl += (tss - ctl) / CTL_TAU;
-    atl += (tss - atl) / ATL_TAU;
-    out.push({ date: iso(dt), tss, ctl: +ctl.toFixed(1), atl: +atl.toFixed(1), tsb: +(ctl - atl).toFixed(1) });
+    ctl += kC * (tss - ctl);
+    atl += kA * (tss - atl);
+    out.push({ date: iso(dt), tss, ctl: +ctl.toFixed(1), atl: +atl.toFixed(1),
+               tsb: +(ctl - atl).toFixed(1), settling: i < L.settleDays });
+    i++;
   }
   return out;
 }
@@ -53,7 +56,10 @@ function baseline(key, days) {
 }
 
 const AX = (t0, ttl) => ({
-  x: { ticks: { color: CSSVAR('--t4'), font: { size: 9 },
+  // type MUSS gesetzt sein: sobald ein bar-Datensatz dabei ist, nimmt Chart.js
+  // sonst eine Kategorie-Achse an und alle Punkte landen auf derselben Stelle.
+  x: { type: 'linear',
+       ticks: { color: CSSVAR('--t4'), font: { size: 9 },
                 callback: v => fmtDay(addDays(new Date(t0), v)), maxTicksLimit: 9 },
        grid: { color: 'rgba(255,255,255,.05)' } },
   y: { title: { display: true, text: ttl, color: CSSVAR('--t5'), font: { size: 10 } },
@@ -72,6 +78,7 @@ function renderFF() {
   box.innerHTML = '<canvas id="ff-canvas"></canvas>';
   const t0 = d(m[0].date).getTime();
   const X = r => Math.round((d(r.date).getTime() - t0) / 86400000);
+  const settleEnd = m.filter(r => r.settling).length;
   if (_ff) _ff.destroy();
   _ff = new Chart($('#ff-canvas'), {
     data: {
@@ -102,8 +109,27 @@ function renderFF() {
               ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
               grid: { drawOnChartArea: false } },
       },
-      plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } } },
+      plugins: {
+        legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } },
+        annotation: undefined,
+      },
     },
+    // Einschwing-Phase grau hinterlegen: solange ist das Modell nicht belastbar.
+    plugins: [{
+      id: 'settle',
+      beforeDatasetsDraw(ch) {
+        if (!settleEnd) return;
+        const { ctx, chartArea: a, scales } = ch;
+        const x1 = scales.x.getPixelForValue(settleEnd);
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,.035)';
+        ctx.fillRect(a.left, a.top, Math.max(0, x1 - a.left), a.bottom - a.top);
+        ctx.fillStyle = CSSVAR('--t5');
+        ctx.font = '9px ' + CSSVAR('--mono');
+        ctx.fillText('Einschwingphase', a.left + 5, a.top + 11);
+        ctx.restore();
+      },
+    }],
   });
 }
 
@@ -144,7 +170,7 @@ function renderHrv() {
              color: '#7ec8a0', font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
              grid: { color: 'rgba(255,255,255,.05)' } },
-        y1: { position: 'right', reverse: true,
+        y1: { position: 'right',
               title: { display: true, text: 'Ruhepuls (bpm)', color: '#e0663c', font: { size: 10 } },
               ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
               grid: { drawOnChartArea: false } },
@@ -161,7 +187,7 @@ function renderForm() {
   if (!box) return;
   const m = loadModel();
   const last = m.length ? m[m.length - 1] : null;
-  const H = DATA.health.slice(0, 10);
+  const H = DATA.health;   // alle Tage, aeltester unten
   const bHrv = baseline('hrv', 30), bRhr = baseline('resting_hr', 30);
   const cmp = (v, base, higherBetter) => {
     if (v == null) return '<b>—</b>';
@@ -177,7 +203,7 @@ function renderForm() {
     <div class="card">
       <div class="card-hd"><span class="t">BELASTUNG</span>${kpi}</div>
       <div id="ff-box"></div>
-      <div class="ez-hint">CTL = ${CTL_TAU}-Tage-Mittel der TSS (Fitness), ATL = ${ATL_TAU} Tage
+      <div class="ez-hint">CTL = ${CFG.ui.load.ctlTau}-Tage-Mittel der TSS (Fitness), ATL = ${CFG.ui.load.atlTau} Tage
         (Ermüdung), TSB = CTL − ATL (Form). Positiv heißt frisch. Das Modell kennt nur TSS —
         es weiß nichts über Schlaf, Stress oder leere Beine nach einem Rennen.</div>
     </div>
