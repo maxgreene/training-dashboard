@@ -115,6 +115,14 @@ const CFG = {
       { key: '300',  label: 'MAP', full: 'Max. aerob 5 min', mult: 1.6, color: '#f59e0b' },
       { key: '1200', label: 'FTP', full: 'Schwelle 20 min',  mult: 1.0, color: '#3b82f6' },
     ],
+    // Gemeinsame Zeitachse fuer ALLE Zeitreihen-Charts (EF, Belastung,
+    // Erholung). Ohne die haette jeder Chart seinen eigenen Nullpunkt und
+    // man koennte sie nicht uebereinander lesen.
+    timeAxis: {
+      start: null,   // null = erste Aktivitaet; sonst 'YYYY-MM-DD'
+      padDays: 3,    // Luft vorn und hinten, damit Randpunkte lesbar bleiben
+    },
+
     // Detailplots einer Fahrt: feste Achsen, damit Fahrten vergleichbar sind.
     detail: {
       // MMP: beide Achsen logarithmisch. yMin kann NICHT 0 sein - log(0) ist
@@ -137,13 +145,13 @@ const CFG = {
     // EF-Trend (Chart.js-Bubble, wie frueher)
     efTrend: {
       height: 340,
-      minDurMin: 10,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
+      minDurMin: 60,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
                        // 30-60 s hinterher und taeuscht einen hohen EF vor.
                        // Auf 10 setzen, um wieder alles zu sehen.
       yMin: 1.1, yMax: 2.0,
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
       dotMinDur: 15, dotMaxDur: 500,
-      alpha: 0.59,
+      alpha: 0.5,
       showTrend: true,
     },
 
