@@ -157,9 +157,8 @@ function ftpWidget() {
     p20html = `<div><span class="big" style="color:#60a5fa">${p20.w}</span><small> W</small>
         <span class="muted"> beste 20 Min · ${fmtDay(d(p20.date))}</span></div>
       <div class="ez-bar"><div class="ez-fill" style="width:${prog}%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
-      <div class="ez-hint">entspricht FTP ≈ <b>${Math.round(p20.w * 0.95)} W</b> · noch
-        <b>${Math.max(0, p20Goal - p20.w)} W</b> bis Ziel ${p20Goal} W.
-        Werte aus Ausfahrten sind eine Untergrenze — nur ein Test misst sauber.</div>`;
+      <div class="ez-hint">FTP ≈ 20min × 0.95 = <b>${Math.round(p20.w * 0.95)} W</b> ·
+        noch <b>${Math.max(0, p20Goal - p20.w)} W</b> · aus Ausfahrt = Untergrenze</div>`;
   }
 
   const tp = testPoints();
@@ -189,8 +188,8 @@ function ftpWidget() {
     <div class="ftp3-grid">
       <div>
         <div class="lbl">Easy-Anteil · letzte ${CFG.ui.easyWindowDays} Tage</div>
-        ${bar(cur.hr, 'nach Herzfrequenz', 'Was der Kreislauf gemerkt hat. Der ehrlichere Wert für die Verteilung.')}
-        ${bar(cur.power, 'nach Leistung', 'Zählt auch kurze Spitzen, die die HF nie erreicht haben.')}
+        ${bar(cur.hr, 'nach HF', 'was der Kreislauf gemerkt hat')}
+        ${bar(cur.power, 'nach Leistung', 'zählt auch Spitzen, die die HF nie erreicht')}
         <div class="ez-meta">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten · Ziel ${tLo}–${tHi} % ${delta}</div>
       </div>
       <div>
