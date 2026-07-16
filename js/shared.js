@@ -148,12 +148,18 @@ function timeAxis() {
   };
 }
 
-/* Chart.js-x-Achse aus timeAxis(). type MUSS linear sein: sobald ein
- * bar-Datensatz im Chart steckt, nimmt Chart.js sonst eine Kategorie-Achse an
- * und alle Punkte kollabieren auf dieselbe Stelle. */
+/* Chart.js-x-Achse aus timeAxis(). Zwei Optionen MUESSEN explizit gesetzt sein,
+ * weil ein bar-Datensatz (die TSS-Balken) die Voreinstellungen der Achse
+ * aendert:
+ *   type:'linear'  - sonst nimmt Chart.js eine Kategorie-Achse an und alle
+ *                    Punkte kollabieren auf dieselbe Stelle.
+ *   offset:false   - bei Balken ist offset per Default true; Chart.js schiebt
+ *                    dann an beiden Enden Platz dazu, damit Randbalken nicht
+ *                    angeschnitten werden. Der Chart mit Balken waere dadurch
+ *                    schmaler als die ohne - trotz identischer Achse. */
 function timeScale(T) {
   return {
-    type: 'linear', min: T.min, max: T.max,
+    type: 'linear', offset: false, min: T.min, max: T.max,
     ticks: { color: CSSVAR('--t4'), font: { size: 9 },
              stepSize: CFG.ui.timeAxis.tickStepDays, autoSkip: false,
              callback: v => fmtDay(addDays(new Date(T.t0), v)) },
