@@ -133,6 +133,33 @@ function easyShare(days, offsetDays) {
   };
 }
 
+/* Gemeinsame Zeitachse: Trainingsstart bis heute, fuer jeden Zeitreihen-Chart
+ * identisch. t0 ist der Nullpunkt, x-Werte sind Tage seit t0. "heute" waechst
+ * mit, ohne dass irgendwo ein Datum haengenbleibt. */
+function timeAxis() {
+  const C = CFG.ui.timeAxis;
+  const first = C.start ? d(C.start)
+    : (DATA.acts.length ? d(DATA.acts[DATA.acts.length - 1].date) : today());
+  return {
+    t0: first.getTime(),
+    min: -C.padDays,
+    max: dayDiff(today(), first) + C.padDays,
+    dayOf: ds => dayDiff(d(ds), first),
+  };
+}
+
+/* Chart.js-x-Achse aus timeAxis(). type MUSS linear sein: sobald ein
+ * bar-Datensatz im Chart steckt, nimmt Chart.js sonst eine Kategorie-Achse an
+ * und alle Punkte kollabieren auf dieselbe Stelle. */
+function timeScale(T) {
+  return {
+    type: 'linear', min: T.min, max: T.max,
+    ticks: { color: CSSVAR('--t4'), font: { size: 9 }, maxTicksLimit: 9,
+             callback: v => fmtDay(addDays(new Date(T.t0), v)) },
+    grid: { color: 'rgba(255,255,255,.05)' },
+  };
+}
+
 // ── Kennzahlen ──────────────────────────────────────────────────────────────
 const IF = a => (a.np && CFG.athlete.ftp) ? a.np / CFG.athlete.ftp : null;
 
