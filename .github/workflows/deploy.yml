@@ -42,8 +42,15 @@ jobs:
           cp -r data/activities.json _site/data/ 2>/dev/null || true
           cp -r data/health.json _site/data/ 2>/dev/null || true
           cp -r data/analysis/. _site/data/analysis/ 2>/dev/null || true
-          # Frontend-Module (config/shared/plan/rides/form)
+          # Frontend-Module
           cp -r js _site/ 2>/dev/null || true
+          # Cache-Busting: ?v=BUILD in index.html durch die Commit-SHA ersetzen.
+          # Jeder Deploy = neue Script-URLs = kein veralteter Browser-Cache.
+          # Ohne das liefert Safari auf dem iPhone tagelang alte Module aus.
+          BUILD_ID=$(git rev-parse --short HEAD)
+          sed -i "s/?v=BUILD/?v=$BUILD_ID/g" _site/index.html
+          echo "Build-Stempel: $BUILD_ID"
+          grep -o 'js/[a-z]*\.js?v=[a-z0-9]*' _site/index.html | head -2
           # alles andere im Root das die Seite evtl. braucht (css/js/img/favicon)
           for f in *.css *.js *.png *.ico *.svg *.webmanifest .nojekyll; do
             [ -e "$f" ] && cp "$f" _site/ 2>/dev/null || true
