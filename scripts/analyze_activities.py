@@ -27,7 +27,7 @@ DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
 
-ANALYSIS_VERSION = 15
+ANALYSIS_VERSION = 16
 
 FTP   = 250      # muss mit js/config.js uebereinstimmen
 HRMAX = 172
