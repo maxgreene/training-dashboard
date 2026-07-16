@@ -10,9 +10,9 @@
 /* WICHTIG: Nur aufrufen, wenn der Container sichtbar ist. Bei display:none ist
  * clientWidth 0, der Puffer waere 0 px breit und CSS zerrt ihn auf. Deshalb
  * zeichnet index.html Seiten erst beim Anzeigen. */
-function canvas(box, h) {
+function canvas(box, h, forceW) {
   box.innerHTML = '';
-  const w = box.clientWidth || 600;
+  const w = forceW || box.clientWidth || 600;
   const c = document.createElement('canvas');
   const dpr = window.devicePixelRatio || 1;
   c.width = w * dpr; c.height = h * dpr;
@@ -120,8 +120,10 @@ function drawTrace(box, s) {
 /* Nur Punkte, an denen die Leistung stabil und die HF eingeschwungen ist.
  * Sonst zeigt die Wolke vor allem die Traegheit des Herzens statt einen
  * Zusammenhang. */
+const SQ_MAX = 340;   // Kantenlaenge der quadratischen Detailplots
 function drawScatter(box, s) {
-  const { ctx, w, h } = canvas(box, box.clientWidth);
+  const side = Math.min(box.clientWidth || 340, SQ_MAX);
+  const { ctx, w, h } = canvas(box, side, side);
   const pad = { l: 46, r: 12, t: 12, b: 34 };
   const W = s.w || [], H = s.hr || [];
   const win = Math.max(3, Math.round(30 / s.step));
@@ -180,7 +182,8 @@ function drawScatter(box, s) {
 
 // ── Detail: MMP-Kurve ───────────────────────────────────────────────────────
 function drawMMP(box, act) {
-  const { ctx, w, h } = canvas(box, box.clientWidth);
+  const side = Math.min(box.clientWidth || 340, SQ_MAX);
+  const { ctx, w, h } = canvas(box, side, side);
   const pad = { l: 46, r: 12, t: 12, b: 34 };
   const pc = act.power_curve || {};
   const ks = Object.keys(pc).map(Number).sort((a, b) => a - b);
@@ -319,8 +322,8 @@ async function toggleRide(id, row) {
       <div class="lbl" style="margin-top:14px">Verlauf · Leistung und Herzfrequenz</div>
       <div class="chartbox" id="c-tr-${id}"></div>
       <div class="grid2">
-        <div><div class="lbl">HF gegen Leistung · stabile Phasen</div><div class="chartbox sq" id="c-sc-${id}"></div></div>
-        <div><div class="lbl">Bestleistungen (MMP)</div><div class="chartbox sq" id="c-mp-${id}"></div></div>
+        <div><div class="lbl">HF gegen Leistung · stabile Phasen</div><div class="chartbox" id="c-sc-${id}"></div></div>
+        <div><div class="lbl">Bestleistungen (MMP)</div><div class="chartbox" id="c-mp-${id}"></div></div>
       </div>`;
     drawTrace($('#c-tr-' + id), s);
     drawScatter($('#c-sc-' + id), s);
