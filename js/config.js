@@ -115,6 +115,17 @@ const CFG = {
       { key: '300',  label: 'MAP', full: 'Max. aerob 5 min', mult: 1.6, color: '#f59e0b' },
       { key: '1200', label: 'FTP', full: 'Schwelle 20 min',  mult: 1.0, color: '#3b82f6' },
     ],
+    // Detailplots einer Fahrt: feste Achsen, damit Fahrten vergleichbar sind.
+    detail: {
+      // MMP: beide Achsen logarithmisch. yMin kann NICHT 0 sein - log(0) ist
+      // nicht definiert. 50 W liegt weit unter jedem realen Bestwert.
+      mmp: { xMin: 5, xMax: 7200, yMin: 50, yMax: 1000,
+             xTicks: [5, 15, 30, 60, 300, 1200, 3600, 7200],
+             yTicks: [50, 100, 200, 300, 500, 750, 1000] },
+      // HF gegen Leistung, linear. yMax null = HRmax aus athlete.
+      scatter: { xMin: 80, xMax: 500, yMin: 80, yMax: null },
+    },
+
     // Belastungsmodell
     load: {
       ctlTau: 42, atlTau: 7,   // Zeitkonstanten (Konvention, keine Messung)
