@@ -119,8 +119,10 @@ const CFG = {
     // Erholung). Ohne die haette jeder Chart seinen eigenen Nullpunkt und
     // man koennte sie nicht uebereinander lesen.
     timeAxis: {
-      start: null,   // null = erste Aktivitaet; sonst 'YYYY-MM-DD'
-      padDays: 3,    // Luft vorn und hinten, damit Randpunkte lesbar bleiben
+      start: null,        // null = erste Aktivitaet; sonst 'YYYY-MM-DD'
+      padDays: 0,         // Achse endet exakt bei Trainingsstart / heute
+      tickStepDays: 14,   // fester Abstand. Ohne den waehlt Chart.js die Ticks
+                          // selbst und jeder Chart bekommt ein anderes Raster.
     },
 
     // Detailplots einer Fahrt: feste Achsen, damit Fahrten vergleichbar sind.
