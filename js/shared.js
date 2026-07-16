@@ -148,6 +148,9 @@ function best(key, days) {
 }
 
 // ── DOM ─────────────────────────────────────────────────────────────────────
+/* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
+ * holt sie hier - so gibt es sie genau einmal. */
+const CSSVAR = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
