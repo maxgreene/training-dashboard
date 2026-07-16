@@ -212,6 +212,7 @@ function dayTile(day) {
 
   const head = `<div class="day-hd"><span class="dow">${dowOf(day.dt)}</span>
     <span class="dat">${fmtDay(day.dt)}</span></div>`;
+  const wrap = body => `<div class="${cls.join(' ')}">${head}<div class="day-body">${body}</div></div>`;
 
   // Vergangenheit: echte Fahrten, keine Behauptungen.
   if (day.acts.length) {
@@ -226,24 +227,22 @@ function dayTile(day) {
             ${a.tss ? `· TSS <b>${Math.round(a.tss)}</b>` : ''}
             ${a.ef ? `· EF <b>${a.ef.toFixed(2)}</b>` : ''}</div>
           ${zbar(a)}
-        </div>${dp4Rings(a, 32)}</div>`;
+        </div>${dp4Rings(a, 30)}</div>`;
     }).join('');
     const planned = day.plan && day.plan.parts
       ? `<div class="was-planned">geplant: ${day.plan.parts.map(p => p.title).join(' + ')}</div>` : '';
-    return `<div class="${cls.join(' ')}">${head}${body}${planned}</div>`;
+    return wrap(body + planned);
   }
 
-  // Kein Ritt: Plan zeigen (Zukunft) oder leer lassen (Vergangenheit).
-  if (!day.plan) return `<div class="${cls.join(' ')} empty">${head}</div>`;
+  if (!day.plan) return `<div class="${cls.join(' ')} empty">${head}<div class="day-body"></div></div>`;
   if (day.plan.source === 'event') {
-    return `<div class="${cls.join(' ')} ev-${day.plan.type}">${head}
+    return `<div class="${cls.join(' ')} ev-${day.plan.type}">${head}<div class="day-body">
       <div class="p-title">${day.plan.title}</div>
-      <div class="p-desc">${day.plan.desc || ''}</div></div>`;
+      <div class="p-desc">${day.plan.desc || ''}</div></div></div>`;
   }
-  const body = day.plan.parts.map(p =>
+  return wrap(day.plan.parts.map(p =>
     `<div class="p-part t-${p.type}"><div class="p-title">${p.title}</div>
-      <div class="p-desc">${p.desc || ''}</div></div>`).join('');
-  return `<div class="${cls.join(' ')}">${head}${body}</div>`;
+      <div class="p-desc">${p.desc || ''}</div></div>`).join(''));
 }
 
 // ── Woche ───────────────────────────────────────────────────────────────────
