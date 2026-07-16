@@ -228,13 +228,16 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- ?v= bei JEDER Aenderung an den Modulen hochzaehlen, sonst liefert der
-     Browser-Cache (besonders Safari/iOS) tagelang die alte Datei aus. -->
-<script src="js/config.js?v=16"></script>
-<script src="js/shared.js?v=16"></script>
-<script src="js/plan.js?v=16"></script>
-<script src="js/rides.js?v=16"></script>
-<script src="js/form.js?v=16"></script>
+<!-- ?v=BUILD wird beim Deploy durch die Commit-SHA ersetzt (deploy.yml).
+     Damit ist jeder Deploy eine neue URL und der Browser-Cache (besonders
+     Safari/iOS, das JS tagelang haelt) kann nicht veralten. Niemand muss
+     etwas von Hand hochzaehlen. Lokal geoeffnet bleibt "BUILD" stehen -
+     das ist unkritisch. -->
+<script src="js/config.js?v=BUILD"></script>
+<script src="js/shared.js?v=BUILD"></script>
+<script src="js/plan.js?v=BUILD"></script>
+<script src="js/rides.js?v=BUILD"></script>
+<script src="js/form.js?v=BUILD"></script>
 <script>
 /* Seiten werden erst gezeichnet, wenn sie sichtbar sind. Vorher ist
  * clientWidth = 0 (display:none), und jeder Canvas kaeme mit 0 px Puffer
