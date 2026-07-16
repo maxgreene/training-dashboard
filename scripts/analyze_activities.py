@@ -43,8 +43,12 @@ HIST_HR_MAX  = 200
 NP_WINDOW    = 30        # Sekunden, Coggan-Standard
 PC_DURATIONS = [5, 10, 30, 60, 120, 300, 600, 1200, 1800, 3600]
 
-MAX_GAP_SEC = 30         # groessere Luecke im time-Array = Halt, trennt Abschnitte.
-                         # 2-10s sind Sensor-Aussetzer und werden toleriert.
+# Eine Luecke ist tolerierbar, wenn sie klein gegen das Messfenster ist.
+# Fuer einen 5-s-Sprint zaehlt jede Sekunde; bei einem 60-Min-Block sind 2 Min
+# Ampel-Halt Rauschen. Daher: Toleranz = max(GAP_MIN, GAP_FRAC * Fensterlaenge).
+GAP_MIN  = 30            # s, darunter immer Sensor-Aussetzer
+GAP_FRAC = 0.05          # 5 % der Fensterlaenge
+MAX_GAP_SEC = GAP_MIN    # fuer die Serie/Pausenerkennung
 FROZEN_HR_MIN_LEN = 180  # s: exakt konstante HF laenger als das = toter Sensor
 FROZEN_HR_MIN_BPM = 50   # darunter "kein Signal", nicht "eingefroren"
 TRIM_PCT          = 0.08 # Anteil vorn/hinten, der beim Decoupling wegfaellt
@@ -102,31 +106,34 @@ def segments(ts, max_gap=MAX_GAP_SEC):
     return segs
 
 
-def power_curve(watts, segs):
-    """Mean-Maximal-Power je Zeitfenster, pro Abschnitt und dann das Maximum.
+def power_curve(watts, ts):
+    """Mean-Maximal-Power je Zeitfenster, lueckenbewusst.
 
-    Fenster duerfen keine Pause ueberspannen, sonst entstehen Bestwerte, die
-    nie gefahren wurden.
+    Ein Fenster darf keine nennenswerte Pause ueberspannen, sonst entstehen
+    Bestwerte, die nie am Stueck gefahren wurden (eine 8-h-Fahrt hatte 2,4 h
+    Pause; der 20-Min-Bestwert war dadurch 34 W zu hoch). Die Toleranz waechst
+    mit dem Fenster, sonst faellt jeder lange Wert einer Stadtfahrt weg.
     """
     series = _clean_watts(watts)
     out = {}
-    for d in PC_DURATIONS:
+    for dur in PC_DURATIONS:
+        tol = max(GAP_MIN, GAP_FRAC * dur)
         best = None
-        for a, b in segs:
+        for a, b in segments(ts, tol):
             seg = series[a:b]
-            if len(seg) < d:
+            if len(seg) < dur:
                 continue
-            s = sum(seg[:d])
+            s = sum(seg[:dur])
             m = s
-            for i in range(d, len(seg)):
-                s += seg[i] - seg[i - d]
+            for i in range(dur, len(seg)):
+                s += seg[i] - seg[i - dur]
                 if s > m:
                     m = s
-            v = m / d
+            v = m / dur
             if best is None or v > best:
                 best = v
         if best is not None:
-            out[str(d)] = round(best)
+            out[str(dur)] = round(best)
     return out
 
 
@@ -275,7 +282,7 @@ def analyze(aid, streams):
     if pw:
         cw = _clean_watts(pw)
         m['np']          = normalized_power(pw)
-        m['power_curve'] = power_curve(pw, segs)
+        m['power_curve'] = power_curve(pw, ts)
         m['hist_p']      = hist_power(pw)
         m['avg_power']   = round(sum(cw) / len(cw), 1)      # mit Nullen
         nz = [w for w in cw if w > 0]
@@ -300,8 +307,15 @@ def analyze(aid, streams):
     # Serie laeuft auf AUFZEICHNUNGSZEIT (Pausen existieren darin nicht).
     # Index i entspricht Sekunde i*SERIES_STEP der aufgezeichneten Fahrt.
     n_out = max(1, moving_sec // SERIES_STEP)
+    # Pausen als [Serien-Index, Sekunden]. Damit kann das Frontend die echte
+    # Zeitachse rekonstruieren und Pausen als Luecken zeigen, statt sie
+    # wegzuraffen.
+    gaps = []
+    for a, b in segments(ts, MAX_GAP_SEC)[:-1]:
+        gaps.append([b // SERIES_STEP, int(ts[b] - ts[b - 1])])
     series = {
         'id': aid, 'v': ANALYSIS_VERSION, 'step': SERIES_STEP, 'n': n_out,
+        'gaps': gaps or None,
         'w':   resample(pw,  SERIES_STEP, n_out) if pw else None,
         'hr':  resample(hr,  SERIES_STEP, n_out) if hr else None,
         'cad': resample(cad, SERIES_STEP, n_out) if cad else None,
