@@ -1,170 +1,178 @@
 #!/usr/bin/env python3
-# analyze_activities.py -- v3, all activities including short commutes
+"""analyze_activities.py — Kennzahlen und Serie pro Fahrt.
+
+DATENMODELL (v15)
+-----------------
+Quelle der Wahrheit ist immer data/streams/{id}.json (rohe Sekundendaten).
+Daraus entstehen genau zwei Artefakte, ohne Ueberschneidung:
+
+  data/activities.json      Index. Pro Fahrt alle Kennzahlen, die Listen und
+                            Aggregate brauchen. Plus zwei Histogramme (Zeit je
+                            Watt- bzw. HF-Eimer), aus denen das Frontend Zonen
+                            LIVE rechnet - deshalb sind Zonengrenzen dort frei
+                            verstellbar, ohne dass hier neu gerechnet wird.
+
+  data/analysis/{id}.json   Eine einzige Serie in fester Aufloesung
+                            (SERIES_STEP). Chart, Scatter und EF-Verlauf
+                            leitet das Frontend daraus ab.
+
+REGEL: Jede Groesse hat genau einen Ort. Nichts wird zweimal gerechnet,
+nichts steht in beiden Dateien.
+"""
 import os, json
 from datetime import datetime, timezone
 
+# ── Parameter ────────────────────────────────────────────────────────────────
 DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
-ANALYSIS_VERSION = 14
-FTP   = 250
+
+ANALYSIS_VERSION = 15
+
+FTP   = 250      # muss mit js/config.js uebereinstimmen
 HRMAX = 172
 
-def normalized_power(watts, window=30):
-    # Coggan standard: rolling average over ALL data (incl. zeros for coasting/descending)
-    if len(watts) < window: return None
-    rolling = [sum(watts[i:i+window])/window for i in range(len(watts)-window)]
-    np = (sum(r**4 for r in rolling)/len(rolling))**0.25
-    return round(np)
+SERIES_STEP = 5          # Sekunden je Punkt in analysis/{id}.json
 
-def power_curve(watts):
-    """Mean-Maximal-Power je Zeitfenster.
+HIST_P_STEP  = 10        # Watt je Histogramm-Eimer
+HIST_P_MAX   = 1000      # darueber: Ueberlauf in den letzten Eimer
+HIST_HR_MIN  = 40        # bpm, Untergrenze des HF-Histogramms
+HIST_HR_STEP = 2
+HIST_HR_MAX  = 200
 
-    WICHTIG: Nullen/None (Coasting) muessen als 0 in der Zeitreihe BLEIBEN.
+NP_WINDOW    = 30        # Sekunden, Coggan-Standard
+PC_DURATIONS = [5, 10, 30, 60, 120, 300, 600, 1200, 1800, 3600]
+
+MAX_GAP_SEC = 30         # groessere Luecke im time-Array = Halt, trennt Abschnitte.
+                         # 2-10s sind Sensor-Aussetzer und werden toleriert.
+FROZEN_HR_MIN_LEN = 180  # s: exakt konstante HF laenger als das = toter Sensor
+FROZEN_HR_MIN_BPM = 50   # darunter "kein Signal", nicht "eingefroren"
+TRIM_PCT          = 0.08 # Anteil vorn/hinten, der beim Decoupling wegfaellt
+
+# Powermeter-Korrektur: 4iiii las am 30.05.2026 rund 20% zu niedrig
+# (verifiziert gegen fremden Stages-PM und ueber die EF-Methode).
+CALIBRATION = {18719827047: 1.247, 18717251723: 1.247}
+
+
+# ── Helfer ───────────────────────────────────────────────────────────────────
+def _clean_watts(watts):
+    """None/negativ -> 0. Nullen BLEIBEN: sie sind echtes Coasting.
     Filtert man sie raus, werden Leistungsphasen ueber Pausen hinweg
-    zusammengeklebt und die Bestwerte systematisch ueberschaetzt.
-    Rolling Sum statt O(n*d)-Neuberechnung pro Fenster.
-    """
-    series = [w if isinstance(w, (int, float)) and w > 0 else 0 for w in watts]
-    result = {}
+    zusammengeklebt und alle Bestwerte systematisch ueberschaetzt."""
+    return [w if isinstance(w, (int, float)) and w > 0 else 0 for w in (watts or [])]
+
+
+def _rolling_means(series, window):
+    """Gleitende Mittel, O(n) statt O(n*window)."""
     n = len(series)
-    for d in [5, 10, 30, 60, 120, 300, 600, 1200, 1800, 3600]:
-        if n < d:
+    if n < window:
+        return []
+    s = sum(series[:window])
+    out = [s / window]
+    for i in range(window, n):
+        s += series[i] - series[i - window]
+        out.append(s / window)
+    return out
+
+
+def normalized_power(watts):
+    r = _rolling_means(_clean_watts(watts), NP_WINDOW)
+    if not r:
+        return None
+    return round((sum(x ** 4 for x in r) / len(r)) ** 0.25)
+
+
+def segments(ts, max_gap=MAX_GAP_SEC):
+    """Zusammenhaengende Aufzeichnungs-Abschnitte als (start, end)-Indizes.
+
+    Wahoo-Streams sind NICHT lueckenlos: bei Pausen fehlen Sekunden im
+    time-Array (eine Fahrt hatte 36 Luecken, die groesste 43 Minuten).
+    Ein Schiebefenster ueber das rohe Array wuerde Punkte als benachbart
+    behandeln, zwischen denen der Fahrer Kaffee getrunken hat.
+    """
+    if not ts:
+        return []
+    segs = []
+    start = 0
+    for i in range(1, len(ts)):
+        if ts[i] - ts[i - 1] > max_gap:
+            segs.append((start, i))
+            start = i
+    segs.append((start, len(ts)))
+    return segs
+
+
+def power_curve(watts, segs):
+    """Mean-Maximal-Power je Zeitfenster, pro Abschnitt und dann das Maximum.
+
+    Fenster duerfen keine Pause ueberspannen, sonst entstehen Bestwerte, die
+    nie gefahren wurden.
+    """
+    series = _clean_watts(watts)
+    out = {}
+    for d in PC_DURATIONS:
+        best = None
+        for a, b in segs:
+            seg = series[a:b]
+            if len(seg) < d:
+                continue
+            s = sum(seg[:d])
+            m = s
+            for i in range(d, len(seg)):
+                s += seg[i] - seg[i - d]
+                if s > m:
+                    m = s
+            v = m / d
+            if best is None or v > best:
+                best = v
+        if best is not None:
+            out[str(d)] = round(best)
+    return out
+
+
+def hist_power(watts):
+    """Sekunden je Watt-Eimer. Absolute Watt, NICHT %FTP - nur so bleiben
+    Zonengrenzen im Frontend verschiebbar, auch wenn sich FTP aendert."""
+    nb = HIST_P_MAX // HIST_P_STEP + 1          # letzter Eimer = Ueberlauf
+    h = [0] * nb
+    for w in _clean_watts(watts):
+        h[min(int(w) // HIST_P_STEP, nb - 1)] += 1
+    return h
+
+
+def hist_hr(hr_list):
+    """Sekunden je HF-Eimer ab HIST_HR_MIN."""
+    nb = (HIST_HR_MAX - HIST_HR_MIN) // HIST_HR_STEP + 1
+    h = [0] * nb
+    for x in (hr_list or []):
+        if not x or x < HIST_HR_MIN:
             continue
-        s = sum(series[:d])
-        best = s
-        for i in range(d, n):
-            s += series[i] - series[i-d]
-            if s > best:
-                best = s
-        result[str(d)] = round(best/d)
-    return result
-
-def power_zones(watts):
-    bounds = [0, 0.55, 0.75, 0.87, 1.05, 999]
-    zones = [0]*5
-    valid = [w for w in watts if w and w > 0]
-    for w in valid:
-        for z in range(4,-1,-1):
-            if w >= bounds[z]*FTP: zones[z]+=1; break
-    total = len(valid) or 1
-    return [round(z/total*100,1) for z in zones]
-
-def hr_zones(hr_list):
-    bounds = [0, 0.68, 0.83, 0.88, 0.95, 1.0]
-    zones = [0]*5
-    valid = [h for h in hr_list if h and h >= 50]
-    for h in valid:
-        for z in range(4,-1,-1):
-            if h >= bounds[z]*HRMAX: zones[z]+=1; break
-    total = len(valid) or 1
-    return [round(z/total*100,1) for z in zones]
-
-def rolling_ef(ts, watts, hr, window=60):
-    result = []
-    for i in range(len(ts)):
-        t_end = ts[i]
-        ws, hs = [], []
-        for j in range(i-1,-1,-1):
-            if ts[j] < t_end-window: break
-            if watts[j] and watts[j] > 10: ws.append(watts[j])
-            if hr[j] and hr[j] > 50: hs.append(hr[j])
-        if len(ws) < 3 or len(hs) < 3: continue
-        avg_w = sum(ws)/len(ws)
-        if avg_w < 30: continue
-        result.append({'t': ts[i], 'ef': round(avg_w/(sum(hs)/len(hs)), 4)})
-    return result
-
-def trim_core(ts, watts, hr, trim_pct=0.08):
-    if not ts: return [], [], []
-    total = ts[-1]
-    t0 = total*trim_pct
-    t1 = total*(1.0-trim_pct)
-    tc,pc,hc = [],[],[]
-    for i,t in enumerate(ts):
-        if t < t0 or t > t1: continue
-        w = watts[i] if i < len(watts) else None
-        h = hr[i] if i < len(hr) else None
-        if (w is None or w < 20) and watts: continue
-        if h is None or h < 60: continue
-        tc.append(t); pc.append(w or 0); hc.append(h)
-    return tc, pc, hc
-
-def decoupling_stats(ts_c, pw_c, hr_c):
-    # Pa:HR aerobic decoupling — Coggan/TrainingPeaks standard
-    # Positive drift = HR drifted UP relative to power = cardiac drift = BAD
-    # Good aerobic base: drift < 5%  |  Excellent: drift < 2%
-    n = len(ts_c)
-    if n < 10: return None
-    # Split by temporal midpoint for fairness
-    mid_t = (ts_c[0] + ts_c[-1]) / 2
-    split = next((i for i,t in enumerate(ts_c) if t >= mid_t), n//2)
-    if split < 3 or split > n-3: split = n//2
-    p1,h1 = pw_c[:split],hr_c[:split]
-    p2,h2 = pw_c[split:],hr_c[split:]
-    if not p1 or not h1 or not p2 or not h2: return None
-    aw1=sum(p1)/len(p1); ah1=sum(h1)/len(h1)
-    aw2=sum(p2)/len(p2); ah2=sum(h2)/len(h2)
-    if ah1==0 or ah2==0 or aw1==0: return None
-    ef1=aw1/ah1; ef2=aw2/ah2
-    # ef_gesamt: avg_W/avg_HR (consistent with ef1/ef2 — all use avg_W)
-    avg_w_c = sum(pw_c)/len(pw_c)
-    avg_hr_c = sum(hr_c)/len(hr_c)
-    ef_g = round(avg_w_c/avg_hr_c, 4) if avg_hr_c else 0
-    # Drift: positive = cardiac drift (EF declined = HR rose relative to power)
-    # (EF1 - EF2) / EF1 × 100  →  positive means decoupling/drift
-    drift = round((ef1-ef2)/ef1*100, 2) if ef1 else 0
-    return {'ef_gesamt':ef_g,'ef1':round(ef1,4),'ef2':round(ef2,4),
-            'drift_pct':drift,'half_t':ts_c[split],
-            'avg_w1':round(aw1,1),'avg_h1':round(ah1,1),
-            'avg_w2':round(aw2,1),'avg_h2':round(ah2,1),'n_core':n}
-
-def detect_climbs(ts, alt, grd, min_grade=3.0, min_dur=30):
-    climbs=[]; in_c=False; si=0
-    for i,g in enumerate(grd):
-        if g is None: continue
-        if not in_c and g>=min_grade: in_c=True; si=i
-        elif in_c and g<min_grade:
-            dur=ts[i]-ts[si]
-            if dur>=min_dur:
-                gain=max(0,alt[i]-alt[si])
-                avg_g=sum(x for x in grd[si:i] if x)/max(1,i-si)
-                climbs.append({'t_start':ts[si],'t_end':ts[i],
-                               'duration_sec':round(dur),'elevation_gain':round(gain,1),
-                               'avg_grade':round(avg_g,1)})
-            in_c=False
-    return climbs
+        h[min((int(x) - HIST_HR_MIN) // HIST_HR_STEP, nb - 1)] += 1
+    return h
 
 
-def strip_frozen_hr(hr, min_len=180, min_bpm=50):
-    """Setzt eingefrorene HF-Phasen auf None.
+def strip_frozen_hr(hr):
+    """Eingefrorene HF-Phasen auf None setzen.
 
-    Ein defekter oder abgerutschter HF-Sensor wiederholt oft seinen letzten
-    Wert. Eine ueber >=min_len Sekunden EXAKT identische, plausible HF ist
-    physiologisch unmoeglich (echte HF schwankt immer, auch bei konstanter
-    Leistung) und verfaelscht EF/Decoupling.
-
-    Nur PLAUSIBLE HF-Werte (>=min_bpm) werden geprueft: HF=0 oder sehr niedrige
-    Werte sind "kein Signal" (Sensor noch nicht verbunden), keine eingefrorene
-    echte HF - die zaehlen ohnehin nicht in die Analyse und werden ignoriert.
-    min_len=180s (3 Min): kurze stabile Plateaus bei ruhiger Fahrt bleiben
-    erhalten, nur echte Sensor-Ausfaelle werden entfernt.
-
-    Leistung/Power bleibt unberuehrt.
+    Ein abgerutschter oder leerer HF-Gurt wiederholt seinen letzten Wert. Eine
+    ueber Minuten EXAKT konstante, plausible HF ist physiologisch unmoeglich
+    und verfaelscht EF, Decoupling und HF-Zonen. Nur plausible Werte werden
+    geprueft: HF unter FROZEN_HR_MIN_BPM ist "kein Signal", nicht "eingefroren".
+    Leistung bleibt unberuehrt.
     """
     if not hr:
         return hr, 0
     out = list(hr)
     n = len(out)
-    i = 0
-    stripped = 0
+    i = stripped = 0
     while i < n:
-        if out[i] is None or out[i] < min_bpm:
-            i += 1; continue
+        if out[i] is None or out[i] < FROZEN_HR_MIN_BPM:
+            i += 1
+            continue
         j = i
         while j < n and out[j] == out[i]:
             j += 1
-        if j - i >= min_len:
+        if j - i >= FROZEN_HR_MIN_LEN:
             for k in range(i, j):
                 out[k] = None
             stripped += j - i
@@ -172,136 +180,197 @@ def strip_frozen_hr(hr, min_len=180, min_bpm=50):
     return out, stripped
 
 
-def analyze(aid, streams, act):
-    ts  = streams.get('time',[])
-    pw  = streams.get('watts',[])
-    hr  = streams.get('heartrate',[])
-    alt = streams.get('altitude',[])
-    cad = streams.get('cadence',[])
-    spd = streams.get('velocity_smooth',[])
-    grd = streams.get('grade_smooth',[])
-    lat = streams.get('latlng',[])
-    if not ts: return None
-    # Eingefrorene HF-Phasen (toter Sensor) aus der HF-Serie entfernen, bevor
-    # irgendeine HF-basierte Kennzahl gerechnet wird. Betrifft EF, Decoupling,
-    # Scatter, HF-Zonen. Power bleibt unangetastet.
+def resample(values, step, n_out):
+    """Mittelwert je Zeitfenster. Luecken bleiben None."""
+    out = []
+    for k in range(n_out):
+        chunk = [v for v in values[k * step:(k + 1) * step]
+                 if isinstance(v, (int, float))]
+        out.append(round(sum(chunk) / len(chunk)) if chunk else None)
+    return out
+
+
+def decoupling(watts, hr, segs):
+    """EF und Pa:HR-Entkopplung, beide nach TrainingPeaks-Standard auf NP.
+
+    EF    = NP / mittlere HF ueber die ganze Fahrt.
+    Pa:HR = (EF erste Haelfte - EF zweite Haelfte) / EF erste Haelfte.
+            Positiv = HF ist relativ zur Leistung gestiegen (cardiac drift).
+
+    Vorn und hinten faellt TRIM_PCT weg: Anfahren und Ausrollen verzerren,
+    weil die HF der Leistung traege folgt.
+    """
+    n = min(len(watts), len(hr))
+    if n < 300:
+        return None, None
+    lo, hi = int(n * TRIM_PCT), int(n * (1 - TRIM_PCT))
+    idx = [i for i in range(lo, hi) if hr[i] and hr[i] >= FROZEN_HR_MIN_BPM]
+    if len(idx) < 240:
+        return None, None
+
+    def ef_of(ii):
+        if len(ii) < NP_WINDOW * 2:
+            return None
+        r = _rolling_means([watts[i] for i in ii], NP_WINDOW)
+        if not r:
+            return None
+        np_ = (sum(x ** 4 for x in r) / len(r)) ** 0.25
+        h = sum(hr[i] for i in ii) / len(ii)
+        return (np_ / h) if h else None
+
+    mid = len(idx) // 2
+    ef_all, ef1, ef2 = ef_of(idx), ef_of(idx[:mid]), ef_of(idx[mid:])
+    if not ef_all:
+        return None, None
+    drift = round((ef1 - ef2) / ef1 * 100, 2) if (ef1 and ef2) else None
+    return round(ef_all, 4), drift
+
+
+def tss_of(np_val, duration_sec):
+    """TSS aus NP und Dauer, gerechnet mit UNSEREM FTP.
+
+    Wahoo liefert ein eigenes TSS, aber gerechnet mit dem FTP aus der Wahoo-App
+    - der weicht ab und fehlt oft ganz (dann stand hier 0). Deshalb selbst.
+    """
+    # duration_sec MUSS die Bewegungszeit sein, nicht die Gesamtspanne.
+    if not np_val or not duration_sec:
+        return None
+    return round(duration_sec * (np_val ** 2) / (FTP ** 2 * 3600) * 100, 1)
+
+
+# ── Analyse einer Fahrt ──────────────────────────────────────────────────────
+def analyze(aid, streams):
+    ts = streams.get('time') or []
+    if not ts:
+        return None, None
+
+    pw  = streams.get('watts') or []
+    hr  = streams.get('heartrate') or []
+    cad = streams.get('cadence') or []
+
+    if aid in CALIBRATION and pw:
+        c = CALIBRATION[aid]
+        pw = [round(w * c) if w else w for w in pw]
+        print(f'    [calib] watts x{c}')
+
+    frozen = 0
     if hr:
-        hr, _frozen_s = strip_frozen_hr(hr)
-        if _frozen_s:
-            print(f"    HF-Ausfall bereinigt: {_frozen_s}s eingefrorene HF entfernt")
-    dur = int(ts[-1] - ts[0]) if len(ts) >= 2 else (ts[-1] if ts else 0)
-    step = max(1, len(ts)//1500)  # target ~1500 pts per chart
-    chart = {
-        'time':ts[::step],
-        'watts':pw[::step] if pw else [],
-        'hr':hr[::step] if hr else [],
-        'altitude':[round(a,1) for a in alt[::step]] if alt else [],
-        'cadence':cad[::step] if cad else [],
-        'speed':[round(v*3.6,1) for v in spd[::step]] if spd else [],
-        'grade':[round(g,1) if g else 0 for g in grd[::step]] if grd else [],
-    }
-    res = {
-        'activity_id':aid,'analyzed_at':datetime.now(timezone.utc).isoformat(),
-        'analysis_version':ANALYSIS_VERSION,'duration_sec':dur,
-        'has_power':bool(pw),'has_hr':bool(hr),'has_gps':bool(lat),
-        'chart':chart,'power_curve':{},'power_zones':[],'hr_zones':[],
-        'np':None,'cadence_avg':None,'cadence_max':None,
-        'decoupling':None,'ef_series':[],'scatter':[],'climbs':[],
-    }
+        hr, frozen = strip_frozen_hr(hr)
+        if frozen:
+            print(f'    HF-Ausfall bereinigt: {frozen}s')
+
+    segs = segments(ts)
+    # moving_sec = tatsaechlich aufgezeichnete Sekunden. duration_sec aus dem
+    # Wahoo-Summary ist die Gesamtspanne INKLUSIVE Pausen und taugt weder fuer
+    # TSS noch fuer die Anzeige.
+    moving_sec = len(ts)
+    elapsed = int(ts[-1] - ts[0]) + 1 if len(ts) >= 2 else moving_sec
+    m = {'has_power': bool(pw), 'has_hr': bool(hr),
+         'moving_sec': moving_sec, 'elapsed_sec': elapsed}
+    if len(segs) > 1:
+        m['pause_sec'] = elapsed - moving_sec
+    if frozen:
+        m['frozen_hr_sec'] = frozen
+
     if pw:
-        res['np']=normalized_power(pw)
-        res['power_curve']=power_curve(pw)
-        res['power_zones']=power_zones(pw)
-        # avg_power AUS DEN STREAMS, mit Nullen (Coasting) - konsistent zu NP und
-        # power_curve. Der Wert aus dem Wahoo-Summary ('power_avg') rechnet ohne
-        # Nullen (Bewegungszeit) und liegt dadurch systematisch zu hoch: er kann
-        # sogar ueber NP oder ueber dem eigenen 60-Min-Bestwert liegen, was
-        # physikalisch unmoeglich ist. Beide Werte werden gespeichert.
-        _series=[w if isinstance(w,(int,float)) and w>0 else 0 for w in pw]
-        if _series:
-            res['avg_power']=round(sum(_series)/len(_series),1)
-            _moving=[w for w in _series if w>0]
-            res['avg_power_moving']=round(sum(_moving)/len(_moving),1) if _moving else None
+        cw = _clean_watts(pw)
+        m['np']          = normalized_power(pw)
+        m['power_curve'] = power_curve(pw, segs)
+        m['hist_p']      = hist_power(pw)
+        m['avg_power']   = round(sum(cw) / len(cw), 1)      # mit Nullen
+        nz = [w for w in cw if w > 0]
+        m['avg_power_moving'] = round(sum(nz) / len(nz), 1) if nz else None
+        m['max_power']   = max(cw) if cw else None
+        m['tss']         = tss_of(m['np'], moving_sec)
+
     if hr:
-        res['hr_zones']=hr_zones(hr)
+        hv = [x for x in hr if x and x >= FROZEN_HR_MIN_BPM]
+        m['hist_hr'] = hist_hr(hr)
+        m['avg_hr']  = round(sum(hv) / len(hv), 1) if hv else None
+        m['max_hr']  = max(hv) if hv else None
+
     if cad:
-        cv=[c for c in cad if c and c>20]
-        if cv: res['cadence_avg']=round(sum(cv)/len(cv),1); res['cadence_max']=max(cv)
-    # Aerobic analysis for all rides >= 60 seconds with HR
-    if hr and dur >= 60:
-        has_pw = bool(pw)
-        pw_for_trim = pw if pw else []
-        ts_c,pw_c,hr_c = trim_core(ts, pw_for_trim, hr)
-        if len(ts_c) >= 6:
-            res['decoupling'] = decoupling_stats(ts_c, pw_c, hr_c)
-        if has_pw and len(ts_c) >= 6:
-            res['ef_series'] = rolling_ef(ts, pw, hr)
-            sc_step = max(1, len(ts_c)//800)
-            cad_map = {ts[i]:cad[i] for i in range(len(ts)) if cad and i<len(cad)} if cad else {}
-            res['scatter'] = [{'t':ts_c[i],'w':pw_c[i],'hr':hr_c[i],'cad':cad_map.get(ts_c[i])}
-                              for i in range(0,len(ts_c),sc_step)]
-    if alt and grd and len(alt)>5:
-        res['climbs']=detect_climbs(ts,alt,grd)
-    return res
+        cv = [c for c in cad if c and c > 20]
+        m['avg_cadence'] = round(sum(cv) / len(cv), 1) if cv else None
+        m['max_cadence'] = max(cv) if cv else None
+
+    if pw and hr:
+        m['ef'], m['decoupling_pct'] = decoupling(_clean_watts(pw), hr, segs)
+
+    # Serie laeuft auf AUFZEICHNUNGSZEIT (Pausen existieren darin nicht).
+    # Index i entspricht Sekunde i*SERIES_STEP der aufgezeichneten Fahrt.
+    n_out = max(1, moving_sec // SERIES_STEP)
+    series = {
+        'id': aid, 'v': ANALYSIS_VERSION, 'step': SERIES_STEP, 'n': n_out,
+        'w':   resample(pw,  SERIES_STEP, n_out) if pw else None,
+        'hr':  resample(hr,  SERIES_STEP, n_out) if hr else None,
+        'cad': resample(cad, SERIES_STEP, n_out) if cad else None,
+    }
+    return m, series
 
 
-def _writeback(act, res):
-    """Schreibt die berechneten Kennzahlen aus der Analyse zurueck ins activities.json."""
-    if res.get('np') is not None:     act['np']=res['np']
-    if res.get('avg_power') is not None:        act['avg_power']=res['avg_power']
-    if res.get('avg_power_moving') is not None: act['avg_power_moving']=res['avg_power_moving']
-    if res.get('power_curve'):        act['power_curve']=res['power_curve']
-    if res.get('power_zones'):        act['power_zones']=res['power_zones']
-    if res.get('hr_zones'):           act['hr_zones']=res['hr_zones']
-    if res.get('cadence_avg') is not None: act['avg_cadence']=res['cadence_avg']
-    d=res.get('decoupling') or {}
-    if d:
-        act['decoupling_pct']=d.get('drift_pct')
-        act['ef_gesamt']=d.get('ef_gesamt')
+# ── Hauptlauf ────────────────────────────────────────────────────────────────
+# Felder, die analyze besitzt (werden beim Reprocess ersetzt).
+OWNED = ['np', 'power_curve', 'hist_p', 'hist_hr', 'avg_power', 'avg_power_moving',
+         'max_power', 'avg_hr', 'max_hr', 'avg_cadence', 'max_cadence', 'tss',
+         'ef', 'decoupling_pct', 'has_power', 'has_hr', 'frozen_hr_sec',
+         'moving_sec', 'elapsed_sec', 'pause_sec']
+# Felder aus alten Versionen, die es nicht mehr gibt.
+OBSOLETE = ['power_zones', 'hr_zones', 'ef_gesamt', 'streams', 'chart',
+            'ef_series', 'scatter', 'climbs', 'gps_ok', 'has_latlng']
+
 
 def main():
     if not os.path.exists(DATA_FILE):
-        print('No activities.json'); return
-    with open(DATA_FILE) as f: data=json.load(f)
-    acts=data.get('activities',[])
+        print('No activities.json')
+        return
+    with open(DATA_FILE) as f:
+        data = json.load(f)
+    acts = data.get('activities', [])
     os.makedirs(ANALYSIS_DIR, exist_ok=True)
-    updated=0
+
+    done = 0
     for act in acts:
-        aid=act['id']
-        sf=os.path.join(STREAMS_DIR, str(aid)+'.json')
-        af=os.path.join(ANALYSIS_DIR, str(aid)+'.json')
-        if not os.path.exists(sf): continue
-        # Wenn die Analyse schon aktuell ist: NICHT neu rechnen, aber die Werte
-        # trotzdem ins activities.json zurueckschreiben (fetch koennte sie geleert haben).
+        aid = act['id']
+        sf = os.path.join(STREAMS_DIR, str(aid) + '.json')
+        af = os.path.join(ANALYSIS_DIR, str(aid) + '.json')
+        if not os.path.exists(sf):
+            continue
+
+        for k in OBSOLETE:
+            act.pop(k, None)
+
         if os.path.exists(af):
-            with open(af) as f: ex=json.load(f)
-            if ex.get('analysis_version')==ANALYSIS_VERSION:
-                _writeback(act, ex)
-                continue
-        name=act.get('name',''); dur=round(act.get('duration_sec',0)/60)
-        print('  ' + name + ' ' + act.get('date','') + ' ' + str(dur) + 'min')
-        with open(sf) as f: streams=json.load(f).get('streams',{})
-        # ── PM calibration fix: 30.05.2026 4iiii read ~20% low (verified vs Ingo's Stages + EF method) ──
-        if aid in (18719827047, 18717251723):
-            CAL = 1.247
-            if streams.get('watts'):
-                streams['watts'] = [round(w*CAL) if w else w for w in streams['watts']]
-            print(f'    [calib] scaled watts x{CAL} (4iiii under-read on 30.05)')
-        res=analyze(aid, streams, act)
-        if not res: continue
-        with open(af,'w') as f: json.dump(res,f)
-        _writeback(act, res)
-        d=res.get('decoupling') or {}
-        nc=len(res['chart'].get('time',[]))
-        ne=len(res.get('ef_series',[]))
-        nclimb=len(res.get('climbs',[]))
-        print('    ' + str(nc) + 'pts ef=' + str(ne) +
-              (' drift=' + str(d.get('drift_pct','')) + '%' if d else '') +
-              (' ' + str(nclimb) + 'climbs' if nclimb else ''))
-        updated+=1
-    data['updated_at']=datetime.now(timezone.utc).isoformat()
-    with open(DATA_FILE,'w') as f: json.dump(data,f,indent=2)
-    print('Done: ' + str(updated) + ' analyzed')
+            try:
+                with open(af) as f:
+                    if json.load(f).get('v') == ANALYSIS_VERSION and act.get('np') is not None:
+                        continue
+            except Exception:
+                pass
+
+        print(f"  {act.get('date','')} {(act.get('name') or '')[:22]}")
+        with open(sf) as f:
+            streams = json.load(f).get('streams', {})
+        m, series = analyze(aid, streams)
+        if not m:
+            continue
+
+        for k in OWNED:
+            act.pop(k, None)
+        act.update({k: v for k, v in m.items() if v is not None})
+
+        with open(af, 'w') as f:
+            json.dump(series, f, separators=(',', ':'))
+        print(f"    NP={m.get('np')} TSS={m.get('tss')} EF={m.get('ef')} "
+              f"Serie={series['n']}pts")
+        done += 1
+
+    data['analysis_version'] = ANALYSIS_VERSION
+    data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    with open(DATA_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+    print(f'Done: {done} analysiert')
+
 
 if __name__ == '__main__':
     main()
