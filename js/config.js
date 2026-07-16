@@ -115,6 +115,14 @@ const CFG = {
       { key: '300',  label: 'MAP', full: 'Max. aerob 5 min', mult: 1.6, color: '#f59e0b' },
       { key: '1200', label: 'FTP', full: 'Schwelle 20 min',  mult: 1.0, color: '#3b82f6' },
     ],
+    // Belastungsmodell
+    load: {
+      ctlTau: 42, atlTau: 7,   // Zeitkonstanten (Konvention, keine Messung)
+      seedCtl: 40, seedAtl: 40, // Startwerte: bei 0 waere TSB wochenlang
+                                // rechnerisch negativ, egal wie erholt man ist.
+      settleDays: 42,           // solange gilt das Modell als nicht eingeschwungen
+    },
+
     // EF-Trend (Chart.js-Bubble, wie frueher)
     efTrend: {
       height: 340,
