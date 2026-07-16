@@ -137,13 +137,13 @@ const CFG = {
     // EF-Trend (Chart.js-Bubble, wie frueher)
     efTrend: {
       height: 340,
-      minDurMin: 60,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
+      minDurMin: 10,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
                        // 30-60 s hinterher und taeuscht einen hohen EF vor.
                        // Auf 10 setzen, um wieder alles zu sehen.
       yMin: 1.1, yMax: 2.0,
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
       dotMinDur: 15, dotMaxDur: 500,
-      alpha: 0.5,
+      alpha: 0.79,
       showTrend: true,
     },
 
