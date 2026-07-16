@@ -347,11 +347,8 @@ function renderRides() {
   box.innerHTML = `
     <div class="card">
       <div class="card-hd"><span class="t">EF-TREND</span>
-        <span class="s">NP / Ø-HF · Punktgröße = Fahrtdauer · nur Fahrten ab ${CFG.ui.efTrend.minDurMin} min</span></div>
+        <span class="s">EF = NP / Ø-HF · ↑ = besser · Punkt = Dauer · ab ${CFG.ui.efTrend.minDurMin} min</span></div>
       <div id="ef-box"></div>
-      <div class="ez-hint">Kürzere Fahrten sind ausgeschlossen: dort hinkt die Herzfrequenz der
-        Leistung 30–60 s hinterher und täuscht einen hohen EF vor. Schwelle in
-        <code>config.js</code> unter <code>ui.efTrend.minDurMin</code>.</div>
     </div>
     <div class="stats">
       ${stat('Fahrten', A.length, 'seit ' + (A.length ? fmtDay(d(A[A.length - 1].date)) : '—'))}
