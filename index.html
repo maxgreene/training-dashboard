@@ -2,2274 +2,258 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training Dashboard · Wolf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-:root {
-  --bg:#181818; --bg2:#1e1e1e; --bg3:#111;
-  --border:#282828; --border2:#222;
-  --t1:#f0f0f0; --t2:#b0b0b0; --t3:#888; --t4:#777; --t5:#666;
-  --active:#e0e0e0;
-  --green:#5a8a52; --red:#a08080;
-  --z1:#34d399; --z2:#60a5fa; --z3:#fbbf24; --z4:#f97316; --z5:#ef4444;
+/* ── Tokens ───────────────────────────────────────────────────────────────
+   Farben stehen NUR hier und in CFG.zones. Kein Hex im JS ausser den
+   Zonenfarben, die aus der Config kommen. */
+:root{
+  --bg:#0d0d0d; --bg2:#161616; --bg3:#1c1c1c; --border:#2a2a2a; --border2:#333;
+  --t1:#e8e8e8; --t2:#b0b0b0; --t3:#888; --t4:#666; --t5:#4a4a4a;
+  --ok:#34d399; --warn:#fbbf24; --err:#ef4444; --accent:#60a5fa;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Inter',system-ui,sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#141414;color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+b{font-weight:600}
+small{font-size:.75em;color:var(--t4)}
+.muted{color:var(--t4);font-size:11px}
+.big{font-size:30px;font-weight:800;font-family:var(--mono);line-height:1}
+.lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t4);margin-bottom:7px;font-weight:600}
 
-/* NAV */
-nav{background:var(--bg3);height:52px;display:flex;align-items:center;padding:0 20px;gap:32px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;}
-.nav-brand{font-size:13px;font-weight:600;color:var(--t1);}
-.nav-tabs{display:flex;margin-left:auto;}
-.tab{font-size:11px;font-weight:500;color:var(--t5);padding:0 16px;height:52px;display:flex;align-items:center;letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid transparent;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif;transition:color 0.15s;}
-.tab:hover:not(.active){color:var(--t3);}
-.tab.active{color:var(--active);border-bottom-color:var(--active);}
-.nav-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);}
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+nav{background:var(--bg3);height:52px;display:flex;align-items:center;gap:24px;
+    padding:0 18px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100}
+.brand{font-size:13px;font-weight:700;letter-spacing:.04em}
+.tabs{display:flex;margin-left:auto;gap:2px}
+.tab{background:none;border:none;color:var(--t3);font:inherit;font-size:13px;
+     padding:8px 14px;cursor:pointer;border-radius:4px}
+.tab:hover{color:var(--t1);background:var(--bg2)}
+.tab.on{color:var(--t1);background:var(--bg2);font-weight:600}
 
-/* LAYOUT */
-main{padding:20px;max-width:1000px;margin:0 auto;}
-.page{display:none;}.page.active{display:block;}
-#loading{text-align:center;padding:60px 20px;color:var(--t4);font-family:'JetBrains Mono',monospace;font-size:12px;}
-
-/* STATS */
-.stats{display:flex;gap:6px;margin-bottom:24px;}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:14px 18px;flex:1;}
-.stat-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
-.stat-val{font-size:23px;font-weight:700;color:var(--t1);line-height:1;}
-.stat-val span{font-size:13px;font-weight:400;color:var(--t5);margin-left:2px;}
-.stat-sub{font-size:11px;color:var(--t5);margin-top:4px;}
-
-/* SECTION HEADER */
-.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;margin-top:20px;}
-.sh-title{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
-.sh-meta{font-size:12px;color:var(--t4);}
-.sh-line{flex:1;height:1px;background:#252525;}
-
-/* ACTIVITY LIST */
-.act-list{display:flex;flex-direction:column;gap:2px;margin-bottom:24px;}
-.act-row{background:var(--bg2);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.15s;}
-.act-row:hover{border-color:#444;}
-.act-row.selected{border-color:#666;}
-.act-main{padding:12px 16px;display:flex;align-items:center;gap:16px;}
-.act-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);width:104px;flex-shrink:0;}
-.act-name{font-size:13px;font-weight:500;color:var(--t1);flex:1;}
-.act-metrics{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.am{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);white-space:nowrap;}
-.am .u{color:var(--t5);font-size:11px;}
-.asep{color:#333;font-size:12px;}
-.act-badge{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--t5);background:#252525;border:1px solid #2e2e2e;padding:2px 7px;border-radius:2px;white-space:nowrap;}
-.zstrip{height:2px;display:flex;gap:1px;border-radius:0 0 2px 2px;overflow:hidden;}
-.zs{border-radius:1px;}
-
-/* CALENDAR */
-/* PLAN WOCHENKARTEN */
-.plan-wrap{padding:0 0 20px}
-.plan-phase{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
-.plan-phase-line{flex:1;height:1px;background:#252525}
-.plan-phase-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1.4px;white-space:nowrap;padding:0 4px}
-.wcard{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;margin-bottom:10px;overflow:hidden}
-.wcard-hdr{display:flex;align-items:baseline;gap:10px;padding:9px 14px;background:#1f1f1f;border-bottom:1px solid #262626}
-.wcard-label{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px}
-.wcard-dates{font-size:13px;color:#666}
-.wcard-vol{margin-left:auto;font-size:12px;color:#555;font-family:'JetBrains Mono',monospace}
-.pday{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid #1e1e1e;cursor:pointer;transition:background .12s;border-left:4px solid transparent}
-.pday:last-child{border-bottom:none}
-.pday:hover{background:#202020}
-.pday.done{background:#161616}
-.pday.done .pday-title{color:#555}
-.pday.done .pday-sub{color:#3a3a3a}
-.pday.today-c{background:#111d11;border-left-color:#5a8a52!important}
-.pday.past:not(.done){opacity:.35}
-.pday.dimmed{opacity:.25}
-.pday-badge{width:38px;height:38px;border-radius:5px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-right:12px}
-.pday-dow{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.85}
-.pday-num{font-size:17px;font-weight:700;line-height:1.1}
-.pday-check{width:18px;text-align:center;font-size:13px;flex-shrink:0;margin-right:8px}
-.pday-icon{font-size:15px;flex-shrink:0;margin-right:10px;width:20px;text-align:center}
-.pday-text{flex:1;min-width:0}
-.pday-title{font-size:14px;font-weight:600;color:#d8d8d8;line-height:1.25}
-.pday-sub{font-size:12px;color:#666;margin-top:2px}
-.pday-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;margin-left:10px;flex-shrink:0}
-.pday-ef{font-size:11px;font-family:'JetBrains Mono',monospace;color:#5a8a52;font-weight:700}
-.pday-tss{font-size:11px;font-family:'JetBrains Mono',monospace;color:#a08050}
-.pday-zs{display:flex;height:5px;width:54px;border-radius:3px;overflow:hidden;gap:1px}
-.pday-zs div{flex:1;border-radius:1px}
-.b-comm{background:#222;color:#666}
-.b-roll{background:#0f1e35;color:#60a5fa}
-.b-aus{background:#0a1f12;color:#34d399}
-.b-test{background:#1e1500;color:#fbbf24}
-.b-check{background:#160f2a;color:#a78bfa}
-.b-rest{background:#181818;color:#444}
-.t-comm{border-left-color:#383838!important}
-.t-roll{border-left-color:#2563b0!important}
-.t-aus{border-left-color:#1a7a4a!important}
-.t-test{border-left-color:#a0860a!important}
-.t-check{border-left-color:#6d3fb5!important}
-.t-rest{border-left-color:#222!important}
-.plan-cp{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:#160f2a;border:1px solid #2d1f5a;border-radius:6px;border-left:4px solid #a78bfa}
-.plan-cp-icon{font-size:18px}
-.plan-cp-label{font-size:14px;font-weight:700;color:#c4a8ff}
-.plan-cp-desc{font-size:12px;color:#7a6090;margin-top:2px}
-.pday-det{padding:10px 14px 12px 74px;background:#141414;border-bottom:1px solid #1e1e1e;font-size:12px;color:#666;line-height:1.6;display:none}
-.pday-det.open{display:block}
-
-.cal-week{margin-bottom:16px;}
-.cal-week-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;}
-.cwl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;}
-.cwd{font-size:12px;color:var(--t4);}
-.cwv{font-size:12px;color:var(--t4);margin-left:auto;}
-.cwline{flex:1;height:1px;background:#252525;}
-.dow-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
-.dow-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t4);text-align:center;padding:2px 0;}
-.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.day-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;min-height:96px;cursor:pointer;transition:border-color 0.15s;position:relative;}
-.day-card:hover{border-color:#444;}
-.day-card.done{background:#1a1e1a;border-color:#263026;}
-.day-card.dimmed{opacity:0.25;cursor:default;}
-.day-card.past{opacity:0.15;cursor:default;}
-.day-card.today-c{border-color:var(--t3);}
-.day-card.sel{border-color:#666;border-width:2px;}
-.dc-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);margin-bottom:6px;}
-.dc-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3);margin-bottom:5px;}
-.dc-type.rest{color:var(--t5);font-weight:500;}
-.dc-type.test{color:var(--red);}
-.dc-type.check{color:var(--t3);}
-.dc-title{font-size:12px;font-weight:500;color:var(--t2);line-height:1.35;}
-.dc-detail{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.35;}
-.dc-done{font-size:10px;font-weight:600;color:var(--green);margin-top:5px;}
-
-/* WEEK DETAIL */
-.week-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:6px;display:none;}
-.week-detail.open{display:block;}
-.wd-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:12px;}
-
-/* DETAIL STATS */
-.detail-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
-.ds{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;flex:1;min-width:80px;}
-.ds-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
-.ds-val{font-size:18px;font-weight:700;color:var(--t1);}
-.ds-val span{font-size:12px;font-weight:400;color:var(--t4);}
-.ds-sub{font-size:11px;color:var(--t5);margin-top:3px;}
-
-/* POWER CURVE */
-.pcurve{display:flex;align-items:flex-end;gap:4px;height:70px;margin:8px 0 12px;}
-.pcb-w{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.pcb{width:100%;border-radius:2px 2px 0 0;opacity:0.85;}
-.pcb-val{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t1);text-align:center;}
-.pcb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);text-align:center;}
-
-/* ZONE BARS */
-.zone-dist{display:flex;flex-direction:column;gap:5px;margin:8px 0 12px;}
-.zd-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
-.zd-lbl{font-size:10px;color:var(--t3);width:72px;flex-shrink:0;}
-.zd-bounds{font-size:9px;color:var(--t4);width:66px;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
-.zd-bg{flex:1;background:#252525;border-radius:2px;height:5px;}
-.zd-bar{height:5px;border-radius:2px;}
-.zd-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);width:32px;text-align:right;}
-.zd-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:44px;text-align:right;}
-.pcb-pct{font-size:8px;color:var(--t4);text-align:center;margin-top:1px;}
-
-/* CHART */
-.chart-wrap{position:relative;margin-bottom:14px;}
-canvas.chart{width:100%;display:block;}
-
-/* INSIGHTS */
-.insight{border-left:2px solid #333;border-radius:3px;padding:9px 12px;font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:5px;background:var(--bg2);}
-.insight.good{border-color:var(--green);}
-.insight.warn{border-color:var(--red);}
-.insight.info{border-color:#555;}
-.insight strong{color:var(--t1);}
-
-/* FTP BLOCK */
-.ftp-block{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 14px;margin-bottom:20px;}
-.ftp-title{font-size:10px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
-.ftp-zones{display:flex;gap:6px;flex-wrap:wrap;}
-.ftp-z{background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:5px 9px;}
-.ftp-zn{font-size:10px;color:var(--t4);}
-.ftp-zv{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace;font-weight:500;}
-
-/* PHASE HEADER */
-.phase-header{display:flex;align-items:baseline;gap:14px;padding:20px 0 10px;border-top:1px solid #2a2a2a;margin-top:8px;}
-.phase-header:first-child{border-top:none;padding-top:0;}
-.phase-label{font-size:11px;font-weight:700;color:#c0c0c0;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
-.phase-desc{font-size:11px;color:#555;}
-
-/* CHECKPOINT SEPARATOR */
-.checkpoint-sep{display:flex;align-items:center;gap:14px;background:#1a1a1a;border:1px solid #333;border-radius:3px;padding:12px 16px;margin:12px 0;cursor:pointer;transition:border-color 0.15s;}
-.checkpoint-sep:hover{border-color:#555;}
-.checkpoint-sep.sel{border-color:#666;}
-.cp-left{display:flex;align-items:baseline;gap:10px;}
-.cp-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;}
-.cp-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;}
-.cp-arrow{color:#333;font-size:14px;}
-.cp-next{font-size:12px;color:#777;}
-.ride-detail{background:#161616;border:1px solid #333;border-radius:4px;padding:16px;margin-top:2px;margin-bottom:4px;display:none;}
-.ride-detail.open{display:block;}
-
-
-
-/* VERTICAL ZONE BARS */
-.vzones-wrap{display:flex;gap:10px;margin-bottom:14px;}
-.vzones-panel{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px;}
-.vzones-title{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
-.vzones-chart{display:flex;align-items:flex-end;gap:3px;}
-.vzbar{flex:1;}
-.vzbar-fill{width:100%;border-radius:2px 2px 0 0;}
-.vzones-labels{display:flex;gap:3px;margin-top:4px;}
-.vzbar-lbl-col{flex:1;text-align:center;}
-.vzbar-pct{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
-.vzbar-time{font-size:7px;color:var(--t4);}
-.vzbar-name{font-size:8px;color:var(--t4);margin-top:1px;}
-
-
-/* TODAY BANNER */
-.today-banner{background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #444;border-radius:3px;padding:14px 16px;margin-bottom:16px;}
-.today-banner.fresh{border-left-color:#5a8a52;}
-.today-banner.normal{border-left-color:#a08840;}
-.today-banner.tired{border-left-color:#a05040;}
-.tb-row1{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;}
-.tb-date{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:1px;}
-.tb-title{font-size:14px;font-weight:600;color:var(--t1);}
-.tb-desc{font-size:11px;color:var(--t3);margin-bottom:6px;}
-.tb-det{font-size:11px;color:var(--t4);line-height:1.5;margin-bottom:8px;}
-.tb-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t3);}
-.tb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.tb-dot.fresh{background:#5a8a52;}.tb-dot.normal{background:#a08840;}.tb-dot.tired{background:#a05040;}
-.tb-tss{font-size:10px;color:var(--t4);margin-left:auto;font-family:'JetBrains Mono',monospace;}
-@media(max-width:680px){
-  .days-grid{grid-template-columns:1fr 1fr;}
-  .stats{flex-wrap:wrap;}
-  .stat{min-width:45%;}
-  .act-metrics{display:none;}
-}
-
-/* 4DP Mikro-Ringe in der Fahrt-Kachel (rechts) */
-.dp4{flex-shrink:0;line-height:0;margin-left:4px;}
-.dp4 svg{transform:rotate(-90deg);display:block;}
-
-/* FTP-300 Fortschritts-Widget */
-.ftp3{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:18px}
-.ftp3-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
-.ftp3-hd .t{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--t1)}
-.ftp3-hd .s{font-size:11px;color:var(--t4)}
-.ftp3-grid{display:grid;grid-template-columns:minmax(240px,1fr) minmax(280px,1.4fr);gap:24px}
-@media(max-width:820px){.ftp3-grid{grid-template-columns:1fr}}
-.ftp3-lbl{font-size:10px;letter-spacing:.05em;color:var(--t4);text-transform:uppercase;margin-bottom:8px}
-/* Easy-Balken */
-.ez-big{font-size:40px;font-weight:800;line-height:1;font-family:'JetBrains Mono',monospace}
-.ez-unit{font-size:16px;font-weight:600;color:var(--t4)}
-.ez-bar{position:relative;height:16px;background:#222;border-radius:3px;margin:12px 0 6px;overflow:hidden}
-.ez-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
-.ez-target{position:absolute;top:-3px;bottom:-3px;background:rgba(52,211,153,.16);border-left:1px solid #34d399;border-right:1px solid #34d399}
-.ez-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--t5);font-family:'JetBrains Mono',monospace}
-.ez-note{font-size:11px;color:var(--t3);margin-top:10px;line-height:1.5}
-.ez-delta{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:4px}
-
-/* Test-Verlauf im FTP-Widget */
-.tst{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
-.tst-row{display:flex;align-items:flex-end;gap:14px}
-.tst-spark{flex-shrink:0}
-.tst-list{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--t3);line-height:1.65}
-.tst-list b{color:var(--t1);font-weight:700}
-.tst-empty{font-size:11px;color:var(--t5);font-style:italic}
-
-/* Status-Ampel in der Kopfzeile */
-.nav-status{position:relative;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);user-select:none}
-.nav-status .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.nav-status .dot.ok{background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.5)}
-.nav-status .dot.warn{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5)}
-.nav-status .dot.err{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.6)}
-.status-panel{position:absolute;top:26px;right:0;background:var(--bg2,#1a1a1a);border:1px solid var(--border,#2a2a2a);border-radius:8px;padding:12px 14px;min-width:230px;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+/* Status-Ampel */
+.nav-status{position:relative;cursor:pointer;display:flex;align-items:center;gap:7px;
+            font-family:var(--mono);font-size:11px;color:var(--t4);user-select:none}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px rgba(52,211,153,.5)}
+.dot.warn{background:var(--warn);box-shadow:0 0 6px rgba(251,191,36,.5)}
+.dot.err{background:var(--err);box-shadow:0 0 6px rgba(239,68,68,.6)}
+.status-panel{position:absolute;top:26px;right:0;background:var(--bg2);border:1px solid var(--border);
+              border-radius:8px;padding:12px 14px;min-width:250px;z-index:200;display:none;
+              box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .status-panel.open{display:block}
-.sp-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:5px 0;font-size:11px}
-.sp-row .lbl{color:var(--t3,#888);display:flex;align-items:center;gap:6px}
-.sp-row .val{color:var(--t1,#e6edf3);font-weight:600;text-align:right}
-.sp-row .val.warn{color:#fbbf24}
-.sp-row .val.err{color:#ef4444}
-.sp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.sp-hint{font-size:10px;color:var(--t5,#555);margin-top:8px;padding-top:8px;border-top:1px solid var(--border,#2a2a2a);line-height:1.5}
+.sp-row{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:11px}
+.sp-row .val{font-family:var(--mono);font-weight:600}
+.sp-hint{font-size:10px;color:var(--t5);margin-top:8px;padding-top:8px;
+         border-top:1px solid var(--border);line-height:1.5}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+main{max-width:1180px;margin:0 auto;padding:18px}
+.page{display:none}
+.page.on{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+      padding:16px 18px;margin-bottom:14px}
+.card-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.card-hd .t{font-size:12px;font-weight:700;letter-spacing:.06em}
+.card-hd .s{font-size:11px;color:var(--t4)}
+
+/* ── Zonenbalken (ueberall gleich) ───────────────────────────────────────── */
+.zbar{display:flex;height:3px;border-radius:2px;overflow:hidden;margin-top:5px;background:#222}
+.zbar div{height:100%}
+
+/* ── 4DP-Ringe ───────────────────────────────────────────────────────────── */
+.dp4{flex-shrink:0;line-height:0;margin-left:8px}
+.dp4 svg{transform:rotate(-90deg);display:block}
+
+/* ── FTP-Widget ──────────────────────────────────────────────────────────── */
+.ftp3-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:840px){.ftp3-grid{grid-template-columns:1fr}}
+.ez-item{margin-bottom:14px}
+.ez-head{display:flex;justify-content:space-between;align-items:baseline}
+.ez-name{font-size:12px;color:var(--t2)}
+.ez-val{font-size:22px;font-weight:800;font-family:var(--mono)}
+.ez-bar{position:relative;height:12px;background:#222;border-radius:3px;margin:6px 0 4px;overflow:hidden}
+.ez-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.ez-tgt{position:absolute;top:0;bottom:0;background:rgba(52,211,153,.14);
+        border-left:1px solid var(--ok);border-right:1px solid var(--ok)}
+.ez-hint{font-size:10.5px;color:var(--t4);line-height:1.5}
+.ez-meta{font-size:11px;color:var(--t4);font-family:var(--mono);margin-top:10px}
+.ez-none{font-size:11px;color:var(--t5);font-style:italic;margin-bottom:12px}
+.tst-row{display:flex;align-items:flex-end;gap:14px}
+.tst-list{font-size:10.5px;font-family:var(--mono);color:var(--t3);line-height:1.7}
+.tst-list b{color:var(--t1)}
+
+/* ── Plan ────────────────────────────────────────────────────────────────── */
+.wcard{background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+       margin-bottom:12px;overflow:hidden}
+.wcard.deload{border-color:#2f4030}
+.wcard-hd{display:flex;align-items:baseline;gap:12px;padding:9px 14px;
+          background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px}
+.wcard-hd .kw{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.wcard-hd .wlbl{font-weight:600;color:var(--t2)}
+.wcard-hd .wdates{color:var(--t4);font-family:var(--mono)}
+.wcard-hd .wvol{margin-left:auto;color:var(--t3);font-family:var(--mono)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)}
+@media(max-width:900px){.days{grid-template-columns:1fr 1fr}}
+.day{background:var(--bg2);padding:8px 9px;min-height:92px;display:flex;flex-direction:column;gap:5px}
+.day.past{opacity:.62}
+.day.today{background:#17201a;box-shadow:inset 0 0 0 1px #2f5f3f}
+.day.empty{opacity:.3}
+.day-hd{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px}
+.day-hd .dow{font-weight:700;color:var(--t2)}
+.day-hd .dat{color:var(--t5)}
+.p-part{border-left:2px solid var(--t5);padding-left:6px}
+.p-part.t-comm{border-color:#3f6b52}
+.p-part.t-roll{border-color:#d9673c}
+.p-part.t-aus{border-color:#4a7fb5}
+.p-part.t-rest{border-color:var(--t5)}
+.p-title{font-size:11.5px;font-weight:600;line-height:1.3}
+.p-desc{font-size:10px;color:var(--t4);line-height:1.4}
+.ev-test{box-shadow:inset 0 0 0 1px #7a4bbd;background:#1a1526}
+.ev-test .p-title{color:#c084fc}
+.act{display:flex;align-items:flex-start;gap:4px}
+.act-main{flex:1;min-width:0}
+.act-name{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-num{font-size:10px;color:var(--t3);font-family:var(--mono);line-height:1.5}
+.act-num b{color:var(--t1)}
+.was-planned{font-size:9.5px;color:var(--t5);font-style:italic;margin-top:auto}
+
+/* ── Rides ───────────────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.stat-l{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--t4);font-weight:600}
+.stat-v{font-size:24px;font-weight:800;font-family:var(--mono);margin-top:3px}
+.stat-s{font-size:10px;color:var(--t5);font-family:var(--mono)}
+.rrow{background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:5px;
+      cursor:pointer;transition:border-color .12s}
+.rrow:hover{border-color:var(--border2)}
+.rrow.on{border-color:#4a5a6a}
+.rmain{display:flex;align-items:center;gap:14px;padding:10px 13px}
+.rdate{font-family:var(--mono);font-size:10.5px;color:var(--t4);width:96px;flex-shrink:0}
+.rname{font-size:12.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rmet{display:flex;gap:11px;font-family:var(--mono);font-size:11px;color:var(--t3);flex-shrink:0}
+.rmet b{color:var(--t1)}
+.rdet{border-top:1px solid var(--border);padding:14px;display:none}
+.rdet.on{display:block}
+.chartbox{position:relative;width:100%;margin-bottom:12px}
+.chartbox canvas{width:100%;display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:840px){.grid2{grid-template-columns:1fr}}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.hrow{display:grid;grid-template-columns:96px repeat(4,1fr);gap:10px;padding:7px 12px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;
+      font-family:var(--mono);font-size:11px;align-items:center}
+.hrow .hd{color:var(--t4)}
+.hval b{color:var(--t1);font-weight:700}
+
+/* ── Zonen-Editor ────────────────────────────────────────────────────────── */
+.zed{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.zed label{font-size:10px;color:var(--t4);display:block;margin-bottom:3px}
+.zed input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+           color:var(--t1);font-family:var(--mono);font-size:12px;padding:5px 7px}
+.zed .note{font-size:10px;color:var(--t5);margin-top:8px;line-height:1.5}
+#loading{padding:40px;text-align:center;color:var(--t4);font-family:var(--mono);font-size:12px}
 </style>
 </head>
 <body>
+
 <nav>
-  <div class="nav-brand">Wolf · Training</div>
-  <div class="nav-tabs">
-    <button class="tab active" onclick="showPage('plan',this)">Plan</button>
-    <button class="tab" onclick="showPage('rides',this)">Rides</button>
-    <button class="tab" onclick="showPage('health',this)">Form</button>
-  </div>
-  <div class="nav-status" id="nav-status" onclick="toggleStatusPanel(event)">
+  <span class="brand">TRAINING</span>
+  <div class="nav-status" id="nav-status" onclick="toggleStatus(event)">
     <span class="dot ok" id="status-dot"></span>
-    <span id="status-summary">…</span>
+    <span id="status-sum">…</span>
     <div class="status-panel" id="status-panel"></div>
   </div>
+  <div class="tabs">
+    <button class="tab on" data-p="plan"  onclick="showPage('plan',this)">Plan</button>
+    <button class="tab"    data-p="rides" onclick="showPage('rides',this)">Rides</button>
+    <button class="tab"    data-p="form"  onclick="showPage('form',this)">Form</button>
+  </div>
 </nav>
+
 <main>
-  <div id="loading">Lade Daten…</div>
-  <div id="today-banner-wrap"></div>
-  <div class="page active" id="page-plan"></div>
-<div class="page" id="page-rides">
-<div id="ef-trend-wrap" style="margin-bottom:16px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-    <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.04em">EF TREND (W/bpm)</span>
-    <span style="display:flex;gap:12px;font-size:10px;color:var(--color-text-secondary)">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,0.9);display:inline-block"></span>Ausfahrt</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(96,165,250,0.8);display:inline-block"></span>Commute</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(180,60,220,0.85);display:inline-block"></span>Test</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(150,150,150,0.8);display:inline-block"></span>Epic</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:rgba(249,115,22,0.4);display:inline-block;border-top:2px dashed rgba(249,115,22,0.4)"></span>Trend</span>
-    </span>
-  </div>
-  <div id="ef-chart-box" style="position:relative;width:100%;height:340px"><canvas id="ef-chart" style="cursor:pointer" role="img" aria-label="EF-Trend über die Zeit. Punkte logarithmisch nach Fahrtdauer skaliert.">EF-Entwicklung seit Planstart.</canvas></div>
-</div>
-<div class="stats" id="summary-stats"></div>
-    <div class="sh"><div class="sh-title">Aktivitäten</div><div class="sh-line"></div></div>
-    <div class="act-list" id="activity-list"></div>
-  </div>
-<div class="page" id="page-health">
-  <div id="health-banner"></div>
-  <div id="ff-chart-wrap" style="margin:16px 0">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.04em">FITNESS / FATIGUE / FORM <span style="font-weight:400;opacity:.7;text-transform:none;letter-spacing:0">· grau = Einschwing-Phase (Werte noch ungenau)</span></span>
-      <span style="display:flex;gap:12px;font-size:10px;color:var(--color-text-secondary)">
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#60a5fa;display:inline-block"></span>Fitness (CTL)</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#f97316;display:inline-block"></span>Fatigue (ATL)</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#34d399;display:inline-block"></span>Form (TSB)</span>
-      </span>
-    </div>
-    <div style="position:relative;width:100%;height:240px"><canvas id="ff-chart"></canvas></div>
-  </div>
-  <div id="hrv-chart-wrap" style="margin:16px 0">
-    <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.04em;margin-bottom:6px">HRV &amp; RUHE-HERZFREQUENZ</div>
-    <div style="position:relative;width:100%;height:180px"><canvas id="hrv-chart"></canvas></div>
-  </div>
-  <div class="sh"><div class="sh-title">Tageswerte</div><div class="sh-line"></div></div>
-  <div class="act-list" id="health-list"></div>
-</div>
+  <div id="loading">lade …</div>
+  <div class="page on" id="page-plan"></div>
+  <div class="page"    id="page-rides"></div>
+  <div class="page"    id="page-form"></div>
 </main>
 
+<script src="js/config.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/rides.js"></script>
+<script src="js/form.js"></script>
 <script>
-const FTP=250,HRMAX=172;
-const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
-const ZN=['Z1 Erholung','Z2 Aerob','Z3 Tempo','Z4 Schwelle','Z5 Max'];
-
-// ═══════════════════════════════════════════════════════════
-//  EINSTELLUNGEN — hier anpassen
-// ═══════════════════════════════════════════════════════════
-const CONFIG = {
-  efTrend: {
-    height:       340,    // Höhe des Charts in px
-    yMin:         1.1,    // untere Grenze EF-Achse
-    yMax:         2.0,    // obere Grenze EF-Achse
-    dotMinR:      3,      // kleinster Punkt-Radius (kurze Fahrt)
-    dotMaxR:      12,     // größter Punkt-Radius (lange Fahrt)
-    dotMinDur:    15,     // min Dauer (min) für Skala
-    dotMaxDur:    500,    // max Dauer (min) für Skala
-    alphaMin:     0.45,   // Transparenz kurze Fahrt
-    alphaMax:     0.45,    // Transparenz lange Fahrt
-    minDurMin:    10,     // Einheiten kürzer werden nicht gezeigt (min)
-    showTrend:    true,   // Trendlinie an/aus
-  },
-  scatter: {
-    cleanByDefault:  true,   // Start im "stabil"-Modus (true) oder "roh" (false)
-    minRideMin:      45,     // Filter nur ab dieser Fahrtdauer anbieten (min)
-    minWatt:         60,     // Punkte unter dieser Leistung raus (Coasting)
-    minHR:           90,     // Punkte unter dieser HR raus
-    minCad:          40,     // Trittfrequenz-Minimum (Coasting raus)
-    windowSec:       30,     // Zeitfenster für Stabilitätsprüfung (s)
-    powerCoV:        0.12,   // max. Variationskoeffizient der Leistung im Fenster
-    hrDriftMax:      6,      // max. HR-Änderung im Fenster (bpm)
-    showTrend:       true,   // Regressionsgerade einzeichnen
-  },
-};
-// ═══════════════════════════════════════════════════════════
-let allActivities=[],selectedRideId=null,allHealth=[];
-
-const PLAN_WEEKS=[
-  {lbl:"WOCHE 1",dates:"04.–10. Mai",vol:"7.7h",
-    days:[
-      {date:"04.05",dow:"Mo",type:"comm",title:"Commute kurz",desc:"×2 · Z1–Z2",done:true},
-      {date:"05.05",dow:"Di",type:"comm",title:"Commute kurz",desc:"×2 · Z1–Z2",done:true},
-      {date:"06.05",dow:"Mi",type:"comm",title:"Commute lang",desc:"×2 · Z2",done:true},
-      {date:"07.05",dow:"Do",type:"roll",title:"Commute + Rolle Z2",desc:"45min · NP 143W · EF 1.21",done:true,ef:"1.21"},
-      {date:"08.05",dow:"Fr",type:"comm",title:"Commute kurz",desc:"×2 · Z1",done:true},
-      {date:"09.05",dow:"Sa",type:"aus",title:"Ausfahrt Z2",desc:"2h16 · NP 199W",done:true,tss:"156"},
-      {date:"10.05",dow:"So",type:"rest",title:"Pause",desc:"Erholung",done:true,dimmed:true},
-    ]
-  },
-  {lbl:"WOCHE 2",dates:"11.–17. Mai",vol:"5.1h",
-    days:[
-      {date:"11.05",dow:"Mo",type:"comm",title:"Commute lang",desc:"×2 · Z2",done:true},
-      {date:"12.05",dow:"Di",type:"roll",title:"Commute + Rolle Z2",desc:"57min · NP 162W · EF 1.31",done:true,ef:"1.31"},
-      {date:"13.05",dow:"Mi",type:"comm",title:"Commute kurz",desc:"nur morgens",done:true},
-      {date:"14.05",dow:"Do",type:"roll",title:"Rolle 90min + 3×5min",desc:"NP 163W · EF 1.34",done:true,ef:"1.34",tss:"69"},
-      {date:"15.05",dow:"Fr",type:"comm",title:"Commute morgens",desc:"dann Abreise",done:true},
-      {date:"16.05",dow:"Sa",type:"rest",title:"Unterwegs",desc:"kein Rad",done:true,dimmed:true},
-      {date:"17.05",dow:"So",type:"rest",title:"Unterwegs",desc:"kein Rad",done:true,dimmed:true},
-    ]
-  },
-  {lbl:"WOCHE 3",dates:"18.–24. Mai",vol:"Taper",
-    days:[
-      {date:"18.05",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker",done:true},
-      {date:"19.05",dow:"Di",type:"comm",title:"Commute kurz",desc:"Z1 sehr locker",done:true},
-      {date:"20.05",dow:"Mi",type:"comm",title:"Commute kurz",desc:"Z1 morgen Test!",done:true},
-      {date:"21.05",dow:"Do",type:"test",title:"Rampentest",desc:"FTP 237W · MAP 313W",done:true,ef:"FTP 237W"},
-      {date:"22.05",dow:"Fr",type:"rest",title:"Erholung",desc:"Pause",done:true,dimmed:true},
-      {date:"23.05",dow:"Sa",type:"aus",title:"Ausfahrt opt.",desc:"neue Zonen testen",done:true},
-      {date:"24.05",dow:"So",type:"rest",title:"Pause",desc:"Phase 2 startet Mo",done:true,dimmed:true},
-    ]
-  },
-  {cp:{lbl:"CHECKPOINT #1 · 25. MAI",desc:"FTP 237W · EF +26% · 2.93 W/kg"},
-    phase:"PHASE 2 · AUFBAU · SWEETSPOT",
-    lbl:"WOCHE 4",dates:"25.–31. Mai",vol:"~5.5h",
-    days:[
-      {date:"25.05",dow:"Mo",type:"check",title:"Checkpoint + Commute",desc:"neue Zonen · Z1–Z2"},
-      {date:"26.05",dow:"Di",type:"comm",title:"Commute lang",desc:"Z2 · HR unter 141"},
-      {date:"27.05",dow:"Mi",type:"roll",title:"Sweetspot 2×10min",desc:"200–215W · 5min Pause · HR 148–158",zs:[0,.2,.5,.25,0]},
-      {date:"28.05",dow:"Do",type:"comm",title:"Commute lang",desc:"Z2 locker"},
-      {date:"29.05",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1–Z2"},
-      {date:"30.05",dow:"Sa",type:"aus",title:"Ausfahrt Hügel",desc:"90min · Z2+Z3 Anstiege"},
-      {date:"31.05",dow:"So",type:"rest",title:"Pause",desc:"Erholung",dimmed:true},
-    ]
-  },
-  {lbl:"WOCHE 5",dates:"01.–07. Jun",vol:"~9h · Epic Ride",
-    days:[
-      {date:"01.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2 locker"},
-      {date:"02.06",dow:"Di",type:"roll",title:"Sweetspot 2×15min",desc:"205–218W · 5min Pause · HR 150–158",zs:[0,.15,.55,.25,.05]},
-      {date:"03.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z2 locker"},
-      {date:"04.06",dow:"Do",type:"rest",title:"Feiertag Fronleichnam",desc:"kein Commute · Erholung vor dem Wochenende",dimmed:true},
-      {date:"05.06",dow:"Fr",type:"rest",title:"Wandern",desc:"aktiv aber kein Rad · Beine schonen für So"},
-      {date:"06.06",dow:"Sa",type:"comm",title:"Commute morgens · Abreise",desc:"Zug nach Saarbrücken abends"},
-      {date:"07.06",dow:"So",type:"aus",title:"Saarbrücken → Bonn",desc:"~230km · ~3700hm · EPIC"},
-    ]
-  },
-  {cp:{lbl:"EPIC RIDE ABSOLVIERT · 07. JUNI",desc:"231km · 3680hm · NP 186W · 12h · 1h-Bestleistung 184W · perfektes Pacing"},
-    lbl:"WOCHE 6",dates:"08.–14. Jun",vol:"Erholung",
-    days:[
-      {date:"08.06",dow:"Mo",type:"rest",title:"Erholung",desc:"nach 230km · keine Intensity",dimmed:true},
-      {date:"09.06",dow:"Di",type:"comm",title:"Commute kurz",desc:"Z1 · sehr locker · Beine testen"},
-      {date:"10.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker"},
-      {date:"11.06",dow:"Do",type:"roll",title:"Erste Rolleneinheit",desc:"30–40min · nur Z2 · Beine testen"},
-      {date:"12.06",dow:"Fr",type:"rest",title:"Pause",desc:"komplett frei",dimmed:true},
-      {date:"13.06",dow:"Sa",type:"rest",title:"Pause",desc:"komplett frei",dimmed:true},
-      {date:"14.06",dow:"So",type:"rest",title:"Erholung",desc:"ganz leicht",dimmed:true},
-    ]
-  },
-  {phase:"PHASE 3 · LETZTER PEAK VOR DEM BERG-WE",
-    lbl:"WOCHE 7",dates:"15.–21. Jun",vol:"~7h",
-    days:[
-      {date:"15.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2 locker"},
-      {date:"16.06",dow:"Di",type:"roll",title:"VO2max 5×3min",desc:"255–270W · 2min Pause",zs:[0,0,.1,.3,.6]},
-      {date:"17.06",dow:"Mi",type:"aus",title:"Solstitium-Ausfahrt",desc:"großer Tag · starke Form gezeigt"},
-      {date:"18.06",dow:"Do",type:"comm",title:"Commute leicht",desc:"Z1 · Erholung nach Solstitium"},
-      {date:"19.06",dow:"Fr",type:"comm",title:"Commute leicht",desc:"Z1–Z2 · noch erholen"},
-      {date:"20.06",dow:"Sa",type:"aus",title:"Ausfahrt moderat",desc:"2–2.5h · Z2 · kein Vollgas"},
-      {date:"21.06",dow:"So",type:"rest",title:"Pause",desc:"frisch werden für Peak-Woche",dimmed:true},
-    ]
-  },
-  {cp:{lbl:"OPTIONAL: FTP-RETEST",desc:"Solstitium zeigte 60min @228W, 30min @236W · FTP vermutlich über 237W gestiegen"},
-    lbl:"WOCHE 8",dates:"22.–28. Jun",vol:"~7h · Peak",
-    days:[
-      {date:"22.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z2"},
-      {date:"23.06",dow:"Di",type:"test",title:"FTP-Retest 20min",desc:"oder Threshold 3×10min falls kein Test"},
-      {date:"24.06",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z2 locker"},
-      {date:"25.06",dow:"Do",type:"roll",title:"VO2max 4×4min",desc:"neue Werte nutzen · 3min Pause",zs:[0,0,.1,.3,.6]},
-      {date:"26.06",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1–Z2"},
-      {date:"27.06",dow:"Sa",type:"aus",title:"BB2026-Simulation",desc:"3–3.5h · 1500m+ · Passtempo"},
-      {date:"28.06",dow:"So",type:"rest",title:"Erholung",desc:"Beine hoch",dimmed:true},
-    ]
-  },
-  {phase:"LETZTER FORMAUFBAU · VOR DEM TAPER",
-    lbl:"WOCHE 9",dates:"29. Jun–05. Jul",vol:"~7h Aufbau",
-    days:[
-      {date:"29.06",dow:"Mo",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker · Beine öffnen nach WE"},
-      {date:"30.06",dow:"Di",type:"roll",title:"Sweetspot 3×12min",desc:"205–222W · 4min Pause · solider Schwellenreiz",zs:[0,.1,.55,.3,.05]},
-      {date:"01.07",dow:"Mi",type:"comm",title:"Commute lang",desc:"Z1–Z2 locker · Erholung"},
-      {date:"02.07",dow:"Do",type:"roll",title:"VO2max 5×3min",desc:"255–270W · 3min Pause · Spitze schärfen",zs:[0,0,.1,.3,.6]},
-      {date:"03.07",dow:"Fr",type:"comm",title:"Commute kurz",desc:"Z1 · ganz locker vor langer Ausfahrt"},
-      {date:"04.07",dow:"Sa",type:"aus",title:"Lange Ausfahrt 3h",desc:"Z2 mit 3–4 Berg-Anstiegen im Schwellenbereich · BB2026-Generalprobe"},
-      {date:"05.07",dow:"So",type:"comm",title:"Aktive Erholung",desc:"45–60min Z1 locker · Beine spülen",dimmed:true},
-    ]
-  },
-  {phase:"ZIEL · BB2026 FR–SO 10.–12. JULI",
-    cp:{lbl:"BB2026 10.–12. JULI · FR–SO",desc:"Ziel: 3.0–3.1 W/kg",goal:true},
-    lbl:"WOCHE 10",dates:"06.–12. Jul",vol:"BB2026",
-    days:[
-      {date:"06.07",dow:"Mo",type:"comm",title:"Kurze Aktivierung",desc:"lockere Beine"},
-      {date:"07.07",dow:"Di",type:"rest",title:"Pause",desc:"erholen",dimmed:true},
-      {date:"08.07",dow:"Mi",type:"rest",title:"Pause",desc:"erholen",dimmed:true},
-      {date:"09.07",dow:"Do",type:"rest",title:"Anreise",desc:"Beine hoch",dimmed:true},
-      {date:"10.07",dow:"Fr",type:"aus",title:"BB2026 Tag 1",desc:"ankommen · warm fahren"},
-      {date:"11.07",dow:"Sa",type:"aus",title:"BB2026 Tag 2",desc:"Haupt-Tag · alles geben"},
-      {date:"12.07",dow:"So",type:"aus",title:"BB2026 Tag 3",desc:"locker ausfahren · genießen"},
-    ]
-  },
-  {phase:"ZIEL #2 · EYECYLE 2026 · DI 14. JULI",
-    cp:{lbl:"EYECYLE 2026 · DI 14. JULI",desc:"krasse 90km Ausfahrt · nur 2 Tage nach BB2026",goal:true},
-    lbl:"WOCHE 11",dates:"13.–19. Jul",vol:"EyeCyle-Woche",
-    days:[
-      {date:"13.07",dow:"Mo",type:"rest",title:"Aktive Erholung",desc:"ganz locker · Beine spülen · Schlaf & Ernährung priorisieren",dimmed:true},
-      {date:"14.07",dow:"Di",type:"aus",title:"EyeCyle 2026",desc:"krasse 90km Ausfahrt · sauber pacen nach BB2026"},
-      {date:"15.07",dow:"Mi",type:"rest",title:"Erholung",desc:"nach EyeCyle · ganz leicht",dimmed:true},
-      {date:"16.07",dow:"Do",type:"comm",title:"Commute leicht",desc:"Z1 · noch erholen"},
-      {date:"17.07",dow:"Fr",type:"comm",title:"Commute leicht",desc:"Z1–Z2"},
-      {date:"18.07",dow:"Sa",type:"aus",title:"Ausfahrt locker",desc:"nach Bedarf · kein Druck"},
-      {date:"19.07",dow:"So",type:"rest",title:"Pause",desc:"",dimmed:true},
-    ]
-  },,
-  {lbl:"FTP-300 · W1",dates:"13.–19. Jul",vol:"8.5h",phase:"FTP-300 AUFBAU · BLOCK 1",cp:{lbl:"NULLPUNKT · 20-MIN-TEST",desc:"Sauberer Ausgangswert auf der Rolle. Danach FTP im Dashboard setzen."},
-    days:[
-      {date:"13.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"14.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"15.07",dow:"Mi",type:"test",title:"Commute ×2 + 20-Min-Test",desc:"Rolle · Nullpunkt · nach 15min Einfahren all-out",protected:true},
-      {date:"16.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"17.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"18.07",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h · IF <0.68 · Puls unter 75% HRmax"},
-      {date:"19.07",dow:"So",type:"rest",title:"Ruhetag",desc:"kein Rad ausser Pflicht-Commute"}
-    ]},
-  {lbl:"FTP-300 · W2",dates:"20.–26. Jul",vol:"9.0h",
-    days:[
-      {date:"20.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"21.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"22.07",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×10min Schwelle",desc:"95–100% FTP · 5min Pause"},
-      {date:"23.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"24.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"25.07",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h30 · IF <0.68"},
-      {date:"26.07",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
-    ]},
-  {lbl:"FTP-300 · W3",dates:"27.–02. Aug",vol:"9.5h",
-    days:[
-      {date:"27.07",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"28.07",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"29.07",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 4×10min Schwelle",desc:"95–100% FTP · 5min Pause"},
-      {date:"30.07",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"31.07",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"01.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
-      {date:"02.08",dow:"So",type:"aus",title:"Kurz intensiv",desc:"75min mit 3×8min Sweet Spot (88–93%)"}
-    ]},
-  {lbl:"FTP-300 · W4",dates:"03.–09. Aug",vol:"6.0h",protected:true,
-    days:[
-      {date:"03.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"04.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"05.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle locker",desc:"45min Z2 · keine Intervalle"},
-      {date:"06.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"07.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"08.08",dow:"Sa",type:"aus",title:"Ausfahrt Z2 kurz",desc:"2h · sehr locker"},
-      {date:"09.08",dow:"So",type:"rest",title:"Ruhetag",desc:"Entlastungswoche"}
-    ]},
-  {lbl:"FTP-300 · W5",dates:"10.–16. Aug",vol:"9.5h",phase:"FTP-300 AUFBAU · BLOCK 2",
-    days:[
-      {date:"10.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"11.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"12.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×12min Schwelle",desc:"98–102% FTP · 6min Pause"},
-      {date:"13.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"14.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"15.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"3h30 · IF <0.68"},
-      {date:"16.08",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
-    ]},
-  {lbl:"FTP-300 · W6",dates:"17.–23. Aug",vol:"10.0h",
-    days:[
-      {date:"17.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"18.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"19.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 2×20min Schwelle",desc:"95–98% FTP · 8min Pause"},
-      {date:"20.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"21.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"22.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
-      {date:"23.08",dow:"So",type:"aus",title:"Kurz intensiv",desc:"75min mit 4×8min Sweet Spot"}
-    ]},
-  {lbl:"FTP-300 · W7",dates:"24.–30. Aug",vol:"10.0h",
-    days:[
-      {date:"24.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"25.08",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"26.08",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle: 3×15min Schwelle",desc:"96–100% FTP · 6min Pause"},
-      {date:"27.08",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"28.08",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"29.08",dow:"Sa",type:"aus",title:"Lange Ausfahrt Z2",desc:"4h · IF <0.68"},
-      {date:"30.08",dow:"So",type:"comm",title:"Optional locker",desc:"60min Z1–Z2 oder frei"}
-    ]},
-  {lbl:"FTP-300 · W8",dates:"31.–06. Sep",vol:"6.5h",cp:{lbl:"CHECKPOINT · RETEST",desc:"Vergleich zum Nullpunkt. Erwartung +10–20W nach 8 Wochen."},protected:true,
-    days:[
-      {date:"31.08",dow:"Mo",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"01.09",dow:"Di",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"02.09",dow:"Mi",type:"roll",title:"Commute ×2 + Rolle locker",desc:"45min Z2 · Beine oeffnen"},
-      {date:"03.09",dow:"Do",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"04.09",dow:"Fr",type:"comm",title:"Commute ×2",desc:"je 20min · Z1–Z2 · IF <0.65"},
-      {date:"05.09",dow:"Sa",type:"test",title:"20-Min-Retest",desc:"Rolle · gleiche Bedingungen wie W1",protected:true},
-      {date:"06.09",dow:"So",type:"rest",title:"Ruhetag",desc:"Entlastung + Retest"}
-    ]}
-];
-
-
-
-
-
-
-function showPage(name,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  btn.classList.add('active');
-  requestAnimationFrame(()=>{
-    if(name==='rides'||name==='health'){
-      window.scrollTo({top:0,behavior:'smooth'});
-    } else if(name==='plan'){
-      // Kein Auto-Scroll: der aktuelle Tag steht seit der Umkehr ohnehin oben.
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
-  });
+function showPage(name, btn){
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'page-' + name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === btn));
+  // Kein Auto-Scroll: der aktuelle Tag steht auf jeder Seite oben.
+  window.scrollTo({ top: 0 });
 }
 
-function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?`${h}h ${m}min`:`${m}min`;}
-function fmtDist(m){return(m/1000).toFixed(1)+' km';}
-function fmtStart(a){let t=a.start_time;if((!t||t==='00:00')&&a.start_date_local&&a.start_date_local.length>=16){t=a.start_date_local.slice(11,16);}return (!t||t==='00:00')?'':t;}
-    function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
-function actDur(a){return a.duration_sec||a.power_duration_sec;}
-// --- 4DP Mikro-Ringe (NM/AC/MAP/FTP), Benchmarks aus FTP abgeleitet ---
-// NM(5s)=4.8xFTP, AC(60s)=3.2xFTP, MAP(300s)=1.6xFTP, FTP(1200s)=1.0xFTP
-const DP4 = [
-  {k:'5',    bench:FTP*4.8, col:'#a855f7', lbl:'NM'},
-  {k:'60',   bench:FTP*3.2, col:'#ef4444', lbl:'AC'},
-  {k:'300',  bench:FTP*1.6, col:'#f59e0b', lbl:'MAP'},
-  {k:'1200', bench:FTP*1.0, col:'#3b82f6', lbl:'FTP'},
-];
-function dp4Rings(a, size){
-  const pc = a.power_curve;
-  if(!pc || !a.has_power) return '';
-  size = size || 36;
-  const cx=size/2, cy=size/2, sw=3, gap=1.2;
-  let out='', tip=[];
-  DP4.forEach((d,i)=>{
-    const r=(size/2 - sw/2) - i*(sw+gap);
-    if(r < sw*0.8) return;
-    const C=2*Math.PI*r;
-    out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#262626" stroke-width="${sw}"/>`;
-    const v = pc[d.k];
-    if(v){
-      const pct=Math.min(1, v/d.bench);
-      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.col}" stroke-width="${sw}"`
-           + ` stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct)).toFixed(1)}" stroke-linecap="round"/>`;
-      tip.push(`${d.lbl}: ${v}W (${Math.round(100*v/d.bench)}%)`);
-    } else {
-      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.col}" stroke-width="1"`
-           + ` stroke-dasharray="1.5 2.5" opacity="0.45"/>`;
-      tip.push(`${d.lbl}: n/a (Fahrt zu kurz)`);
-    }
-  });
-  return `<div class="dp4" title="${tip.join('\n')}"><svg width="${size}" height="${size}">${out}</svg></div>`;
+// ── Status-Ampel ──────────────────────────────────────────────────────────
+function toggleStatus(ev){
+  ev.stopPropagation();
+  $('#status-panel').classList.toggle('open');
 }
-function zstrip(zones){if(!zones||!zones.length)return'';return`<div class="zstrip">${zones.map((p,i)=>`<div class="zs" style="width:${p}%;background:${ZC[i]}"></div>`).join('')}</div>`;}
-
-// ── PLAN ──
-// -- PLAN --
-// ── ADAPTIVE PLAN: passt zukuenftige Tage der laufenden Woche an die Form an ──
-// Gibt {newType,newTitle,reason,protected} zurueck oder null (keine Anpassung)
-function adaptDay(d, weekIdx, week){
-  // Eigene Datums-Helfer (dateObj/isDone sind lokal in renderPlan)
-  const _dateObj=(ds)=>{
-    if(!ds) return null;
-    const[dd,mm]=ds.split('.');
-    const x=new Date(2026,parseInt(mm)-1,parseInt(dd)); x.setHours(0,0,0,0); return x;
-  };
-  const _now=new Date(); _now.setHours(0,0,0,0);
-  const _isDone=(day)=>{
-    if(day.done) return true;
-    const dt2=_dateObj(day.date);
-    if(!dt2||dt2>=_now) return false;
-    const key='2026-'+(day.date.split('.')[1])+'-'+(day.date.split('.')[0]);
-    return allActivities.some(a=>a.date===key);
-  };
-  // Nur zukuenftige, nicht erledigte Tage anpassen
-  const dt=_dateObj(d.date);
-  const now=_now;
-  if(!dt||dt<now) return null;          // Vergangenheit: nie anpassen
-  if(_isDone(d)) return null;
-
-  // Nur die laufende Woche + ist es ueberhaupt eine harte Einheit?
-  const weekDates=week.days.map(x=>_dateObj(x.date)).filter(Boolean);
-  const wkStart=weekDates[0], wkEnd=weekDates[weekDates.length-1];
-  const inThisWeek = wkStart&&wkEnd&&now>=wkStart&&now<=wkEnd;
-  // laufende Woche ODER die naechsten FUTURE_WEEKS_SHOWN Wochen
-  const daysAhead=Math.round((dt-now)/86400000);
-  if(daysAhead>FUTURE_WEEKS_SHOWN*7) return null;
-
-  // Taper-Schutz: geschuetzte Einheiten nie abschwaechen
-  if(d.protected||week.protected) return null;
-  // Schluessel-/Ziel-Einheiten in Event-Phasen schuetzen
-  if(week.phase&&/TAPER|ZIEL|EVENT|BB2026|EYECYLE/i.test(week.phase)) {
-    return {protected:true};
-  }
-
-  // Nur harte Einheiten kommen fuer Abschwaechung infrage
-  const hardTypes=['roll','test'];          // Intervalle/Tests
-  const isHard=hardTypes.includes(d.type)|| /intervall|vo2|threshold|sweetspot|ftp|rampe|test/i.test((d.title||'')+(d.desc||''));
-  if(!isHard) return null;                    // Z2/Commute/Rest: nie nach unten
-
-  // Readiness fuer DIESEN Tag (heute-basiert, da Garmin nur bis heute reicht)
-  const todayISO=new Date().toISOString().slice(0,10);
-  let r=null;
-  if(typeof readinessFor==='function' && allHealth.length){
-    r=readinessFor(todayISO);
-    if(!r.h && allHealth[0]) r=readinessFor(allHealth[0].date);
-  }
-  if(!r) return null;
-
-  // Asymmetrisch: nur hart -> leicht, nie hoch
-  if(r.light==='red'){
-    return {newType:'aus', newTitle:'Z2 locker (angepasst)',
-            reason:`Form rot: ${r.msg.toLowerCase()}`, downgraded:true};
-  }
-  if(r.light==='yellow'){
-    return {keepType:true, dosisHint:'Intensität −5–10% · ein Intervall weniger',
-            reason:`Form gelb: ${r.msg.toLowerCase()}`, softened:true};
-  }
-  // gruen: Plan bleibt, optionaler Push-Hinweis
-  return {keepType:true, dosisHint:'Form gut · oberes Ende der Vorgabe möglich',
-          reason:'Form grün', boosted:true};
-}
-
-
-// ===== FTP-300 Fortschritts-Widget =====
-// Zwei Kennzahlen, die den Aufbau steuern, lange bevor die FTP reagiert:
-//  (a) Easy-Anteil: Zeit in Z1+Z2 (<75% FTP) am Gesamtvolumen. Ziel 75-80%.
-//  (b) 20-Min-Bestleistung (power_curve['1200']) als FTP-Indikator.
-//      Fuer FTP 300 sind ~316W noetig (FTP = 20min x 0.95).
-const FTP_GOAL = 300;
-const FUTURE_WEEKS_SHOWN = 2;   // wie weit der Plan nach vorne blickt (Wochen)
-const P20_GOAL = Math.round(FTP_GOAL/0.95);   // 316 W
-
-function easyShareRange(days, offset){
-  offset = offset||0;
-  const now = new Date(); now.setHours(0,0,0,0);
-  const hi = new Date(now); hi.setDate(hi.getDate()-offset);
-  const lo = new Date(hi);  lo.setDate(lo.getDate()-days);
-  let ez=0, tot=0, n=0, hrs=0;
-  allActivities.forEach(a=>{
-    if(!a.date) return;
-    const d=new Date(a.date+'T00:00:00');
-    if(d<=lo || d>hi) return;
-    const pz=a.power_zones, dur=actDur(a);
-    if(pz && pz.length===5 && dur){
-      ez  += (pz[0]+pz[1])/100*dur;
-      tot += dur; n++; hrs += dur/3600;
-    }
-  });
-  return tot ? {pct: 100*ez/tot, hours: hrs, rides: n} : null;
-}
-
-function best20(days){
-  const now=new Date(); now.setHours(0,0,0,0);
-  const lo=new Date(now); lo.setDate(lo.getDate()-days);
-  let best=0, when=null;
-  allActivities.forEach(a=>{
-    const p=a.power_curve && a.power_curve['1200'];
-    if(!p||!a.date) return;
-    const d=new Date(a.date+'T00:00:00');
-    if(d<lo) return;
-    if(p>best){best=p; when=a.date;}
-  });
-  return best?{w:best,date:when}:null;
-}
-
-
-// ===== Echte Rollentests (manuell gepflegt) =====
-// kind: 'ramp' (Rampentest) | '4dp' (Sufferfest/SYSTM) | '20min'
-// ftp/map: gemessene Werte. Ist "id" gesetzt und ein Wert fehlt, wird er aus
-// der power_curve der Aktivitaet abgeleitet (20min x 0.95 bzw. 5min = MAP).
-const TESTS = [
-  {date:'2026-05-21', kind:'ramp', id:'18599770325', ftp:237, map:313, note:'Rampentest'},
-  // Naechster Eintrag hier ergaenzen, z.B.:
-  // {date:'2026-07-15', kind:'20min', id:'wahoo_...', note:'Nullpunkt FTP-300-Block'},
-];
-
-function testValues(t){
-  let ftp=t.ftp, map=t.map;
-  if(t.id){
-    const a=allActivities.find(x=>String(x.id)===String(t.id));
-    const pc=a&&a.power_curve;
-    if(pc){
-      if(ftp==null && pc['1200']) ftp=Math.round(pc['1200']*0.95);
-      if(map==null && pc['300'])  map=pc['300'];
-    }
-  }
-  return {ftp,map};
-}
-
-function testSparkline(){
-  const pts=TESTS.map(t=>({...t,...testValues(t)})).filter(t=>t.ftp).sort((a,b)=>a.date<b.date?-1:1);
-  if(!pts.length) return '<div class="tst"><div class="tst-empty">Noch keine Rollentests erfasst.</div></div>';
-
-  const W=170,H=52,pad=6;
-  const goal=FTP_GOAL;
-  const lo=Math.min(goal, ...pts.map(p=>p.ftp))-10;
-  const hi=Math.max(goal, ...pts.map(p=>p.ftp))+10;
-  const x=i=> pts.length===1 ? W/2 : pad+i*(W-2*pad)/(pts.length-1);
-  const y=v=> H-pad-((v-lo)/(hi-lo))*(H-2*pad);
-
-  let svg=`<svg width="${W}" height="${H}">`;
-  // Ziellinie
-  svg+=`<line x1="0" y1="${y(goal).toFixed(1)}" x2="${W}" y2="${y(goal).toFixed(1)}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`;
-  if(pts.length>1){
-    const dd=pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(p.ftp).toFixed(1)}`).join(' ');
-    svg+=`<path d="${dd}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>`;
-  }
-  pts.forEach((p,i)=>{ svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(p.ftp).toFixed(1)}" r="3" fill="#60a5fa"/>`; });
-  svg+='</svg>';
-
-  const KIND={ramp:'Rampe','4dp':'4DP','20min':'20-Min'};
-  const rows=pts.slice().reverse().slice(0,3).map(p=>
-    `<div>${fmtDate(p.date)} · ${KIND[p.kind]||p.kind} · FTP <b>${p.ftp} W</b>${p.map?` · MAP ${p.map} W`:''}</div>`
-  ).join('');
-  const first=pts[0], last=pts[pts.length-1];
-  const gain = pts.length>1 ? `<div style="color:#34d399">▲ ${last.ftp-first.ftp} W seit ${fmtDate(first.date)}</div>` : '';
-
-  return `<div class="tst">
-    <div class="ftp3-lbl">Rollentests · gemessene FTP</div>
-    <div class="tst-row">
-      <div class="tst-spark">${svg}</div>
-      <div class="tst-list">${rows}${gain}</div>
-    </div>
-  </div>`;
-}
-
-function ftp300Widget(){
-  const cur  = easyShareRange(28,0);
-  const prev = easyShareRange(28,28);
-  const p20  = best20(42);          // beste 20min der letzten 6 Wochen
-  if(!cur) return '';
-
-  // Easy-Anteil
-  const pct=cur.pct;
-  const col = pct>=75 ? '#34d399' : pct>=65 ? '#fbbf24' : '#f97316';
-  let delta='';
-  if(prev){
-    const dv=pct-prev.pct;
-    const dcol = dv>=0 ? '#34d399' : '#ef4444';
-    delta=`<div class="ez-delta" style="color:${dcol}">${dv>=0?'▲':'▼'} ${Math.abs(dv).toFixed(0)} Pp. vs. Vormonat (${prev.pct.toFixed(0)}%)</div>`;
-  }
-  const note = pct>=75
-    ? 'Verteilung passt. Harte Einheiten koennen wirken.'
-    : 'Zu viel Mittelintensitaet. Commutes bewusst unter 65% FTP fahren, lange Ausfahrten ruhiger.';
-
-  // 20-Min-Balken
-  let p20html='<div style="font-size:12px;color:var(--t4)">Noch keine 20-Min-Bestleistung erfasst.</div>';
-  if(p20){
-    const prog=Math.min(100, 100*p20.w/P20_GOAL);
-    const ftpEst=Math.round(p20.w*0.95);
-    p20html=`
-      <div><span class="ez-big" style="color:#60a5fa">${p20.w}</span><span class="ez-unit"> W</span>
-        <span style="font-size:11px;color:var(--t4);margin-left:8px">beste 20 Min (6 Wo) · ${fmtDate(p20.date)}</span></div>
-      <div class="ez-bar">
-        <div class="ez-fill" style="width:${prog}%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div>
-      </div>
-      <div class="ez-scale"><span>0</span><span>Ziel ${P20_GOAL} W → FTP ${FTP_GOAL}</span></div>
-      <div class="ez-note">Entspricht FTP ≈ <b style="color:var(--t1)">${ftpEst} W</b>. Noch <b style="color:var(--t1)">${Math.max(0,P20_GOAL-p20.w)} W</b> bis zum Ziel.
-        Werte aus Ausfahrten sind eine Untergrenze — ein echter 20-Min-Test auf der Rolle misst sauberer.</div>`;
-  }
-
-  return `
-  <div class="ftp3">
-    <div class="ftp3-hd"><span class="t">WEG ZU FTP ${FTP_GOAL}</span><span class="s">Steuergroessen des Aufbaus</span></div>
-    <div class="ftp3-grid">
-      <div>
-        <div class="ftp3-lbl">Easy-Anteil · letzte 4 Wochen</div>
-        <div><span class="ez-big" style="color:${col}">${pct.toFixed(0)}</span><span class="ez-unit"> %</span>
-          <span style="font-size:11px;color:var(--t4);margin-left:8px">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten</span></div>
-        <div class="ez-bar">
-          <div class="ez-fill" style="width:${pct}%;background:${col}"></div>
-          <div class="ez-target" style="left:75%;right:20%"></div>
-        </div>
-        <div class="ez-scale"><span>0%</span><span style="color:#34d399">Ziel 75–80%</span><span>100%</span></div>
-        ${delta}
-        <div class="ez-note">${note}</div>
-      </div>
-      <div>
-        <div class="ftp3-lbl">20-Min-Bestleistung · FTP-Indikator</div>
-        ${p20html}
-      </div>
-    </div>
-    ${testSparkline()}
-  </div>`;
-}
-
-function renderPlan(){
-  const el=document.getElementById('page-plan');
-  if(!el)return;
-  const now=new Date(); now.setHours(0,0,0,0);
-  const todayStr=(now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.';
-  const BCLS={comm:'b-comm',roll:'b-roll',aus:'b-aus',test:'b-test',check:'b-check',rest:'b-rest',goal:'b-aus'};
-  const TCLS={comm:'t-comm',roll:'t-roll',aus:'t-aus',test:'t-test',check:'t-check',rest:'t-rest',goal:'t-aus'};
-  const ZC=['#34d399','#60a5fa','#fbbf24','#f97316','#ef4444'];
-
-  function dateObj(ds){
-    if(!ds)return null;
-    const[dd,mm]=ds.split('.');
-    const d=new Date(2026,parseInt(mm)-1,parseInt(dd));
-    d.setHours(0,0,0,0);return d;
-  }
-
-  function isDone(d){
-    if(d.done)return true;
-    const dt=dateObj(d.date);
-    if(!dt||dt>=now)return false;
-    const key='2026-'+(d.date.split('.')[1])+'-'+(d.date.split('.')[0]);
-    return allActivities.some(a=>a.date===key);
-  }
-
-  let h=ftp300Widget()+'<div class="plan-wrap">';
-
-  // Anzeigereihenfolge: Zukunft oben, Vergangenheit unten.
-  // Nur FUTURE_WEEKS_SHOWN Wochen nach vorne zeigen - alles weiter Entfernte
-  // ist ohnehin Spekulation und wird erst sichtbar, wenn es naeher rueckt.
-  const horizon=new Date(now); horizon.setDate(horizon.getDate()+FUTURE_WEEKS_SHOWN*7);
-
-  // Effektive Phase pro Woche vorwaerts propagieren (phase steht nur an der
-  // ERSTEN Woche einer Phase). Sonst landet der Header nach dem Umdrehen falsch.
-  let _ph=null;
-  const weeksAll=PLAN_WEEKS.map(w=>{
-    if(w.phase) _ph=w.phase;
-    const ds=w.days.map(x=>dateObj(x.date)).filter(Boolean);
-    return {...w, _effPhase:_ph, _start:ds[0]||null, _end:ds[ds.length-1]||null};
-  });
-
-  // Wochen ausblenden, die komplett jenseits des Horizonts liegen
-  const weeksVisible=weeksAll.filter(w=> !w._start || w._start<=horizon );
-
-  // Umdrehen: neueste zuerst
-  const weeksOrdered=weeksVisible.slice().reverse();
-
-  let _lastPhase=null;
-  weeksOrdered.forEach((week)=>{
-    // Phase-Header immer VOR der ersten angezeigten Woche einer Phase
-    if(week._effPhase && week._effPhase!==_lastPhase){
-      h+=`<div class="plan-phase"><div class="plan-phase-line"></div><div class="plan-phase-label">${week._effPhase}</div><div class="plan-phase-line"></div></div>`;
-      _lastPhase=week._effPhase;
-    }
-    // Checkpoint
-    if(week.cp){
-      const cp=week.cp;
-      const icon=cp.goal?'WE':'CP';
-      h+=`<div class="plan-cp"><div style="font-size:11px;font-weight:700;width:28px;flex-shrink:0">${icon}</div><div><div class="plan-cp-label">${cp.lbl}</div>${cp.desc?`<div class="plan-cp-desc">${cp.desc}</div>`:''}</div></div>`;
-    }
-
-    h+=`<div class="wcard">`;
-    // Actual TSS for this week
-    let weekTss=0;
-    week.days.forEach(d=>{
-      const dk='2026-'+d.date.split('.').reverse().join('-');
-      allActivities.filter(a=>a.date===dk&&!a.hidden).forEach(a=>{
-        const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
-        if(!np) return;
-        let t=0;
-        if(kj&&avgW&&avgW>0) t=kj*100000*np*np/(avgW*FTP*FTP*3600);
-        else {const dur=a.elapsed_sec||a.duration_sec||0;t=dur*np*(np/FTP)/(FTP*3600)*100;}
-        weekTss+=t;
-      });
-    });
-    const tssTag=weekTss>0?` <span style="font-size:10px;color:#666;font-family:'JetBrains Mono',monospace">TSS ${Math.round(weekTss)}</span>`:'';
-    h+=`<div class="wcard-hdr"><span class="wcard-label">${week.lbl}</span><span class="wcard-dates">${week.dates}</span><span class="wcard-vol">${week.vol}${tssTag}</span></div>`;
-
-    // Tage innerhalb der Woche umgedreht: jüngster/aktueller Tag oben,
-    // konsistent zur umgekehrten Wochenreihenfolge.
-    if(week.days) week.days.slice().reverse().forEach((d,di)=>{
-      const done=isDone(d);
-      const dt=dateObj(d.date);
-      const isToday=d.date===todayStr;
-      const isPast=dt&&dt<now||isToday;
-      let cls='pday '+TCLS[d.type||'rest'];
-      if(done)cls+=' done';
-      else if(isToday)cls+=' today-c';
-      else if(isPast&&!done)cls+=' past';
-      if(d.dimmed&&!done)cls+=' dimmed';
-
-      // Look up actual activities for this date
-      const mm2=d.date?d.date.split('.')[1]:'';
-      const dd2=d.date?d.date.split('.')[0]:'';
-      const dateKey='2026-'+mm2+'-'+dd2;
-      const acts=allActivities.filter(a=>a.date===dateKey);
-      const showActual=done&&acts.length>0;
-
-      const bc=BCLS[d.type||'rest'];
-
-      const num=d.date?d.date.split('.')[0]:'';
-      const dow=d.dow||'';
-
-      // Build display content
-      let title=d.title, sub=d.desc, rightEf=d.ef, rightTss=d.tss, rightZs=d.zs;
-      if(showActual){
-        // Show real activity data
-        const names=acts.map(a=>a.name).join(' + ');
-        const totalDurMin=Math.round(acts.reduce((s,a)=>s+actDur(a),0)/60);
-        // Pick mainAct: prefer PM activity, else longest
-        const mainAct=acts.find(a=>a.has_power&&actDur(a)>=600)||acts.reduce((b,a)=>actDur(a)>actDur(b)?a:b,acts[0]);
-        title=names.length>40?names.substring(0,38)+'…':names;
-        const parts=[];
-        if(totalDurMin>0)parts.push(totalDurMin>59?Math.floor(totalDurMin/60)+'h'+(totalDurMin%60?String(totalDurMin%60).padStart(2,'0'):''):''+totalDurMin+'min');
-        if(mainAct.np)parts.push('NP '+mainAct.np+'W');
-        else if(mainAct.avg_hr)parts.push('ØHR '+mainAct.avg_hr+'bpm');
-        if(mainAct.elevation_m)parts.push(mainAct.elevation_m+'m');
-        sub=parts.join(' · ');
-        if(mainAct.np&&mainAct.avg_hr){
-          rightEf=(mainAct.np/mainAct.avg_hr).toFixed(2);
-        }
-        // Sum TSS across ALL activities of the day (not just mainAct)
-        const ftp=FTP;
-        let dayTss=0,hasTss=false;
-        acts.forEach(a=>{
-          const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
-          if(!np) return;
-          hasTss=true;
-          if(kj&&avgW&&avgW>0) dayTss+=kj*100000*np*np/(avgW*ftp*ftp*3600);
-          else {const dur=a.elapsed_sec||a.duration_sec||0;dayTss+=dur*np*(np/ftp)/(ftp*3600)*100;}
-        });
-        if(hasTss) rightTss=Math.round(dayTss);
-        // Zone bars: prefer power_zones from any PM activity that day, else HR zones
-        const pmAct=acts.find(a=>a.power_zones&&a.power_zones.length&&actDur(a)>=1800)||null;
-        if(pmAct&&pmAct.power_zones.length){
-          rightZs=pmAct.power_zones.map(p=>p/100);
-        } else {
-          const hrAct=acts.find(a=>a.hr_zones&&a.hr_zones.length&&actDur(a)>=1800)||null;
-          rightZs=hrAct?hrAct.hr_zones.map(p=>p/100):null;
-        }
-      }
-
-      // ── Adaptive Anpassung (nur zukuenftige harte Einheiten) ──
-      let adaptBadge='', adaptNote='';
-      if(!showActual){
-        const ad=adaptDay(d, 0, week);
-        if(ad){
-          if(ad.protected){
-            adaptBadge='<span style="font-size:8px;font-weight:700;color:#a78bfa;border:1px solid #a78bfa55;border-radius:3px;padding:1px 4px;margin-left:6px">GESCHÜTZT</span>';
-          } else if(ad.downgraded){
-            title=ad.newTitle;
-            sub=`<span style="text-decoration:line-through;opacity:.5">${d.title}</span> · ${ad.reason}`;
-            adaptBadge='<span style="font-size:8px;font-weight:700;color:#ef4444;border:1px solid #ef444455;border-radius:3px;padding:1px 4px;margin-left:6px">ANGEPASST</span>';
-          } else if(ad.softened){
-            adaptNote=`<div style="font-size:10px;color:#fbbf24;margin-top:2px">⚠ ${ad.dosisHint} · ${ad.reason}</div>`;
-            adaptBadge='<span style="font-size:8px;font-weight:700;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 4px;margin-left:6px">±</span>';
-          } else if(ad.boosted){
-            adaptNote=`<div style="font-size:10px;color:#34d399;margin-top:2px">↑ ${ad.dosisHint}</div>`;
-          }
-        }
-      }
-
-      h+=`<div class="${cls}" onclick="togglePlanDet(this)">`;
-      h+=`<div class="pday-badge ${bc}"><div class="pday-dow">${dow}</div><div class="pday-num">${num}</div></div>`;
-      h+=`<div class="pday-check">${done?'<span style="color:#5a8a52">✓</span>':isToday?'<span style="color:#5a8a52">→</span>':''}</div>`;
-      const TYPE_TAGS={comm:"Comm",roll:"Rolle",aus:"Tour",test:"Test",check:"CP",rest:"-",goal:"WE"};
-      const TYPE_COLORS={comm:"#555",roll:"#2563b0",aus:"#1a7a4a",test:"#a0860a",check:"#6d3fb5",rest:"#333",goal:"#1a7a4a"};
-      const typeTag=TYPE_TAGS[d.type||"rest"]||"-";
-      const typeColor=TYPE_COLORS[d.type||"rest"]||"#555";
-      h+=`<div style="width:38px;flex-shrink:0;margin-right:8px;text-align:center;font-size:9px;font-weight:700;color:${typeColor};text-transform:uppercase;letter-spacing:.5px">${typeTag}</div>`;
-      h+=`<div class="pday-text"><div class="pday-title">${title}${adaptBadge}</div>${sub?`<div class="pday-sub">${sub}</div>`:''}${adaptNote}</div>`;
-
-      const hasRight=rightEf||rightTss||rightZs;
-      if(hasRight){
-        h+=`<div class="pday-right">`;
-        if(rightEf)h+=`<div class="pday-ef">EF ${rightEf}</div>`;
-        if(rightTss)h+=`<div class="pday-tss">TSS ${rightTss}</div>`;
-        if(rightZs){
-          h+=`<div class="pday-zs">`;
-          rightZs.forEach((v,i)=>h+=`<div style="flex:${v||0.01};background:${v>0.05?ZC[i]:'#252525'}"></div>`);
-          h+=`</div>`;
-        }
-        h+=`</div>`;
-      }
-      h+=`</div>`;
-
-      // Detail row (hidden, shown on click)
-      if(d.det){
-        h+=`<div class="pday-det">${d.det}</div>`;
-      }
-
-
-    });
-
-    h+=`</div>`;
-  });
-
-  h+='</div>';
-  el.innerHTML=h;
-  // Kein Auto-Scroll nach dem Rendern: aktueller Tag steht oben.
-}
-
-function togglePlanDet(row){
-  const det=row.nextElementSibling;
-  if(det&&det.classList.contains('pday-det')){
-    det.classList.toggle('open');
-  }
-}
-
-
-function togglePlanDetail(wi,di,cardEl){
-  const panel=document.getElementById(`plan-detail-${wi}`);
-  const week=PLAN_WEEKS[wi];
-  const d=week.days?.[di];
-  if(!d||d.empty||d.dimmed)return;
-  const allCards=cardEl.parentElement.querySelectorAll('.day-card');
-  const was=cardEl.classList.contains('sel');
-  allCards.forEach(c=>c.classList.remove('sel'));
-  if(was){panel.classList.remove('open');panel.innerHTML='';return;}
-  cardEl.classList.add('sel');
-  const[day,mon]=d.date.split('.');
-  const act=allActivities.find(a=>a.date===`2026-${mon}-${day}`);
-  let html=`<div class="wd-title">${d.title} · ${d.date}</div>`;
-  html+=`<div class="insight info"><strong>Geplant:</strong> ${d.det}</div>`;
-  if(act)html+=`<div class="insight good"><strong>Gefahren:</strong> ${act.avg_power?`Ø ${act.avg_power}W · NP ${act.np||'—'}W · `:''}${fmtDur(actDur(act))}${act.distance_m?' · '+fmtDist(act.distance_m):''}</div>`;
-  else html+=`<div class="insight">Noch nicht gefahren.</div>`;
-  panel.innerHTML=html;
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-// ── HISTORY ──
-// ── RIDES ──
-function renderSummary(){
-  const recent=allActivities.filter(a=>a.date>='2026-05-05');
-  const hours=recent.reduce((s,a)=>s+actDur(a),0)/3600;
-  const pw=recent.filter(a=>a.avg_power);
-  const avgP=pw.length?pw.reduce((s,a)=>s+a.avg_power,0)/pw.length:0;
-  const maxNP=Math.max(0,...recent.filter(a=>a.np).map(a=>a.np));
-  document.getElementById('summary-stats').innerHTML=`
-    <div class="stat"><div class="stat-label">Rides Phase 1</div><div class="stat-val">${recent.length}<span> rides</span></div><div class="stat-sub">seit 05.05</div></div>
-    <div class="stat"><div class="stat-label">Stunden</div><div class="stat-val">${hours.toFixed(1)}<span> h</span></div><div class="stat-sub">Gesamtvolumen</div></div>
-    <div class="stat"><div class="stat-label">Ø Watt</div><div class="stat-val">${avgP?Math.round(avgP):'—'}<span> W</span></div><div class="stat-sub">mit Powermeter</div></div>
-    <div class="stat"><div class="stat-label">Best NP</div><div class="stat-val">${maxNP||'—'}<span> W</span></div><div class="stat-sub">normalisiert</div></div>
-    <div class="stat"><div class="stat-label">FTP Schätzung</div><div class="stat-val">~${FTP}<span> W</span></div><div class="stat-sub">${(FTP/81).toFixed(2).replace('.',',')} W/kg</div></div>`;
-}
-
-function renderActivityList(){
-  document.getElementById('activity-list').innerHTML=allActivities.map(a=>{
-    const zones=(a.power_zones&&a.power_zones.length)?a.power_zones:(a.hr_zones&&a.hr_zones.length)?a.hr_zones:[];
-    const sel=selectedRideId===String(a.id);
-    return`<div class="act-item">
-      <div class="act-row${sel?' selected':''}" onclick="selectRide('${a.id}')">
-        <div class="act-main">
-          <div class="act-date">${fmtDate(a.date)} ${fmtStart(a)}</div>
-          <div class="act-name">${a.name}</div>
-          <div class="act-metrics">
-            ${a.distance_m?`<div class="am">${fmtDist(a.distance_m)}</div><div class="asep">·</div>`:''}
-            <div class="am">${fmtDur(actDur(a))}</div>
-            ${a.avg_power?`<div class="asep">·</div><div class="am">${a.avg_power}<span class="u"> W</span></div><div class="asep">·</div><div class="am">NP ${a.np||'—'}<span class="u"> W</span></div>`:''}
-            ${a.avg_hr?`<div class="asep">·</div><div class="am">♥ ${a.avg_hr}<span class="u"> bpm</span></div>`:''}
-            ${a.elevation_m?`<div class="asep">·</div><div class="am">↑ ${a.elevation_m}<span class="u"> m</span></div>`:''}
-          </div>
-          <div class="act-badge">${[a.has_power?'⚡ Watt':'',a.has_hr?'♥ HR':''].filter(Boolean).join(' · ')}</div>
-          ${dp4Rings(a)}
-        </div>
-        ${zstrip(zones)}
-      </div>
-      <div class="ride-detail${sel?' open':''}" id="rd-${a.id}"></div>
-    </div>`;
-  }).join('');
-  if(selectedRideId){
-    const act=allActivities.find(a=>String(a.id)===selectedRideId);
-    const panel=document.getElementById('rd-'+selectedRideId);
-    if(act&&panel&&!panel.innerHTML){
-      panel.innerHTML=buildDetail(act);
-      setTimeout(()=>loadAndDrawAnalysis(act),50);
-    }
-  }
-}
-
-function selectRide(id){
-  if(selectedRideId&&selectedRideId!==id){
-    const prev=document.getElementById('rd-'+selectedRideId);
-    if(prev){prev.classList.remove('open');prev.innerHTML='';}
-  }
-  selectedRideId=(selectedRideId===id)?null:id;
-  if(!selectedRideId){
-    const prev=document.getElementById('rd-'+id);
-    if(prev){prev.classList.remove('open');prev.innerHTML='';}
-    document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
-    return;
-  }
-  const act=allActivities.find(a=>String(a.id)===id);
-  if(!act)return;
-  document.querySelectorAll('.act-row.selected').forEach(el=>el.classList.remove('selected'));
-  const clickedRow=document.querySelector(`#rd-${id}`)?.previousElementSibling;
-  if(clickedRow)clickedRow.classList.add('selected');
-  const panel=document.getElementById('rd-'+id);
-  if(!panel)return;
-  panel.innerHTML=buildDetail(act);
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>loadAndDrawAnalysis(act),50);
-}
-
-// ── DETAIL ──
-function buildDetail(act){
-  const movingSec=actDur(act);
-  const elapsedSec=act.elapsed_sec||movingSec;
-  const dur=movingSec;
-  const showBothDur=elapsedSec>movingSec*1.15; // >15% difference
-  const durMin=dur/60;
-  const IF=act.np?+(act.np/FTP).toFixed(3):null;
-  const TSS=act.np&&IF?Math.round(dur*act.np*IF/(FTP*3600)*100):null;
-  const VI=act.np&&act.avg_power?+(act.np/act.avg_power).toFixed(3):null;
-  const hasAnalysis=durMin>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
-
-  function zTime(pct){
-    const s=Math.round(pct/100*dur);
-    const m=Math.floor(s/60),ss=s%60;
-    return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+':'+(ss<10?'0':'')+ss;
-  }
-
-  function vzBars(zones,names,title){
-    if(!zones||!zones.length)return '';
-    const maxZ=Math.max(...zones)||1;
-    const CHART_H=90; // fixed chart area height px
-    let h=`<div class="vzones-panel"><div class="vzones-title">${title}</div>`;
-    h+=`<div class="vzones-chart" style="height:${CHART_H}px">`;
-    zones.forEach((p,i)=>{
-      const barH=Math.max(2,Math.round(p/maxZ*CHART_H));
-      h+=`<div class="vzbar">
-        <div class="vzbar-fill" style="height:${barH}px;background:${ZC[i]}"></div>
-      </div>`;
-    });
-    h+=`</div><div class="vzones-labels">`;
-    zones.forEach((p,i)=>{
-      h+=`<div class="vzbar-lbl-col">
-        <div class="vzbar-pct">${p}%</div>
-        <div class="vzbar-time">${zTime(p)}</div>
-        <div class="vzbar-name">${names[i]}</div>
-      </div>`;
-    });
-    h+=`</div></div>`;
-    return h;
-  }
-
-  let h=`<div class="wd-title">${act.name} · ${fmtDate(act.date)}${fmtStart(act)?' · '+fmtStart(act):''}</div>`;
-
-  // ── 1. GRAPHS (async, placeholder) ──
-  h+=`<div id="aerob-${act.id}">`;
-  h+=`<canvas id="chart-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-  if(hasAnalysis){
-    h+=`<canvas id="an-ef-${act.id}" style="display:block;width:100%;box-sizing:border-box;margin-bottom:4px"></canvas>`;
-    h+=`<div style="display:flex;gap:6px;margin-bottom:4px"><div id="sc-wrap-${act.id}" style="flex:1;min-height:4px"></div><div id="pc-wrap-${act.id}" style="flex:1;min-height:4px"></div></div>`;
-  }
-  h+=`</div>`;
-
-  // ── 2. ZONE BARS (vertical, from activities.json) ──
-  const pzNames=['Z1','Z2','Z3','Z4','Z5'];
-  const hrNames=['Easy','Fat\u00A0Burn','Cardio','Hard','Peak'];
-  const hasPZ=act.power_zones&&act.power_zones.length;
-  const hasHZ=act.hr_zones&&act.hr_zones.length;
-  if(hasPZ||hasHZ){
-    h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Zonen</div><div class="sh-line"></div></div>`;
-    h+=`<div class="vzones-wrap">`;
-    if(hasPZ) h+=vzBars(act.power_zones,pzNames,`Power-Zonen · FTP ${FTP}W`);
-    if(hasHZ)  h+=vzBars(act.hr_zones,hrNames,`HR-Zonen · HRmax ${HRMAX} bpm`);
-    h+=`</div>`;
-  }
-
-
-
-  // ── 3. VALUES ──
-  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Werte</div><div class="sh-line"></div></div>`;
-  h+=`<div class="detail-stats" style="flex-wrap:wrap">`;
-  if(TSS)  h+=`<div class="ds"><div class="ds-label">TSS</div><div class="ds-val">${TSS}</div><div class="ds-sub">Training Stress</div></div>`;
-  if(IF)   h+=`<div class="ds"><div class="ds-label">IF</div><div class="ds-val">${IF}</div><div class="ds-sub">Intensity Factor</div></div>`;
-  if(act.np) h+=`<div class="ds"><div class="ds-label">NP</div><div class="ds-val">${act.np}<span> W</span></div><div class="ds-sub">Normalized Power</div></div>`;
-  if(VI)   h+=`<div class="ds"><div class="ds-label">VI</div><div class="ds-val">${VI}</div><div class="ds-sub">Variability</div></div>`;
-  if(act.avg_power) h+=`<div class="ds"><div class="ds-label">Ø Power</div><div class="ds-val">${act.avg_power}<span> W</span></div></div>`;
-  if(act.max_power) h+=`<div class="ds"><div class="ds-label">Max Power</div><div class="ds-val">${act.max_power}<span> W</span></div></div>`;
-  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Arbeit</div><div class="ds-val">${act.kilojoules}<span> kJ</span></div></div>`;
-  h+=`<div class="ds"><div class="ds-label">Bewegte Zeit</div><div class="ds-val">${fmtDur(movingSec)}</div><div class="ds-sub">${showBothDur?'gesamt '+fmtDur(elapsedSec):''}</div></div>`;
-  if(act.distance_m) h+=`<div class="ds"><div class="ds-label">Distanz</div><div class="ds-val">${fmtDist(act.distance_m)}</div></div>`;
-  if(act.elevation_m) h+=`<div class="ds"><div class="ds-label">Höhenmeter</div><div class="ds-val">${act.elevation_m}<span> m</span></div></div>`;
-  if(act.avg_hr) h+=`<div class="ds"><div class="ds-label">Ø HR</div><div class="ds-val">${act.avg_hr}<span> bpm</span></div></div>`;
-  if(act.max_hr) h+=`<div class="ds"><div class="ds-label">Max HR</div><div class="ds-val">${act.max_hr}<span> bpm</span></div></div>`;
-  if(act.avg_cadence) h+=`<div class="ds"><div class="ds-label">Ø Kadenz</div><div class="ds-val">${Math.round(act.avg_cadence)}<span> rpm</span></div></div>`;
-  if(act.kilojoules) h+=`<div class="ds"><div class="ds-label">Kalorien</div><div class="ds-val">${act.kilojoules}<span> kcal</span></div></div>`;
-  h+=`</div>`;
-
-  // Aerobe Werte (filled by loadAndDrawAnalysis)
-  if(hasAnalysis){
-    h+=`<div id="aerob-vals-${act.id}"></div>`;
-  }
-
-  // Einschätzung
-  h+=`<div class="sh" style="margin-top:14px"><div class="sh-title">Einschätzung</div><div class="sh-line"></div></div>`;
-  if(TSS) h+=`<div class="insight"><strong>TSS ${TSS}:</strong> ${TSS<50?'leicht, Erholung <24h':TSS<100?'moderat, ~24–36h':TSS<150?'hart, 2–3 Tage':'sehr hart, >3 Tage'}.</div>`;
-  if(!act.gps_ok&&act.gps_coverage_pct) h+=`<div class="insight warn"><strong>GPS:</strong> nur ${act.gps_coverage_pct}% getrackt.</div>`;
-  if(act.decoupling_pct!==null&&act.decoupling_pct!==undefined){
-    const dc=act.decoupling_pct;
-    if(dc<5) h+=`<div class="insight good"><strong>Drift ${dc>0?'+':''}${dc}%</strong> — unter 5%: gute aerobe Effizienz.</div>`;
-    else h+=`<div class="insight warn"><strong>Drift +${dc}%</strong> — über 5%: HR stieg relativ zur Leistung.</div>`;
-  }
-  return h;
-}
-
-
-// ── LOAD ANALYSIS + DRAW ALL CHARTS ──
-async function loadAndDrawAnalysis(act){
-  const id=act.id;
-  const hasAnalysis=actDur(act)/60>=5&&(act.has_power||act.power_duration_sec||act.has_hr);
-
-  // Fetch analysis.json
-  let an=null;
-  try{
-    const r=await fetch('data/analysis/'+id+'.json?_='+Date.now());
-    if(r.ok) an=await r.json();
-  }catch(e){}
-
-  const ch=an?.chart||act.streams||{};
-  const ts=ch.time||[], pw=ch.watts||[], hr=ch.hr||[], alt=ch.altitude||[];
-
-  // Rolling average helper
-  function rollingMean(arr, win, minVal){
-    return arr.map((_, i)=>{
-      const slice=arr.slice(Math.max(0,i-win),i+1).filter(v=>v!=null&&v>=(minVal||0));
-      return slice.length?slice.reduce((s,v)=>s+v,0)/slice.length:null;
-    });
-  }
-
-  // Canvas setup
-  function SC(c,h){
-    if(!c)return null;
-    const dpr=window.devicePixelRatio||1;
-    const W=Math.floor(c.parentElement.clientWidth-2);
-    c.width=W*dpr; c.height=h*dpr;
-    c.style.width=W+'px'; c.style.height=h+'px';
-    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
-    return{ctx,W,H:h};
-  }
-
-  // ── CHART 1: HR + Watt (raw dots + rolling mean) ──
-  const c0=document.getElementById('chart-'+id);
-  if(c0&&ts.length){
-    const H=130;
-    const r=SC(c0,H); if(!r)return;
-    const{ctx,W}=r;
-    const pL=42,pR=44,pT=16,pB=24,cW=W-pL-pR,cH=H-pT-pB;
-    const maxT=ts[ts.length-1]||1; // elapsed time from stream
-
-    // Power range
-    const pwValid=pw.filter(v=>v>0&&v<1500);
-    const maxP=pwValid.length?Math.min(650,Math.max(300,Math.max(...pwValid)*1.05)):400;
-    // HR range
-    const hrValid=hr.filter(h=>h>50);
-    const minHR=hrValid.length?Math.max(60,Math.min(...hrValid)-5):70;
-    const maxHR=hrValid.length?Math.min(185,Math.max(...hrValid)+5):180;
-
-    function xOf(t){return pL+(t/maxT)*cW;}
-    function yP(p){return pT+cH-Math.min(1,(p/maxP))*cH;}
-    function yH(h){return pT+cH-((Math.max(minHR,Math.min(maxHR,h))-minHR)/(maxHR-minHR))*cH;}
-
-    // Altitude bg
-    if(alt.length>1){
-      const aMin=Math.min(...alt),aMax=Math.max(...alt)+1;
-      ctx.beginPath();
-      alt.forEach((a,i)=>{i===0?ctx.moveTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH)):ctx.lineTo(xOf(ts[i]),(pT+cH-(a-aMin)/(aMax-aMin)*cH));});
-      ctx.lineTo(xOf(maxT),pT+cH);ctx.lineTo(xOf(0),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(90,90,90,0.13)';ctx.fill();
-    }
-
-    // Grid
-    ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-    const tks=Math.min(8,Math.floor(maxT/300));
-    for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT);ctx.lineTo(xOf(t),pT+cH);ctx.stroke();}
-
-    // FTP reference
-    ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
-    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(249,115,22,0.35)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-3);
-
-    // Raw power dots
-    if(pw.length){
-      pw.forEach((p,i)=>{if(!p||p<5)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yP(p),1.5,0,Math.PI*2);ctx.fillStyle='rgba(249,115,22,0.2)';ctx.fill();});
-      // Rolling mean line (win=5 pts)
-      const pwSmooth=rollingMean(pw,5,5);
-      ctx.beginPath();let fst=true;
-      pwSmooth.forEach((p,i)=>{if(!p)return;fst?(ctx.moveTo(xOf(ts[i]),yP(p)),fst=false):ctx.lineTo(xOf(ts[i]),yP(p));});
-      ctx.strokeStyle='rgba(249,115,22,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-    }
-
-    // Raw HR dots
-    if(hr.length){
-      hr.forEach((h,i)=>{if(!h||h<50)return;ctx.beginPath();ctx.arc(xOf(ts[i]),yH(h),1.5,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.18)';ctx.fill();});
-      // Rolling mean line
-      const hrSmooth=rollingMean(hr,5,50);
-      ctx.beginPath();let fst=true;
-      hrSmooth.forEach((h,i)=>{if(!h)return;fst?(ctx.moveTo(xOf(ts[i]),yH(h)),fst=false):ctx.lineTo(xOf(ts[i]),yH(h));});
-      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=1.8;ctx.stroke();
-    }
-
-    // Y labels
-    ctx.fillStyle='rgba(249,115,22,0.6)';ctx.font='9px monospace';ctx.textAlign='right';
-    [100,200,300,400].filter(p=>p<maxP).forEach(p=>ctx.fillText(p+'W',pL-3,yP(p)+3));
-    ctx.fillStyle='rgba(200,200,200,0.5)';ctx.textAlign='left';
-    [Math.round(minHR+5),Math.round((minHR+maxHR)/2),Math.round(maxHR-5)].forEach(h=>ctx.fillText(h,W-pR+3,yH(h)+3));
-    ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
-    for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-    // Legend
-    ctx.fillStyle='rgba(249,115,22,0.7)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('Watt',pL+4,pT+11);
-    ctx.fillStyle='rgba(200,200,200,0.6)';ctx.fillText('· HR',pL+32,pT+11);
-    ctx.fillStyle='rgba(130,130,130,0.4)';ctx.fillText('· Punkte = Roh, Linie = 30s Mittel',pL+48,pT+11);
-  }
-
-  if(!an)return;
-
-  // ── CHART 2: EF — 3 Schichten: chart-Rohpunkte + ef_series(60s) + geglättet(120s) ──
-  const c2=document.getElementById('an-ef-'+id);
-  if(c2){
-    const efSeries=an.ef_series||[];
-    const cT=an.chart.time||[], cW2=an.chart.watts||[], cH2=an.chart.hr||[];
-    const hasSeries=efSeries.length>5;
-    const hasChartPow=cT.length>0&&cW2.filter(v=>v>10).length>3&&cH2.filter(v=>v>50).length>3;
-    if(hasSeries||hasChartPow){
-      const H2=130;
-      const r=SC(c2,H2);
-      if(r){
-        const{ctx,W}=r;
-        const pL=40,pR=12,pT2=14,pB=22,cW=W-pL-pR,cH=H2-pT2-pB;
-
-        // --- Data prep ---
-        // Raw dots: instant EF from chart data (noisy, downsampled)
-        const rawPts=hasChartPow?cT.map((t,i)=>{
-          const w=cW2[i],h=cH2[i];
-          return(w>10&&h>50)?{t,ef:Math.min(w/h,3.2)}:null;
-        }).filter(Boolean):[];
-
-        // 60s line: ef_series (pre-computed 60s rolling at 1Hz)
-        const ef60pts=efSeries.filter(p=>p.ef>0.4&&p.ef<3.2);
-
-        // 120s line: 5-point moving avg of ef_series (≈120s effective smoothing)
-        const WIN=5;
-        const ef120pts=ef60pts.map((_,i)=>{
-          const sl=ef60pts.slice(Math.max(0,i-WIN),i+WIN+1);
-          return{t:ef60pts[i].t, ef:sl.reduce((s,p)=>s+p.ef,0)/sl.length};
-        }).filter(p=>p.ef>0.4&&p.ef<3.2);
-
-        // --- Axis range from 60s line ---
-        const allEF=[...ef60pts.map(p=>p.ef),...rawPts.map(p=>p.ef)];
-        const minEF=allEF.length?Math.max(0.5,Math.min(...allEF)-0.05):0.6;
-        const maxEF=allEF.length?Math.min(3.2,Math.max(...allEF)+0.1):2.5;
-        const avgEF=ef120pts.length?ef120pts.reduce((s,p)=>s+p.ef,0)/ef120pts.length:1.5;
-        const allT=[...ef60pts.map(p=>p.t),...rawPts.map(p=>p.t),...cT];
-        const maxT=allT.length?Math.max(...allT):1;
-
-        const xOf=t=>pL+(t/maxT)*cW;
-        const yEF=e=>pT2+cH-((Math.max(minEF,Math.min(maxEF,e))-minEF)/(maxEF-minEF))*cH;
-
-        // Grid
-        ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-        const tks=Math.min(8,Math.floor(maxT/180));
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.beginPath();ctx.moveTo(xOf(t),pT2);ctx.lineTo(xOf(t),pT2+cH);ctx.stroke();}
-
-        // Avg reference
-        ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.setLineDash([4,6]);
-        ctx.beginPath();ctx.moveTo(pL,yEF(avgEF));ctx.lineTo(pL+cW,yEF(avgEF));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='9px monospace';ctx.textAlign='left';
-        ctx.fillText('Ø '+avgEF.toFixed(3),pL+4,yEF(avgEF)-3);
-
-        // Raw dots (chart data, transparent)
-        rawPts.forEach(p=>{ctx.beginPath();ctx.arc(xOf(p.t),yEF(p.ef),2,0,Math.PI*2);ctx.fillStyle='rgba(96,165,250,0.22)';ctx.fill();});
-
-        // 60s line (ef_series, blau)
-        if(ef60pts.length){
-          ctx.beginPath();let f=true;
-          ef60pts.forEach(p=>{f?(ctx.moveTo(xOf(p.t),yEF(p.ef)),f=false):ctx.lineTo(xOf(p.t),yEF(p.ef));});
-          ctx.strokeStyle='rgba(96,165,250,0.75)';ctx.lineWidth=1.4;ctx.stroke();
-        }
-
-        // 120s line (geglättetes ef_series, orange)
-        if(ef120pts.length){
-          ctx.beginPath();let f=true;
-          ef120pts.forEach(p=>{f?(ctx.moveTo(xOf(p.t),yEF(p.ef)),f=false):ctx.lineTo(xOf(p.t),yEF(p.ef));});
-          ctx.strokeStyle='rgba(249,115,22,0.9)';ctx.lineWidth=2.5;ctx.stroke();
-        }
-
-        // Y labels
-        [minEF,avgEF,maxEF].forEach(e=>{
-          ctx.fillStyle='rgba(96,165,250,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-          ctx.fillText(e.toFixed(2),pL-3,yEF(e)+3);
-        });
-        // X labels
-        ctx.fillStyle='#2e2e2e';ctx.textAlign='center';
-        for(let i=0;i<=tks;i++){const t=i*maxT/tks;ctx.fillText(Math.round(t/60)+"'",xOf(t),H2-4);}
-        // Legend
-        ctx.font='9px sans-serif';ctx.textAlign='left';
-        ctx.fillStyle='rgba(96,165,250,0.35)';ctx.fillText('EF instant',pL+4,pT2+10);
-        ctx.fillStyle='rgba(96,165,250,0.85)';ctx.fillText('60s',pL+62,pT2+10);
-        ctx.fillStyle='rgba(249,115,22,0.9)';ctx.fillText('120s',pL+84,pT2+10);
-      }
-    }
-  }
-
-  // ── CHART 3+4: Scatter + MMP Power Curve (dynamically created, side by side) ──
-  const scatter=an.scatter||[];
-  const pcurve=an.power_curve||act.power_curve||{};
-  const scWrap=document.getElementById('sc-wrap-'+id);
-  const pcWrap=document.getElementById('pc-wrap-'+id);
-
-  function drawInWrap(wrap, drawFn){
-    if(!wrap)return;
-    wrap.innerHTML='';
-    // Force layout read AFTER clearing
-    const W=wrap.getBoundingClientRect().width||wrap.offsetWidth||300;
-    const H=W; // square
-    const dpr=window.devicePixelRatio||1;
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.round(W*dpr);
-    canvas.height=Math.round(H*dpr);
-    canvas.style.width=Math.round(W)+'px';
-    canvas.style.height=Math.round(H)+'px';
-    canvas.style.display='block';
-    wrap.appendChild(canvas);
-    const ctx=canvas.getContext('2d');
-    ctx.scale(dpr,dpr);
-    drawFn(ctx, Math.round(W), Math.round(H));
-  }
-
-  if(scWrap&&scatter.length){
-    const SC=CONFIG.scatter;
-    const rideMin=(an.duration_sec||0)/60;
-    const canFilter=rideMin>=SC.minRideMin;
-    // Stabilitaetsfilter: nur quasi-stationaere Phasen
-    function filterStable(pts){
-      if(!canFilter) return pts;
-      const out=[];
-      for(let i=0;i<pts.length;i++){
-        const p=pts[i];
-        if(p.w<SC.minWatt||p.hr<SC.minHR||(p.cad!=null&&p.cad<SC.minCad)) continue;
-        // Fenster: alle Punkte innerhalb windowSec vor p
-        const win=[];
-        for(let j=i;j>=0;j--){
-          if(p.t-pts[j].t>SC.windowSec) break;
-          win.push(pts[j]);
-        }
-        if(win.length<3) continue;
-        const ws=win.map(x=>x.w);
-        const mean=ws.reduce((s,x)=>s+x,0)/ws.length;
-        const sd=Math.sqrt(ws.reduce((s,x)=>s+(x-mean)**2,0)/ws.length);
-        if(mean>0&&sd/mean>SC.powerCoV) continue;       // Leistung instabil
-        const hs=win.map(x=>x.hr);
-        if(Math.abs(hs[0]-hs[hs.length-1])>SC.hrDriftMax) continue; // HR nicht eingeschwungen
-        out.push(p);
-      }
-      return out;
-    }
-    // Toggle-State pro Ride (default aus CONFIG)
-    if(window.__scatterClean===undefined) window.__scatterClean=SC.cleanByDefault;
-    const useClean=canFilter&&window.__scatterClean;
-    const shownPts=useClean?filterStable(scatter):scatter.filter(p=>p.w>=SC.minWatt&&p.hr>=SC.minHR);
-
-    // Toggle-Button (nur wenn Filtern moeglich)
-    if(canFilter){
-      const existing=scWrap.parentElement.querySelector('.sc-toggle');
-      if(!existing){
-        const btn=document.createElement('button');
-        btn.className='sc-toggle';
-        btn.style.cssText='position:absolute;top:6px;right:8px;z-index:5;font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid var(--color-border);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer';
-        btn.textContent=window.__scatterClean?'● stabil':'○ roh';
-        btn.onclick=(e)=>{e.stopPropagation();window.__scatterClean=!window.__scatterClean;const act=allActivities.find(a=>String(a.id)===selectedRideId);if(act)loadAndDrawAnalysis(act);};
-        scWrap.parentElement.style.position='relative';
-        scWrap.parentElement.appendChild(btn);
-      }
-    }
-
-    drawInWrap(scWrap,(ctx,W,H)=>{
-      const pL=38,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      const minW=50, maxW=400, minH=80, maxH=175;
-      const wZones=[144,180,216,252];
-      function xOf(w){return pL+((w-minW)/(maxW-minW))*cW;}
-      function yOf(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,350,400].forEach(w=>{ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();});
-      [90,100,110,120,130,140,150,160,170].forEach(h=>{ctx.beginPath();ctx.moveTo(pL,yOf(h));ctx.lineTo(pL+cW,yOf(h));ctx.stroke();});
-      const zCols=['#34d399','#60a5fa','#fbbf24','#f97316'];
-      wZones.forEach((w,i)=>{
-        ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(xOf(w),pT);ctx.lineTo(xOf(w),pT+cH);ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle=zCols[i];ctx.font='8px monospace';ctx.textAlign='center';
-        ctx.fillText('Z'+(i+2),xOf(w)+12,pT+9);
-      });
-      // Punkte
-      const tMin=shownPts.length?shownPts[0].t:0,tMax=shownPts.length?shownPts[shownPts.length-1].t:1;
-      shownPts.forEach(p=>{
-        if(p.w<minW||p.w>maxW||p.hr<minH||p.hr>maxH)return;
-        const tf=(p.t-tMin)/Math.max(1,tMax-tMin);
-        const r=Math.round(96+tf*(249-96)),g=Math.round(165+tf*(115-165)),b=Math.round(250+tf*(22-250));
-        ctx.beginPath();ctx.arc(xOf(p.w),yOf(p.hr),useClean?3:2.5,0,Math.PI*2);
-        ctx.fillStyle='rgba('+r+','+g+','+b+','+(useClean?0.8:0.6)+')';ctx.fill();
-      });
-      // Regressionsgerade (nur im stabil-Modus)
-      if(useClean&&SC.showTrend&&shownPts.length>=5){
-        const n=shownPts.length;
-        const sx=shownPts.reduce((s,p)=>s+p.hr,0),sy=shownPts.reduce((s,p)=>s+p.w,0);
-        const sxy=shownPts.reduce((s,p)=>s+p.hr*p.w,0),sx2=shownPts.reduce((s,p)=>s+p.hr*p.hr,0);
-        const m=(n*sxy-sx*sy)/(n*sx2-sx*sx),b=(sy-m*sx)/n;
-        const r2=Math.pow(n*sxy-sx*sy,2)/((n*sx2-sx*sx)*(n*shownPts.reduce((s,p)=>s+p.w*p.w,0)-sy*sy));
-        const hrs=shownPts.map(p=>p.hr),h1=Math.min(...hrs),h2=Math.max(...hrs);
-        ctx.strokeStyle='rgba(52,211,153,0.8)';ctx.lineWidth=2;
-        ctx.beginPath();ctx.moveTo(xOf(m*h1+b),yOf(h1));ctx.lineTo(xOf(m*h2+b),yOf(h2));ctx.stroke();
-        ctx.fillStyle='rgba(52,211,153,0.9)';ctx.font='9px monospace';ctx.textAlign='left';
-        ctx.fillText('R²='+r2.toFixed(2),pL+4,pT+cH-4);
-      }
-      // Achsen
-      ctx.fillStyle='rgba(180,180,180,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [80,100,120,140,160,175].forEach(h=>ctx.fillText(h,pL-3,yOf(h)+3));
-      ctx.fillStyle='rgba(100,100,100,0.7)';ctx.textAlign='center';
-      [100,150,200,250,300,350,400].forEach(w=>ctx.fillText(w+'W',xOf(w),H-pB+14));
-      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.textAlign='left';
-      ctx.fillText(useClean?'HR vs Watt · stabile Phasen ('+shownPts.length+')':'HR vs Watt · roh',pL+4,pT+12);
-      if(!useClean){ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('blau=früh, orange=spät',pL+4,pT+22);}
-      else if(!canFilter){ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('zu kurz für Filter',pL+4,pT+22);}
-      ctx.save();ctx.translate(12,pT+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
-      ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='9px sans-serif';ctx.fillText('HR (bpm)',0,0);ctx.restore();
-    });
-  }
-
-  if(pcWrap&&Object.keys(pcurve).length){
-    drawInWrap(pcWrap,(ctx,W,H)=>{
-      const pL=40,pR=10,pT=14,pB=34,cW=W-pL-pR,cH=H-pT-pB;
-      const allDurs=[5,10,30,60,120,300,600,1200,1800,3600];
-      const pts=allDurs.map(d=>({d,w:pcurve[String(d)]})).filter(p=>p.w);
-      if(pts.length<2)return;
-      // Fixed axes for cross-ride comparison
-      const logMin=Math.log10(5),logMax=Math.log10(3600);
-      const wMin=100, wMax=700;
-      function xOf(d){return pL+(Math.log10(d)-logMin)/(logMax-logMin)*cW;}
-      function yOf(w){return pT+cH-((w-wMin)/(wMax-wMin))*cH;}
-      // Grid
-      // Background grid
-      ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;
-      [100,150,200,250,300,400,500,600,700].forEach(w=>{ctx.beginPath();ctx.moveTo(pL,yOf(w));ctx.lineTo(pL+cW,yOf(w));ctx.stroke();});
-      [{d:5,l:'5s'},{d:10,l:'10s'},{d:30,l:'30s'},{d:60,l:'1m'},{d:120,l:'2m'},{d:300,l:'5m'},{d:600,l:'10m'},{d:1200,l:'20m'},{d:3600,l:'1h'}]
-        .forEach(t=>{ctx.strokeStyle='#1a1a1a';ctx.beginPath();ctx.moveTo(xOf(t.d),pT);ctx.lineTo(xOf(t.d),pT+cH);ctx.stroke();
-          ctx.fillStyle='rgba(100,100,100,0.7)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(t.l,xOf(t.d),H-pB+14);});
-      // Power zone horizontal lines
-      const mmpZones=[{w:144,l:'Z2',c:'#60a5fa'},{w:180,l:'Z3',c:'#fbbf24'},{w:216,l:'Z4',c:'#f97316'},{w:252,l:'Z5',c:'#ef4444'}];
-      mmpZones.forEach(z=>{
-        ctx.strokeStyle=z.c+'44';ctx.setLineDash([3,4]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(z.w));ctx.lineTo(pL+cW,yOf(z.w));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle=z.c;ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText(z.l,pL+2,yOf(z.w)-3);
-      });
-      // FTP
-      {
-        ctx.strokeStyle='rgba(249,115,22,0.2)';ctx.setLineDash([4,5]);
-        ctx.beginPath();ctx.moveTo(pL,yOf(FTP));ctx.lineTo(pL+cW,yOf(FTP));ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='rgba(249,115,22,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yOf(FTP)-3);
-      }
-      // MMP curve fill
-      ctx.beginPath();pts.forEach((p,i)=>{i===0?ctx.moveTo(xOf(p.d),yOf(p.w)):ctx.lineTo(xOf(p.d),yOf(p.w));});
-      ctx.strokeStyle='rgba(200,200,200,0.85)';ctx.lineWidth=2;ctx.stroke();
-      ctx.lineTo(xOf(pts[pts.length-1].d),pT+cH);ctx.lineTo(xOf(pts[0].d),pT+cH);ctx.closePath();
-      ctx.fillStyle='rgba(200,200,200,0.06)';ctx.fill();
-      // Dots + labels
-      pts.forEach(p=>{
-        ctx.beginPath();ctx.arc(xOf(p.d),yOf(p.w),3,0,Math.PI*2);ctx.fillStyle='rgba(200,200,200,0.7)';ctx.fill();
-        ctx.fillStyle='rgba(200,200,200,0.55)';ctx.font='8px monospace';ctx.textAlign='center';ctx.fillText(p.w+'W',xOf(p.d),yOf(p.w)-7);
-      });
-      // Y labels
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px monospace';ctx.textAlign='right';
-      [100,150,200,250,300,400,500,600,700].forEach(w=>ctx.fillText(w+'W',pL-3,yOf(w)+3));
-      // Title
-      ctx.fillStyle='rgba(200,200,200,0.5)';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MMP Kurve',pL+4,pT+12);
-      ctx.fillStyle='rgba(100,100,100,0.5)';ctx.fillText('log. Zeitskala',pL+4,pT+22);
-    });
-  }
-
-    // ── Aerobe Werte ──
-  const avDiv=document.getElementById('aerob-vals-'+id);
-  if(avDiv&&an.decoupling){
-    const d=an.decoupling;
-    const dPos=d.drift_pct>0;
-    avDiv.innerHTML=`<div class="sh" style="margin-top:14px"><div class="sh-title">Aerobe Analyse</div><div class="sh-line"></div></div>
-    <div class="detail-stats">
-      <div class="ds"><div class="ds-label">EF gesamt</div><div class="ds-val">${d.ef_gesamt.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">avgW / avgHR · Kern</div></div>
-      <div class="ds"><div class="ds-label">EF₁ (1. Hälfte)</div><div class="ds-val">${d.ef1.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w1.toFixed(0)}W · ${d.avg_h1.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">EF₂ (2. Hälfte)</div><div class="ds-val">${d.ef2.toFixed(3)}<span> W/bpm</span></div><div class="ds-sub">${d.avg_w2.toFixed(0)}W · ${d.avg_h2.toFixed(0)} bpm</div></div>
-      <div class="ds"><div class="ds-label">Pa:HR Drift</div><div class="ds-val" style="color:${dPos?'var(--red)':'var(--green)'}">${dPos?'+':''}${d.drift_pct.toFixed(2)}<span>%</span></div><div class="ds-sub">${dPos?'HR-Drift (decoupling)':'gut gekoppelt'} · &lt;5% = gut</div></div>
-    </div>`;
-  }
-}
-
-function drawChart(act){
-  const canvas=document.getElementById(`chart-${act.id}`);
-  if(!canvas||!act.streams)return;
-  const ts=act.streams.time||[],pw=act.streams.watts||[],hr=act.streams.hr||[];
-  if(!ts.length)return;
-  const dpr=window.devicePixelRatio||1,W=canvas.parentElement.offsetWidth,H=90;
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+'px';canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
-  const pL=36,pR=8,pT=10,pB=22,cW=W-pL-pR,cH=H-pT-pB;
-  const maxT=ts[ts.length-1]||1,maxP=pw.length?Math.max(600,...pw):600,minH=80,maxH=175;
-  function xOf(t){return pL+(t/maxT)*cW;}
-  function yP(p){return pT+cH-(p/maxP)*cH;}
-  function yH(h){return pT+cH-((h-minH)/(maxH-minH))*cH;}
-  ctx.strokeStyle='#333';ctx.lineWidth=1;
-  [100,200,300,400,500].forEach(p=>{if(!pw.length)return;ctx.beginPath();ctx.moveTo(pL,yP(p));ctx.lineTo(pL+cW,yP(p));ctx.stroke();ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText(p,pL-3,yP(p)+3);});
-  if(pw.length){
-    ctx.strokeStyle='rgba(180,180,180,0.25)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
-    ctx.beginPath();ctx.moveTo(pL,yP(FTP));ctx.lineTo(pL+cW,yP(FTP));ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(180,180,180,0.4)';ctx.font='8px monospace';ctx.textAlign='left';ctx.fillText('FTP',pL+2,yP(FTP)-2);
-    ctx.fillStyle='rgba(176,176,176,0.1)';ctx.strokeStyle='rgba(176,176,176,0.7)';ctx.lineWidth=1.5;ctx.beginPath();
-    ts.forEach((t,i)=>{const x=xOf(t),y=yP(pw[i]||0);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-    ctx.stroke();ctx.lineTo(xOf(maxT),yP(0));ctx.lineTo(xOf(0),yP(0));ctx.closePath();ctx.fill();
-  }
-  if(hr.length){
-    ctx.strokeStyle='rgba(136,136,136,0.6)';ctx.lineWidth=1.5;ctx.beginPath();
-    ts.forEach((t,i)=>{if(!hr[i]||hr[i]<50)return;const x=xOf(t),y=yH(hr[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-    ctx.stroke();
-  }
-  ctx.fillStyle='#555';ctx.font='8px monospace';ctx.textAlign='center';
-  const ticks=Math.min(6,Math.floor(maxT/60));
-  for(let i=0;i<=ticks;i++){const t=Math.round(i*maxT/ticks);ctx.fillText(Math.round(t/60)+"'",xOf(t),H-5);}
-}
-
-
-
-
-// ── TODAY BANNER ──
-function renderTodayBanner(){
-  const wrap = document.getElementById('today-banner-wrap');
-  if(!wrap) return;
-
-  // Find today in plan
-  const now = new Date();
-  const todayStr = (now.getDate()<10?'0':'')+now.getDate()+'.'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'.'; // '11.05.'
-  const todayPlan = todayStr.slice(0,5); // '11.05' matches plan dates
-  let todayDay = null, todayWeek = null;
-  for(const week of PLAN_WEEKS){
-    if(!week.days) continue;
-    for(const d of week.days){
-      if(d.date === todayPlan){ todayDay=d; todayWeek=week; break; }
-    }
-    if(todayDay) break;
-  }
-  if(!todayDay){ wrap.innerHTML=''; return; }
-
-  // Calculate fatigue from recent TSS (last 7 days weighted)
-  const today = new Date(); today.setHours(0,0,0,0);
-  let atl = 0; // Acute Training Load (7-day weighted)
-  allActivities.forEach(a=>{
-    const actDate = new Date(a.date); actDate.setHours(0,0,0,0);
-    const daysAgo = Math.round((today-actDate)/(1000*86400));
-    if(daysAgo<0||daysAgo>7) return;
-    const IF = a.np?+(a.np/FTP).toFixed(3):null;
-    const tss = a.np&&IF?Math.round(actDur(a)*a.np*IF/(FTP*3600)*100):null;
-    if(!tss) return;
-    const weight = Math.exp(-daysAgo/7); // exponential decay
-    atl += tss * weight;
-  });
-
-  // Classify fatigue
-  let status, statusLabel, statusDetail;
-  if(atl < 40){ status='fresh'; statusLabel='Frisch'; statusDetail='Volle Leistung · ambitioniert trainieren'; }
-  else if(atl < 90){ status='normal'; statusLabel='Normal'; statusDetail='Gut erholt · Plan wie vorgesehen fahren'; }
-  else if(atl < 150){ status='normal'; statusLabel='Etwas müde'; statusDetail='Intensität im Zweifel 5–10% reduzieren'; }
-  else { status='tired'; statusLabel='Müde'; statusDetail='Nur lockere Einheiten · bei Zweifel pausieren'; }
-
-  // Day of week
-  const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
-  const dow = days[now.getDay()];
-
-  // Type color
-  const typeColors={comm:'#555',roll:'#60a5fa',aus:'#34d399',test:'#fbbf24',check:'#a78bfa',rest:'#333',goal:'#ef4444'};
-  const accent = typeColors[todayDay.type]||'#555';
-
-  // Kombi-Score aus Garmin + TSB (falls Daten da), sonst ATL-Fallback
-  const todayISO=new Date().toISOString().slice(0,10);
-  let ampelDot=status, ampelText=`<strong>${statusLabel}</strong> — ${statusDetail}`, ampelMeta=`ATL ${atl.toFixed(0)}`;
-  if(typeof readinessFor==='function' && allHealth.length && Object.keys(loadModel).length){
-    let r=readinessFor(todayISO);
-    if(!r.h && allHealth[0]) r=readinessFor(allHealth[0].date);
-    const map={green:'fresh',yellow:'normal',red:'tired'};
-    ampelDot=map[r.light]||'normal';
-    ampelText=`<strong>${r.msg}</strong>`;
-    const bits=[];
-    if(r.tsb!=null) bits.push(`Form ${r.tsb>0?'+':''}${r.tsb.toFixed(0)}`);
-    if(r.garminParts&&r.garminParts.length) bits.push(...r.garminParts);
-    ampelMeta=bits.join(' · ');
-  }
-
-  wrap.innerHTML=`<div class="today-banner ${ampelDot}" style="border-left-color:${accent}">
-    <div class="tb-row1">
-      <span class="tb-date">Heute · ${dow} ${todayStr.slice(0,5)}</span>
-      <span class="tb-title">${todayDay.title}</span>
-    </div>
-    <div class="tb-desc">${todayDay.desc}</div>
-    <div class="tb-det">${todayDay.det}</div>
-    <div class="tb-status">
-      <div class="tb-dot ${ampelDot}"></div>
-      <span class="tb-status-text">${ampelText}</span>
-      <span class="tb-tss">${ampelMeta}</span>
-    </div>
-  </div>`;
-}
-
-// ── LOAD ──
-
-// ===== Daten-Status: pro Quelle Stand + Warnung =====
-// Health kommt taeglich (Garmin) -> ab >36h Warnung, >60h Fehler.
-// Aktivitaeten kommen unregelmaessig -> nur informativ, kein Fehler.
-let _statusData = {act:null, health:null};
-
-function relTime(iso){
-  // h (Stunden seit Fetch) treibt die Ampel-Logik. txt zeigt Tag + Uhrzeit
-  // im Klartext statt 'vor X Min'.
-  if(!iso) return {txt:'nie', h:Infinity};
-  const then=new Date(iso), now=new Date();
-  const h=(now-then)/3600000;
-  const t=new Date(iso);
-  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const day0=new Date(t.getFullYear(),t.getMonth(),t.getDate());
-  const dd=Math.round((today-day0)/86400000);
-  const uhr=t.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-  let tag;
-  if(dd<=0) tag='heute';
-  else if(dd===1) tag='gestern';
-  else tag=t.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-  return {txt: tag+' '+uhr, h};
-}
-
-function dayFreshness(dateStr){
-  // dateStr = 'YYYY-MM-DD' des neuesten Datentags.
-  // Echte KALENDERTAGE-Differenz (nicht stundenbasiert), damit 'gestern'
-  // auch wirklich gestern heisst und nicht faelschlich 'heute'.
-  if(!dateStr) return {txt:'—', days:Infinity};
-  const p=dateStr.split('-').map(Number);
-  const then=new Date(p[0], p[1]-1, p[2]);      // lokale Mitternacht des Datentags
-  const n=new Date(); const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
-  const days=Math.round((today - then)/86400000);
-  let txt;
-  if(days<=0) txt='heute';
-  else if(days===1) txt='gestern';
-  else txt='vor '+days+' Tagen';
-  return {txt, days};
-}
-
-function computeStatus(){
-  const a=_statusData.act, hEl=_statusData.health;
-  // Fetch-Frische aus activities.updated_at (laeuft der Abruf ueberhaupt?)
-  const fetch=relTime(a&&a.updated_at);
-  // Health-Datentag (kommt taeglich -> guter Haenger-Indikator)
-  const health=dayFreshness(hEl&&hEl.newestDay);
-  // neueste Aktivitaet (unregelmaessig -> informativ)
-  const act=dayFreshness(a&&a.newestDay);
-
-  // Gesamt-Ampel. Health kommt taeglich, aktueller Tag oft erst mittags
-  // synchronisiert -> heute/gestern ok, 2 Tage warnen, 3+ Fehler.
-  // Fetch laeuft alle 15 Min -> >2h verspaetet, >6h eindeutig tot.
-  let level='ok';
-  if(health.days>=3 || fetch.h>=6) level='err';
-  else if(health.days>=2 || fetch.h>=2) level='warn';
-
-  return {fetch, health, act, level};
-}
+document.addEventListener('click', e => {
+  const s = $('#nav-status');
+  if (s && !s.contains(e.target)) $('#status-panel').classList.remove('open');
+});
 
 function renderStatus(){
-  const s=computeStatus();
-  const dot=document.getElementById('status-dot');
-  const sum=document.getElementById('status-summary');
-  if(dot) dot.className='dot '+s.level;
-  // Kompakte Zusammenfassung in der Kopfzeile
-  if(sum){
-    const label = s.level==='err' ? 'Daten hängen' : s.level==='warn' ? 'Daten verspätet' : 'aktuell';
-    sum.textContent = label;
-  }
-  // Ausfuehrliches Panel
-  const panel=document.getElementById('status-panel');
-  if(!panel) return;
-  const cH = s.health.days>=3?'err':s.health.days>=2?'warn':'';
-  const cF = s.fetch.h>=6?'err':s.fetch.h>=2?'warn':'';
-  const dotC = lvl => lvl==='err'?'#ef4444':lvl==='warn'?'#fbbf24':'#34d399';
-  let hint='';
-  if(s.health.days>=2)
-    hint='Health hängt. Garmin-Token prüfen: refresh.log auf ukb457, oder GitHub-Fetch-Log.';
-  else if(s.fetch.h>=6)
-    hint='Fetch läuft nicht. cron-job.org-Trigger und GitHub-Actions prüfen.';
-  else
-    hint='Fetch alle 15 Min · Health täglich · Aktivitäten nach dem Fahren.';
-  panel.innerHTML=`
-    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC(cF||'ok')}"></span>Letzter Fetch</span><span class="val ${cF}">${s.fetch.txt}</span></div>
-    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC(cH||'ok')}"></span>Health-Daten</span><span class="val ${cH}">${s.health.txt}</span></div>
-    <div class="sp-row"><span class="lbl"><span class="sp-dot" style="background:${dotC('ok')}"></span>Letzte Aktivität</span><span class="val">${s.act.txt}</span></div>
+  const st = CFG.ui.status;
+  const fetchAge = DATA.updatedAt ? (Date.now() - new Date(DATA.updatedAt)) / 3600000 : Infinity;
+  const hDay = DATA.health.length ? dayDiff(today(), d(DATA.health[0].date)) : Infinity;
+  const aDay = DATA.acts.length   ? dayDiff(today(), d(DATA.acts[0].date))   : Infinity;
+
+  const lvl = (hDay >= st.healthErrDays || fetchAge >= st.fetchErrH) ? 'err'
+            : (hDay >= st.healthWarnDays || fetchAge >= st.fetchWarnH) ? 'warn' : 'ok';
+  $('#status-dot').className = 'dot ' + lvl;
+  $('#status-sum').textContent = lvl === 'err' ? 'Daten hängen' : lvl === 'warn' ? 'Daten verspätet' : 'aktuell';
+
+  const ago = n => n <= 0 ? 'heute' : n === 1 ? 'gestern' : isFinite(n) ? `vor ${n} Tagen` : '—';
+  const stamp = iso_ => {
+    if (!iso_) return 'nie';
+    const t = new Date(iso_), dd = dayDiff(today(), d(t.toISOString()));
+    const hm = t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return (dd <= 0 ? 'heute' : dd === 1 ? 'gestern' : fmtDay(t)) + ' ' + hm;
+  };
+  const cF = fetchAge >= st.fetchErrH ? 'err' : fetchAge >= st.fetchWarnH ? 'warn' : 'ok';
+  const cH = hDay >= st.healthErrDays ? 'err' : hDay >= st.healthWarnDays ? 'warn' : 'ok';
+  const col = c => c === 'err' ? 'var(--err)' : c === 'warn' ? 'var(--warn)' : 'var(--ok)';
+  const hint = hDay >= st.healthWarnDays
+    ? 'Health hängt. Garmin-Token prüfen: refresh.log auf ukb457.'
+    : fetchAge >= st.fetchWarnH
+    ? 'Fetch läuft nicht. cron-job.org und GitHub Actions prüfen.'
+    : 'Fetch alle 15 Min · Health täglich · Aktivitäten nach dem Fahren.';
+
+  $('#status-panel').innerHTML = `
+    <div class="sp-row"><span style="color:${col(cF)}">Letzter Fetch</span><span class="val">${stamp(DATA.updatedAt)}</span></div>
+    <div class="sp-row"><span style="color:${col(cH)}">Health-Daten</span><span class="val">${ago(hDay)}</span></div>
+    <div class="sp-row"><span style="color:var(--ok)">Letzte Aktivität</span><span class="val">${ago(aDay)}</span></div>
     <div class="sp-hint">${hint}</div>`;
 }
 
-function toggleStatusPanel(ev){
-  ev.stopPropagation();
-  const p=document.getElementById('status-panel');
-  if(p) p.classList.toggle('open');
-}
-document.addEventListener('click', e=>{
-  const p=document.getElementById('status-panel');
-  const s=document.getElementById('nav-status');
-  if(p&&s&&!s.contains(e.target)) p.classList.remove('open');
-});
-
-async function loadData(){
-  try{
-    const r=await fetch('data/activities.json?_='+Date.now());
-    const data=await r.json();
-    document.getElementById('loading').style.display='none';
-    allActivities=(data.activities||[]).filter(a=>!a.hidden);
-    _statusData.act={updated_at:data.updated_at, newestDay:(allActivities[0]&&allActivities[0].date)||null};
+// ── Start ─────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    await loadAll();
+    $('#loading').style.display = 'none';
     renderStatus();
-    renderSummary();
-    renderActivityList();
-    if(window.Chart) renderEFChart();
     renderPlan();
-    renderTodayBanner();
-    // Garmin health data (separate file, non-blocking)
-    try{
-      const hr2=await fetch('data/health.json?_='+Date.now());
-      const hdata=await hr2.json();
-      allHealth=hdata.days||[];
-      // Status: neuesten Health-Tag (Garmin liefert taeglich) fuer die Ampel
-      const _newestHealth=(allHealth||[]).map(x=>x.date).sort().pop()||null;
-      _statusData.health={updated_at:hdata.updated_at, newestDay:_newestHealth};
-      renderStatus();
-      computeLoadModel();
-      renderHealthBanner();
-      renderHealthList();
-      if(window.Chart){ renderFFChart(); renderHrvChart(); }
-      renderTodayBanner();
-    }catch(e){ console.log('health.json noch nicht da'); }
-  }catch(e){
-    document.getElementById('loading').textContent='Keine Daten — GitHub Action noch nicht gelaufen.';
+    renderRides();
+    renderForm();
+  } catch (e) {
+    $('#loading').textContent = 'Fehler beim Laden: ' + e.message;
+    console.error(e);
   }
-}
-
-// ── LOAD MODEL: CTL/ATL/TSB aus TSS + Kombi-Score mit Garmin ──
-let loadModel={};  // date -> {ctl,atl,tsb,tss}
-function dayTSSfor(dateStr){
-  let tss=0;
-  allActivities.filter(a=>a.date===dateStr&&!a.hidden).forEach(a=>{
-    const np=a.np,avgW=a.avg_power,kj=a.kilojoules;
-    if(!np) return;
-    if(kj&&avgW&&avgW>0) tss+=kj*100000*np*np/(avgW*FTP*FTP*3600);
-    else {const dur=a.elapsed_sec||a.duration_sec||0;tss+=dur*np*(np/FTP)/(FTP*3600)*100;}
-  });
-  return tss;
-}
-// Seed-Werte: am 04.05 war Wolf bereits trainiert (Commutes+Ausfahrten),
-// nicht bei Null. CTL/ATL-Startwert verhindert die kuenstliche Ueberzeichnung
-// der Ermuedung in den ersten ~6 Wochen (Einschwing-Phase).
-const LOAD_SEED_CTL=40, LOAD_SEED_ATL=40;
-const SETTLE_DAYS=42;   // Tage bis das Modell als eingeschwungen gilt
-function computeLoadModel(){
-  const start=new Date('2026-05-04'), today=new Date();
-  const days=[];
-  for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
-    const ds=d.toISOString().slice(0,10);
-    days.push({date:ds,tss:dayTSSfor(ds)});
-  }
-  let ctl=LOAD_SEED_CTL, atl=LOAD_SEED_ATL;
-  const kC=1-Math.exp(-1/42), kA=1-Math.exp(-1/7);
-  loadModel={};
-  let idx=0;
-  days.forEach(day=>{
-    ctl=ctl+kC*(day.tss-ctl);
-    atl=atl+kA*(day.tss-atl);
-    // Tage seit Start -> markiere Einschwing-Phase
-    const settling = idx < SETTLE_DAYS;
-    loadModel[day.date]={ctl,atl,tsb:ctl-atl,tss:day.tss,settling};
-    idx++;
-  });
-}
-// Kombi-Score: TSB (Form) + Garmin-Erholung -> Ampel
-function readinessFor(dateStr){
-  const lm=loadModel[dateStr];
-  const h=allHealth.find(x=>x.date===dateStr);
-  const tsb=lm?lm.tsb:null;
-  // Garmin-Komponente: HRV vs 30T-Baseline + Schlaf letzte Nacht
-  let garminScore=0, garminParts=[];
-  if(h){
-    const hrvVals=allHealth.map(x=>x.hrv).filter(Boolean);
-    const hrvBase=hrvVals.length?hrvVals.reduce((s,v)=>s+v,0)/hrvVals.length:null;
-    if(h.hrv&&hrvBase){
-      const dev=(h.hrv-hrvBase)/hrvBase;
-      if(dev>0.05) garminScore+=1; else if(dev<-0.08) garminScore-=1;
-      garminParts.push(`HRV ${h.hrv}${dev<-0.08?' ↓':dev>0.05?' ↑':''}`);
-    }
-    if(h.sleep_h!=null){
-      if(h.sleep_h>=7.5) garminScore+=1; else if(h.sleep_h<6) garminScore-=1;
-      garminParts.push(`${h.sleep_h}h Schlaf`);
-    }
-  }
-  // TSB-Komponente
-  let tsbScore=0;
-  if(tsb!=null){
-    if(tsb>5) tsbScore+=1; else if(tsb<-20) tsbScore-=1;
-  }
-  const total=garminScore+tsbScore;
-  let light,msg;
-  if(total>=2){light='green';msg='Frisch — Vollgas möglich';}
-  else if(total<=-2){light='red';msg='Erschöpft — heute erholen';}
-  else if(total<=-1){light='yellow';msg='Leicht müde — locker halten';}
-  else {light='green';msg='Bereit — normales Training';}
-  return {light,msg,tsb,garminParts,h};
-}
-
-renderPlan();
-renderTodayBanner();
-loadData();
-setInterval(loadData,5*60*1000);
-// ── HEALTH PAGE RENDERERS ──
-function renderHealthBanner(){
-  const el=document.getElementById('health-banner');
-  if(!el) return;
-  const today=new Date().toISOString().slice(0,10);
-  // Nimm heutigen oder letzten verfügbaren Readiness
-  let r=readinessFor(today);
-  if(!r.h){
-    const last=allHealth[0];
-    if(last) r=readinessFor(last.date);
-  }
-  const colors={green:'#34d399',yellow:'#fbbf24',red:'#ef4444'};
-  const c=colors[r.light]||'#888';
-  const lm=loadModel[today]||loadModel[Object.keys(loadModel).pop()]||{};
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--color-background-secondary);border-radius:10px;border-left:4px solid ${c}">
-      <div style="width:14px;height:14px;border-radius:50%;background:${c};flex-shrink:0;box-shadow:0 0 12px ${c}88"></div>
-      <div style="flex:1">
-        <div style="font-size:15px;font-weight:600;color:var(--color-text-primary)">${r.msg}</div>
-        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px">
-          Form (TSB) ${lm.tsb!=null?(lm.tsb>0?'+':'')+lm.tsb.toFixed(0):'—'}
-          ${r.garminParts&&r.garminParts.length?' · '+r.garminParts.join(' · '):''}
-        </div>
-      </div>
-    </div>`;
-}
-
-function renderFFChart(){
-  if(!window.Chart) return;
-  const dates=Object.keys(loadModel).sort();
-  if(!dates.length) return;
-  const t0=new Date('2026-05-04').getTime();
-  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
-  const ctl=dates.map(d=>({x:dayOf(d),y:+loadModel[d].ctl.toFixed(1)}));
-  const atl=dates.map(d=>({x:dayOf(d),y:+loadModel[d].atl.toFixed(1)}));
-  const tsb=dates.map(d=>({x:dayOf(d),y:+loadModel[d].tsb.toFixed(1)}));
-  // Einschwing-Phase: letzter Tag der noch 'settling' ist
-  const settleEnd=dates.filter(d=>loadModel[d].settling).length;
-  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
-  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
-  const ticks={};
-  for(let w=0;w<=10;w++){const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
-    ticks[w*7]=(d.getDate()+'').padStart(2,'0')+'.'+((d.getMonth()+1)+'').padStart(2,'0')+'.';}
-  const ex=Chart.getChart('ff-chart');if(ex)ex.destroy();
-  new Chart(document.getElementById('ff-chart'),{
-    type:'line',
-    data:{datasets:[
-      {label:'_settle',type:'line',yAxisID:'y',
-        data:[{x:0,y:200},{x:settleEnd,y:200}],
-        borderColor:'transparent',backgroundColor:'rgba(150,150,150,0.08)',
-        pointRadius:0,fill:true,order:9},
-      {label:'Fitness',data:ctl,borderColor:'#60a5fa',backgroundColor:'#60a5fa22',borderWidth:2,pointRadius:0,fill:true,tension:.3,yAxisID:'y'},
-      {label:'Fatigue',data:atl,borderColor:'#f97316',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,yAxisID:'y'},
-      {label:'Form',data:tsb,borderColor:'#34d399',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,3],yAxisID:'y1'},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
-        filter:i=>!i.dataset.label.startsWith('_'),
-        callbacks:{
-        title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
-        label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(0)}`}}},
-      scales:{
-        x:{type:'linear',min:0,max:dayOf(dates[dates.length-1])+2,
-          ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
-        y:{position:'left',ticks:{color:cT,font:{size:9}},grid:{color:cG},
-          title:{display:true,text:'Fitness / Fatigue',color:cT,font:{size:9}}},
-        y1:{position:'right',ticks:{color:'#34d399',font:{size:9}},grid:{display:false},
-          title:{display:true,text:'Form (TSB)',color:'#34d399',font:{size:9}}}}
-    }
-  });
-}
-
-function renderHrvChart(){
-  if(!window.Chart||!allHealth.length) return;
-  const t0=new Date('2026-05-04').getTime();
-  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
-  const rows=[...allHealth].filter(h=>h.hrv||h.resting_hr).sort((a,b)=>a.date.localeCompare(b.date));
-  const hrvPts=rows.filter(h=>h.hrv).map(h=>({x:dayOf(h.date),y:h.hrv}));
-  const rhrPts=rows.filter(h=>h.resting_hr).map(h=>({x:dayOf(h.date),y:h.resting_hr}));
-  // EWMA + Band (Standardabweichung der EWMA-Residuen, exp. gewichtet)
-  function ewmaBand(pts, alpha){
-    if(!pts.length) return {line:[],upper:[],lower:[]};
-    let e=pts[0].y, v=0;
-    const line=[],upper=[],lower=[];
-    pts.forEach((p,i)=>{
-      const prev=e;
-      e=e+alpha*(p.y-e);
-      // exp. gewichtete Varianz der Abweichung
-      const dev=p.y-prev;
-      v=(1-alpha)*(v+alpha*dev*dev);
-      const sd=Math.sqrt(v);
-      line.push({x:p.x,y:+e.toFixed(2)});
-      upper.push({x:p.x,y:+(e+sd).toFixed(2)});
-      lower.push({x:p.x,y:+(e-sd).toFixed(2)});
-    });
-    return {line,upper,lower};
-  }
-  const hrvE=ewmaBand(hrvPts,0.1);
-  const rhrE=ewmaBand(rhrPts,0.1);
-  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
-  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
-  const ticks={};
-  for(let w=0;w<=10;w++){const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
-    ticks[w*7]=(d.getDate()+'').padStart(2,'0')+'.'+((d.getMonth()+1)+'').padStart(2,'0')+'.';}
-  const ex=Chart.getChart('hrv-chart');if(ex)ex.destroy();
-  const ds=[
-    // HRV Band (linke Achse)
-    {label:'_hrvU',type:'line',data:hrvE.upper,borderColor:'transparent',backgroundColor:'rgba(167,139,250,0.13)',pointRadius:0,fill:'+1',tension:.4,yAxisID:'y',order:6},
-    {label:'_hrvL',type:'line',data:hrvE.lower,borderColor:'transparent',pointRadius:0,fill:false,tension:.4,yAxisID:'y',order:6},
-    // RHR Band (rechte Achse)
-    {label:'_rhrU',type:'line',data:rhrE.upper,borderColor:'transparent',backgroundColor:'rgba(239,68,68,0.10)',pointRadius:0,fill:'+1',tension:.4,yAxisID:'y1',order:6},
-    {label:'_rhrL',type:'line',data:rhrE.lower,borderColor:'transparent',pointRadius:0,fill:false,tension:.4,yAxisID:'y1',order:6},
-    // EWMA Linien
-    {label:'HRV',type:'line',data:hrvE.line,borderColor:'#a78bfa',borderWidth:2.5,pointRadius:0,fill:false,tension:.4,yAxisID:'y',order:1},
-    {label:'Ruhe-HR',type:'line',data:rhrE.line,borderColor:'#ef4444',borderWidth:2.5,pointRadius:0,fill:false,tension:.4,yAxisID:'y1',order:2},
-    // Tageswerte als Punkte
-    {label:'_hrvP',type:'scatter',data:hrvPts,backgroundColor:'rgba(167,139,250,0.5)',pointRadius:2,yAxisID:'y',order:3},
-    {label:'_rhrP',type:'scatter',data:rhrPts,backgroundColor:'rgba(239,68,68,0.5)',pointRadius:2,yAxisID:'y1',order:4},
-  ];
-  new Chart(document.getElementById('hrv-chart'),{
-    data:{datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false},tooltip:{
-        filter:i=>i.dataset.label==='HRV'||i.dataset.label==='Ruhe-HR',
-        callbacks:{
-          title:items=>{const v=items[0].parsed.x;const d=new Date(t0+v*86400000);return d.toLocaleDateString('de-DE');},
-          label:ctx=>`${ctx.dataset.label} (Trend): ${ctx.parsed.y.toFixed(1)}`}}},
-      scales:{
-        x:{type:'linear',min:0,max:dayOf(rows[rows.length-1].date)+2,
-          ticks:{color:cT,font:{size:9},callback:v=>ticks[v]||'',autoSkip:false},grid:{color:cG}},
-        y:{position:'left',ticks:{color:'#a78bfa',font:{size:9}},grid:{color:cG},title:{display:true,text:'HRV',color:'#a78bfa',font:{size:9}}},
-        y1:{position:'right',ticks:{color:'#ef4444',font:{size:9}},grid:{display:false},title:{display:true,text:'Ruhe-HR',color:'#ef4444',font:{size:9}}}}
-    }
-  });
-}
-
-function renderHealthList(){
-  const el=document.getElementById('health-list');
-  if(!el) return;
-  const colors={green:'#34d399',yellow:'#fbbf24',red:'#ef4444'};
-  // Ampel-Balken (wie zstrip bei Rides): zeigt Readiness-Verlauf-Segment
-  function lightStrip(light, parts){
-    const c=colors[light]||'#888';
-    return `<div class="zstrip" style="display:flex;gap:2px;height:5px;margin-top:8px;border-radius:3px;overflow:hidden">
-      <div style="flex:1;background:${c}"></div>
-    </div>`;
-  }
-  el.innerHTML=allHealth.map(h=>{
-    const r=readinessFor(h.date);
-    const c=colors[r.light]||'#888';
-    const lm=loadModel[h.date];
-    const sleepCol=h.sleep_h>=7.5?'#34d399':h.sleep_h<6?'#ef4444':'';
-    const dimSleep=sleepCol?` style="color:${sleepCol}"`:'';
-    return `<div class="act-item">
-      <div class="act-row">
-        <div class="act-main">
-          <div class="act-date">${fmtDate(h.date)}</div>
-          <div class="act-name">${r.msg}</div>
-          <div class="act-metrics">
-            <div class="am">HRV <b>${h.hrv||'—'}</b></div>
-            <div class="asep">·</div>
-            <div class="am">RHR <b>${h.resting_hr||'—'}</b><span class="u"> bpm</span></div>
-            <div class="asep">·</div>
-            <div class="am"${dimSleep}>Schlaf <b>${h.sleep_h!=null?h.sleep_h:'—'}</b><span class="u"> h</span></div>
-            ${h.sleep_score?`<div class="asep">·</div><div class="am">SS <b>${h.sleep_score}</b></div>`:''}
-            ${h.stress_avg!=null?`<div class="asep">·</div><div class="am">Stress <b>${h.stress_avg}</b></div>`:''}
-            ${(h.bb_low!=null||h.bb_high!=null)?`<div class="asep">·</div><div class="am">BB <b>${h.bb_low||'—'}–${h.bb_high||'—'}</b></div>`:''}
-            ${lm?`<div class="asep">·</div><div class="am">TSB <b style="color:${lm.tsb>0?'#34d399':'#f97316'}">${lm.tsb>0?'+':''}${lm.tsb.toFixed(0)}</b></div>`:''}
-          </div>
-        </div>
-        ${lightStrip(r.light)}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderEFChart(){
-  if(!window.Chart) return;
-  const C=CONFIG.efTrend;
-  const acts=allActivities.filter(a=>
-    a.has_power&&a.ef_gesamt&&a.ef_gesamt>0.8&&a.ef_gesamt<2.5
-    &&(a.duration_sec||0)>=C.minDurMin*60
-  );
-  if(!acts.length) return;
-  const t0=new Date('2026-05-04').getTime();
-  const dayOf=d=>Math.round((new Date(d).getTime()-t0)/86400000);
-  const logSpan=Math.log(C.dotMaxDur/C.dotMinDur);
-  const logR=dur=>{
-    const t=Math.max(0,Math.min(1,Math.log(Math.max(dur,C.dotMinDur)/C.dotMinDur)/logSpan));
-    return Math.round(C.dotMinR+(C.dotMaxR-C.dotMinR)*t);
-  };
-  const alpha=dur=>+(C.alphaMin+(C.alphaMax-C.alphaMin)*Math.min(1,Math.log(Math.max(dur,C.dotMinDur)/C.dotMinDur)/logSpan)).toFixed(2);
-  const col=(name,dur)=>{
-    const a=alpha(dur);
-    if(name.includes('Bonn')||name.includes('Saar')) return 'rgba(150,150,150,'+a+')';
-    if(name.includes('FTP')||name.includes('Rampe')||name.includes('Test')) return 'rgba(180,60,220,'+a+')';
-    if(dur>=90) return 'rgba(249,115,22,'+a+')';
-    return 'rgba(96,165,250,'+a+')';
-  };
-  const pts=acts.map(a=>{
-    const dur=(a.duration_sec||0)/60;
-    return {x:dayOf(a.date),y:+a.ef_gesamt,r:logR(dur),
-            bg:col(a.name||'',dur),name:a.name||'',dur:Math.round(dur)};
-  });
-  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),n=xs.length;
-  const sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
-  const sxy=xs.reduce((a,p,i)=>a+p*ys[i],0),sx2=xs.reduce((a,p)=>a+p*p,0);
-  const sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;
-  const x0=Math.min(...xs),x1=Math.max(...xs);
-  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const cT=isDark?'rgba(255,255,255,.4)':'rgba(0,0,0,.35)';
-  const cG=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
-  const ticks={};
-  for(let w=0;w<=16;w++){
-    const d=new Date('2026-05-04');d.setDate(d.getDate()+w*7);
-    ticks[w*7]=(d.getDate()).toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.';
-  }
-  const box=document.getElementById('ef-chart-box');
-  if(box) box.style.height=C.height+'px';
-  const ex=Chart.getChart('ef-chart');if(ex)ex.destroy();
-  const efChart=new Chart(document.getElementById('ef-chart'),{
-    type:'bubble',
-    data:{datasets:[
-      {label:'EF',data:pts,backgroundColor:pts.map(p=>p.bg),borderWidth:0},
-      ...(C.showTrend?[{label:'Trend',type:'line',
-       data:[{x:x0,y:+(ic+sl*x0).toFixed(3)},{x:x1,y:+(ic+sl*x1).toFixed(3)}],
-       borderColor:'rgba(249,115,22,0.35)',borderWidth:1.5,borderDash:[5,4],
-       pointRadius:0,fill:false,tension:0,order:-1}]:[]),
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:false,
-      layout:{padding:{top:8,right:8,bottom:4,left:4}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
-        const p=pts[ctx.dataIndex];
-        return p?p.name+' \xb7 '+p.dur+'min \xb7 EF '+ctx.parsed.y.toFixed(3):ctx.dataset.label;
-      }}}},
-      onClick:(evt,elements)=>{
-        if(!elements.length) return;
-        const idx=elements[0].index;
-        const act=acts[idx];
-        if(!act) return;
-        showPage('rides',document.querySelector('.tab:last-child'));
-        setTimeout(()=>selectRide(act.id),50);
-      },
-      scales:{
-        x:{min:x0-2,max:x1+4,
-          ticks:{color:cT,font:{size:9},callback:function(v){return ticks[v]||'';},autoSkip:false},
-          grid:{color:cG}},
-        y:{min:C.yMin,max:C.yMax,
-          ticks:{color:cT,font:{size:9},callback:function(v){return v.toFixed(2);}},
-          grid:{color:cG},
-          title:{display:true,text:'EF W/bpm',color:cT,font:{size:9}}}
-      }
-    }
-  });
-}
-
+})();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="renderEFChart();if(allHealth.length){renderFFChart();renderHrvChart();}"></script>
 </body>
 </html>
