@@ -23,38 +23,56 @@ function canvas(box, h, forceW) {
   return { ctx, w, h };
 }
 
-/* Achsen mit Ticks und Beschriftung. fx/fy formatieren die Werte. */
-function frame(ctx, w, h, pad, xr, yr, fx, fy, xlab, ylab) {
-  ctx.strokeStyle = CSSVAR('--border2'); ctx.lineWidth = 1;
+/* Achsenrahmen. X/Y sind fertige Skalenfunktionen (linear oder log), die Ticks
+ * kommen als Liste [{v, l}]. Ein Code fuer beide Achsentypen. */
+function frame(ctx, w, h, pad, X, Y, xTicks, yTicks, xlab, ylab) {
+  ctx.font = '9px ' + CSSVAR('--mono');
+  // Gitter
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  yTicks.forEach(t => {
+    const y = Y(t.v);
+    if (y < pad.t || y > h - pad.b) return;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+  });
+  xTicks.forEach(t => {
+    const x = X(t.v);
+    if (x < pad.l || x > w - pad.r) return;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, h - pad.b); ctx.stroke();
+  });
+  // Achsen
+  ctx.strokeStyle = CSSVAR('--border2');
   ctx.beginPath();
   ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, h - pad.b); ctx.lineTo(w - pad.r, h - pad.b);
   ctx.stroke();
-  ctx.font = '9px ' + CSSVAR('--mono');
+  // Beschriftung
   ctx.fillStyle = CSSVAR('--t4');
-  const X = v => pad.l + (v - xr[0]) / (xr[1] - xr[0]) * (w - pad.l - pad.r);
-  const Y = v => h - pad.b - (v - yr[0]) / (yr[1] - yr[0]) * (h - pad.t - pad.b);
-  // y-Ticks
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  for (let i = 0; i <= 4; i++) {
-    const v = yr[0] + (yr[1] - yr[0]) * i / 4, y = Y(v);
-    ctx.fillText(fy(v), pad.l - 5, y);
-    ctx.strokeStyle = 'rgba(255,255,255,.05)';
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
-  }
-  // x-Ticks
+  yTicks.forEach(t => {
+    const y = Y(t.v);
+    if (y < pad.t - 2 || y > h - pad.b + 2) return;
+    ctx.fillText(t.l, pad.l - 5, y);
+  });
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (let i = 0; i <= 4; i++) {
-    const v = xr[0] + (xr[1] - xr[0]) * i / 4;
-    ctx.fillText(fx(v), X(v), h - pad.b + 5);
-  }
+  xTicks.forEach(t => {
+    const x = X(t.v);
+    if (x < pad.l - 2 || x > w - pad.r + 2) return;
+    ctx.fillText(t.l, x, h - pad.b + 5);
+  });
   ctx.fillStyle = CSSVAR('--t5');
-  if (xlab) { ctx.textAlign = 'center'; ctx.fillText(xlab, (pad.l + w - pad.r) / 2, h - 10); }
+  if (xlab) { ctx.textAlign = 'center'; ctx.fillText(xlab, (pad.l + w - pad.r) / 2, h - 11); }
   if (ylab) {
     ctx.save(); ctx.translate(9, (pad.t + h - pad.b) / 2); ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(ylab, 0, 0); ctx.restore();
   }
-  return { X, Y };
 }
+
+/* Skalen. lin/log liefern eine Funktion Wert -> Pixel. */
+const linScale = (d0, d1, p0, p1) => v => p0 + (v - d0) / (d1 - d0) * (p1 - p0);
+const logScale = (d0, d1, p0, p1) => {
+  const l0 = Math.log(d0), l1 = Math.log(d1);
+  return v => p0 + (Math.log(Math.max(v, d0)) - l0) / (l1 - l0) * (p1 - p0);
+};
+const durLabel = s => s < 60 ? s + 's' : s < 3600 ? (s / 60) + 'm' : (s / 3600) + 'h';
 
 function smooth(arr, win) {
   const out = new Array(arr.length).fill(null);
@@ -81,7 +99,7 @@ function elapsedAxis(s) {
 // ── Detail: Leistung und HF ueber die echte Zeit ────────────────────────────
 function drawTrace(box, s) {
   const { ctx, w, h } = canvas(box, 200);
-  const pad = { l: 46, r: 46, t: 10, b: 30 };
+  const pad = { l: 46, r: 46, t: 10, b: 32 };
   const T = elapsedAxis(s);
   const W = smooth(s.w || [], 6), H = s.hr || [];
   const wv = W.filter(x => x != null), hv = H.filter(x => x != null);
@@ -89,27 +107,30 @@ function drawTrace(box, s) {
   const wMax = Math.max(100, ...wv) * 1.05;
   const hLo = hv.length ? Math.min(...hv) - 5 : 60, hHi = hv.length ? Math.max(...hv) + 5 : 180;
   const tMax = T[s.n - 1] || 1;
-  const A = frame(ctx, w, h, pad, [0, tMax], [0, wMax],
-                  v => Math.round(v / 60) + '′', v => Math.round(v), 'Zeit (mit Pausen)', 'Watt');
-  const YH = v => h - pad.b - (v - hLo) / (hHi - hLo) * (h - pad.t - pad.b);
+
+  const X = linScale(0, tMax, pad.l, w - pad.r);
+  const Y = linScale(0, wMax, h - pad.b, pad.t);
+  const YH = linScale(hLo, hHi, h - pad.b, pad.t);
+  const xT = [], step = tMax / 5;
+  for (let i = 0; i <= 5; i++) xT.push({ v: i * step, l: Math.round(i * step / 60) + '′' });
+  const yT = [0, .25, .5, .75, 1].map(f => ({ v: f * wMax, l: Math.round(f * wMax) }));
+  frame(ctx, w, h, pad, X, Y, xT, yT, 'Zeit inkl. Pausen', 'Watt');
 
   // Pausen als graue Baender
   (s.gaps || []).forEach(([i, sec]) => {
     if (i >= s.n) return;
-    const x0 = A.X(T[i] - sec), x1 = A.X(T[i]);
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    const x0 = X(T[i] - sec), x1 = X(T[i]);
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
     ctx.fillRect(x0, pad.t, Math.max(1, x1 - x0), h - pad.t - pad.b);
   });
-  // Watt (Luecken bleiben Luecken)
-  ctx.beginPath(); let up = false;
-  W.forEach((v, i) => { if (v == null) { up = false; return; }
-    up ? ctx.lineTo(A.X(T[i]), A.Y(v)) : ctx.moveTo(A.X(T[i]), A.Y(v)); up = true; });
-  ctx.strokeStyle = 'rgba(96,165,250,.85)'; ctx.lineWidth = 1; ctx.stroke();
-  // HF
-  ctx.beginPath(); up = false;
-  H.forEach((v, i) => { if (v == null) { up = false; return; }
-    up ? ctx.lineTo(A.X(T[i]), YH(v)) : ctx.moveTo(A.X(T[i]), YH(v)); up = true; });
-  ctx.strokeStyle = '#e05555'; ctx.lineWidth = 1.4; ctx.stroke();
+  const trace = (arr, sc, col, lw) => {
+    ctx.beginPath(); let up = false;
+    arr.forEach((v, i) => { if (v == null) { up = false; return; }
+      up ? ctx.lineTo(X(T[i]), sc(v)) : ctx.moveTo(X(T[i]), sc(v)); up = true; });
+    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke();
+  };
+  trace(W, Y, 'rgba(96,165,250,.85)', 1);
+  trace(H, YH, '#e05555', 1.4);
   ctx.font = '9px ' + CSSVAR('--mono'); ctx.fillStyle = '#e05555';
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillText(Math.round(hHi) + ' bpm', w - pad.r + 4, pad.t + 4);
@@ -121,13 +142,38 @@ function drawTrace(box, s) {
  * Sonst zeigt die Wolke vor allem die Traegheit des Herzens statt einen
  * Zusammenhang. */
 const SQ_MAX = 340;   // Kantenlaenge der quadratischen Detailplots
+
+/* Nur Punkte, an denen die Leistung stabil und die HF eingeschwungen ist.
+ * Sonst zeigt die Wolke vor allem die Traegheit des Herzens statt einen
+ * Zusammenhang. Achsen sind FEST (config), damit Fahrten vergleichbar sind. */
 function drawScatter(box, s) {
   const side = Math.min(box.clientWidth || 340, SQ_MAX);
   const { ctx, w, h } = canvas(box, side, side);
-  const pad = { l: 46, r: 12, t: 12, b: 34 };
-  const W = s.w || [], H = s.hr || [];
+  const pad = { l: 44, r: 10, t: 10, b: 34 };
+  const C = CFG.ui.detail.scatter;
+  const yMax = C.yMax || CFG.athlete.hrmax;
+  const X = linScale(C.xMin, C.xMax, pad.l, w - pad.r);
+  const Y = linScale(C.yMin, yMax, h - pad.b, pad.t);
+  const xT = [], yT = [];
+  for (let v = C.xMin; v <= C.xMax; v += 100) xT.push({ v, l: v });
+  for (let v = C.yMin; v <= yMax; v += 20) yT.push({ v, l: v });
+  frame(ctx, w, h, pad, X, Y, xT, yT, 'Watt', 'HF (bpm)');
+
+  // Zonengrenzen
+  CFG.zones.power.bounds.forEach((b, i) => {
+    if (!i) return;
+    const x = b * CFG.athlete.ftp;
+    if (x < C.xMin || x > C.xMax) return;
+    ctx.beginPath(); ctx.moveTo(X(x), pad.t); ctx.lineTo(X(x), h - pad.b);
+    ctx.strokeStyle = CFG.zones.power.colors[i] + '77'; ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = CFG.zones.power.colors[i]; ctx.font = '8px ' + CSSVAR('--mono');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('Z' + (i + 1), X(x), pad.t + 1);
+  });
+
   const win = Math.max(3, Math.round(30 / s.step));
-  const pts = [];
+  const W = s.w || [], H = s.hr || [], pts = [];
   for (let i = win; i < s.n; i++) {
     const ww = W.slice(i - win, i + 1), hh = H.slice(i - win, i + 1);
     if (ww.some(x => x == null) || hh.some(x => x == null)) continue;
@@ -139,87 +185,87 @@ function drawScatter(box, s) {
     if (Math.abs(hh[0] - hh[hh.length - 1]) > 6) continue;
     pts.push([W[i], H[i]]);
   }
+  ctx.font = '9px ' + CSSVAR('--mono');
   if (pts.length < 12) {
-    frame(ctx, w, h, pad, [0, 400], [90, 180], v => Math.round(v), v => Math.round(v), 'Watt', 'HF (bpm)');
     ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('zu wenige stabile Phasen', w / 2, h / 2);
     return;
   }
-  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
-  const xr = [Math.min(...xs) - 10, Math.max(...xs) + 10];
-  const yr = [Math.min(...ys) - 4, Math.max(...ys) + 4];
-  const A = frame(ctx, w, h, pad, xr, yr, v => Math.round(v), v => Math.round(v), 'Watt', 'HF (bpm)');
-
-  // Zonengrenzen als senkrechte Linien
-  CFG.zones.power.bounds.forEach((b, i) => {
-    if (!i) return;
-    const x = b * CFG.athlete.ftp;
-    if (x < xr[0] || x > xr[1]) return;
-    ctx.beginPath(); ctx.moveTo(A.X(x), pad.t); ctx.lineTo(A.X(x), h - pad.b);
-    ctx.strokeStyle = CFG.zones.power.colors[i] + '66'; ctx.setLineDash([3, 3]);
-    ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = CFG.zones.power.colors[i]; ctx.font = '8px ' + CSSVAR('--mono');
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText('Z' + (i + 1), A.X(x), pad.t + 1);
-  });
+  // Clipping: feste Achsen koennen Punkte ausserhalb lassen.
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); ctx.clip();
   ctx.fillStyle = 'rgba(96,165,250,.5)';
-  pts.forEach(p => { ctx.beginPath(); ctx.arc(A.X(p[0]), A.Y(p[1]), 2.2, 0, 7); ctx.fill(); });
-  // Regression
-  const n = pts.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 2.2, 0, 7); ctx.fill(); });
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), n = pts.length;
+  const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
   const varx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+  let r2 = null;
   if (varx) {
-    const b = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / varx, a0 = my - b * mx;
+    const bb = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / varx, a0 = my - bb * mx;
     const ssTot = ys.reduce((s2, y) => s2 + (y - my) ** 2, 0);
-    const ssRes = pts.reduce((s2, p) => s2 + (p[1] - (a0 + b * p[0])) ** 2, 0);
-    ctx.beginPath(); ctx.moveTo(A.X(xr[0]), A.Y(a0 + b * xr[0]));
-    ctx.lineTo(A.X(xr[1]), A.Y(a0 + b * xr[1]));
+    const ssRes = pts.reduce((s2, p) => s2 + (p[1] - (a0 + bb * p[0])) ** 2, 0);
+    r2 = 1 - ssRes / ssTot;
+    ctx.beginPath(); ctx.moveTo(X(C.xMin), Y(a0 + bb * C.xMin));
+    ctx.lineTo(X(C.xMax), Y(a0 + bb * C.xMax));
     ctx.strokeStyle = CSSVAR('--ok'); ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = CSSVAR('--t3'); ctx.font = '9px ' + CSSVAR('--mono');
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillText('R² ' + (1 - ssRes / ssTot).toFixed(2) + ' · n=' + n, pad.l + 5, pad.t + 2);
   }
+  ctx.restore();
+  const off = pts.filter(p => p[0] > C.xMax || p[1] > yMax || p[0] < C.xMin || p[1] < C.yMin).length;
+  ctx.fillStyle = CSSVAR('--t3'); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText((r2 != null ? 'R² ' + r2.toFixed(2) + ' · ' : '') + 'n=' + n
+               + (off ? ' · ' + off + ' außerhalb' : ''), pad.l + 5, pad.t + 2);
 }
 
 // ── Detail: MMP-Kurve ───────────────────────────────────────────────────────
+/* MMP mit festen log-log-Achsen (config). yMin kann nicht 0 sein: log(0)
+ * existiert nicht. Feste Achsen machen Fahrten direkt vergleichbar. */
 function drawMMP(box, act) {
   const side = Math.min(box.clientWidth || 340, SQ_MAX);
   const { ctx, w, h } = canvas(box, side, side);
-  const pad = { l: 46, r: 12, t: 12, b: 34 };
-  const pc = act.power_curve || {};
-  const ks = Object.keys(pc).map(Number).sort((a, b) => a - b);
-  if (!ks.length) {
-    frame(ctx, w, h, pad, [0, 1], [0, 1], () => '', () => '', 'Dauer', 'Watt');
-    ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('keine Leistungsdaten', w / 2, h / 2);
-    return;
-  }
-  const yMax = Math.max(...ks.map(k => pc[k])) * 1.08;
-  const lx = k => Math.log(k);
-  const xr = [lx(ks[0]), lx(ks[ks.length - 1])];
-  const durLab = v => { const k = Math.exp(v);
-    return k < 60 ? Math.round(k) + 's' : k < 3600 ? Math.round(k / 60) + 'm' : (k / 3600).toFixed(0) + 'h'; };
-  const A = frame(ctx, w, h, pad, xr, [0, yMax], durLab, v => Math.round(v), 'Dauer (log)', 'Watt');
+  const pad = { l: 44, r: 10, t: 10, b: 34 };
+  const C = CFG.ui.detail.mmp;
+  const X = logScale(C.xMin, C.xMax, pad.l, w - pad.r);
+  const Y = logScale(C.yMin, C.yMax, h - pad.b, pad.t);
+  frame(ctx, w, h, pad,
+        X, Y,
+        C.xTicks.map(v => ({ v, l: durLabel(v) })),
+        C.yTicks.map(v => ({ v, l: v })),
+        'Dauer (log)', 'Watt (log)');
 
+  // Zonengrenzen
   CFG.zones.power.bounds.forEach((b, i) => {
     if (!i) return;
     const y = b * CFG.athlete.ftp;
-    if (y > yMax) return;
-    ctx.beginPath(); ctx.moveTo(pad.l, A.Y(y)); ctx.lineTo(w - pad.r, A.Y(y));
-    ctx.strokeStyle = CFG.zones.power.colors[i] + '66'; ctx.setLineDash([3, 3]);
+    if (y < C.yMin || y > C.yMax) return;
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(y)); ctx.lineTo(w - pad.r, Y(y));
+    ctx.strokeStyle = CFG.zones.power.colors[i] + '77'; ctx.setLineDash([3, 3]);
     ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = CFG.zones.power.colors[i]; ctx.font = '8px ' + CSSVAR('--mono');
     ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillText('Z' + (i + 1), pad.l + 3, A.Y(y) - 1);
+    ctx.fillText('Z' + (i + 1), pad.l + 3, Y(y) - 1);
   });
+
+  const pc = act.power_curve || {};
+  const ks = Object.keys(pc).map(Number).sort((a, b) => a - b)
+             .filter(k => k >= C.xMin && k <= C.xMax);
+  if (!ks.length) {
+    ctx.fillStyle = CSSVAR('--t5'); ctx.font = '9px ' + CSSVAR('--mono');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('keine Leistungsdaten', w / 2, h / 2);
+    return;
+  }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); ctx.clip();
   ctx.beginPath();
-  ks.forEach((k, i) => i ? ctx.lineTo(A.X(lx(k)), A.Y(pc[k])) : ctx.moveTo(A.X(lx(k)), A.Y(pc[k])));
+  ks.forEach((k, i) => i ? ctx.lineTo(X(k), Y(pc[k])) : ctx.moveTo(X(k), Y(pc[k])));
   ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1.6; ctx.stroke();
   ctx.fillStyle = '#ddd'; ctx.font = '8px ' + CSSVAR('--mono');
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   ks.forEach(k => {
-    ctx.beginPath(); ctx.arc(A.X(lx(k)), A.Y(pc[k]), 2.5, 0, 7); ctx.fill();
-    ctx.fillText(pc[k] + 'W', A.X(lx(k)), A.Y(pc[k]) - 5);
+    ctx.beginPath(); ctx.arc(X(k), Y(pc[k]), 2.5, 0, 7); ctx.fill();
+    ctx.fillText(pc[k], X(k), Y(pc[k]) - 5);
   });
+  ctx.restore();
 }
 
 // ── Zonentabelle aus dem Histogramm ─────────────────────────────────────────
