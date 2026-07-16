@@ -1,162 +1,158 @@
 /* form.js — Form-Seite.
  *
- * Belastungsmodell (CTL/ATL/TSB), Erholungsmarker aus Garmin und der
- * EF-Trend. Alles aus dem Index, keine Serie noetig.
+ * Belastungsmodell (CTL/ATL/TSB) und Erholungsmarker. Beide Charts laufen ueber
+ * Chart.js, damit Achsen, Ticks und Tooltips stimmen.
  */
 
 // ── Belastungsmodell ────────────────────────────────────────────────────────
-/* Impulse-Response nach Banister: CTL = 42-Tage-Exponentialmittel der TSS
- * (Fitness), ATL = 7-Tage (Ermuedung), TSB = CTL - ATL (Form).
- * Beide Zeitkonstanten sind Konvention, keine Messung. */
+/* Impulse-Response nach Banister: CTL = Exponentialmittel der TSS ueber
+ * CTL_TAU Tage (Fitness), ATL ueber ATL_TAU (Ermuedung), TSB = CTL - ATL
+ * (Form). Die Zeitkonstanten sind Konvention, keine Messung. */
 const CTL_TAU = 42, ATL_TAU = 7;
 
 function loadModel() {
   if (!DATA.acts.length) return [];
   const byDay = {};
   DATA.acts.forEach(a => { byDay[a.date] = (byDay[a.date] || 0) + (a.tss || 0); });
-  const from = d(DATA.acts[DATA.acts.length - 1].date);
-  const to = today();
   const out = [];
   let ctl = 0, atl = 0;
-  for (let dt = new Date(from); dt <= to; dt = addDays(dt, 1)) {
+  for (let dt = d(DATA.acts[DATA.acts.length - 1].date); dt <= today(); dt = addDays(dt, 1)) {
     const tss = byDay[iso(dt)] || 0;
     ctl += (tss - ctl) / CTL_TAU;
     atl += (tss - atl) / ATL_TAU;
-    out.push({ date: iso(dt), tss, ctl, atl, tsb: ctl - atl });
+    out.push({ date: iso(dt), tss, ctl: +ctl.toFixed(1), atl: +atl.toFixed(1), tsb: +(ctl - atl).toFixed(1) });
   }
   return out;
 }
 
-// ── Erholung ────────────────────────────────────────────────────────────────
-/* Vergleicht die letzten Werte mit dem Median der Vorwochen. HRV und Ruhepuls
- * sagen etwas ueber das vegetative Nervensystem — NICHT ueber Muskelglykogen
- * oder muskulaere Ermuedung. Nach einem harten Rennen kann die HRV laengst
- * wieder gut sein, waehrend die Beine leer sind. */
+/* EWMA mit exponentiell gewichteter Streuung -> Trendlinie plus Band.
+ * Das Band zeigt, was normale Schwankung ist: nur was daraus ausbricht,
+ * ist ein Signal. */
+function ewmaBand(pts, alpha) {
+  if (!pts.length) return { line: [], upper: [], lower: [] };
+  let e = pts[0].y, v = 0;
+  const line = [], upper = [], lower = [];
+  pts.forEach(p => {
+    const prev = e;
+    e = e + alpha * (p.y - e);
+    const dev = p.y - prev;
+    v = (1 - alpha) * (v + alpha * dev * dev);
+    const sd = Math.sqrt(v);
+    line.push({ x: p.x, y: +e.toFixed(2) });
+    upper.push({ x: p.x, y: +(e + sd).toFixed(2) });
+    lower.push({ x: p.x, y: +(e - sd).toFixed(2) });
+  });
+  return { line, upper, lower };
+}
+
 function baseline(key, days) {
   const lo = addDays(today(), -days);
-  const v = DATA.health.filter(x => d(x.date) >= lo && x[key] != null).map(x => x[key]).sort((a, b) => a - b);
+  const v = DATA.health.filter(x => d(x.date) >= lo && x[key] != null)
+                       .map(x => x[key]).sort((a, b) => a - b);
   return v.length ? v[Math.floor(v.length / 2)] : null;
 }
 
+const AX = (t0, ttl) => ({
+  x: { ticks: { color: CSSVAR('--t4'), font: { size: 9 },
+                callback: v => fmtDay(addDays(new Date(t0), v)), maxTicksLimit: 9 },
+       grid: { color: 'rgba(255,255,255,.05)' } },
+  y: { title: { display: true, text: ttl, color: CSSVAR('--t5'), font: { size: 10 } },
+       ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+       grid: { color: 'rgba(255,255,255,.05)' } },
+});
+
 // ── Charts ──────────────────────────────────────────────────────────────────
-function drawFF(box) {
+let _ff = null, _hrv = null;
+
+function renderFF() {
+  const box = $('#ff-box');
   const m = loadModel();
-  if (m.length < 7) return;
-  const { ctx, w, h } = canvas(box, 220);
-  const pad = { l: 40, r: 40, t: 12, b: 22 };
-  const maxY = Math.max(30, ...m.map(x => Math.max(x.ctl, x.atl))) * 1.1;
-  const tsbAbs = Math.max(20, ...m.map(x => Math.abs(x.tsb)));
-  const X = i => pad.l + i / (m.length - 1) * (w - pad.l - pad.r);
-  const Y = v => h - pad.b - v / maxY * (h - pad.t - pad.b);
-  const YT = v => (h - pad.b + pad.t) / 2 - v / tsbAbs * ((h - pad.t - pad.b) / 2);
-
-  axes(ctx, w, h, pad);
-  // TSB als Flaeche um die Nulllinie
-  ctx.beginPath(); ctx.moveTo(X(0), YT(0));
-  m.forEach((x, i) => ctx.lineTo(X(i), YT(x.tsb)));
-  ctx.lineTo(X(m.length - 1), YT(0)); ctx.closePath();
-  ctx.fillStyle = 'rgba(120,120,120,.15)'; ctx.fill();
-
-  const line = (key, col, lw) => {
-    ctx.beginPath();
-    m.forEach((x, i) => i ? ctx.lineTo(X(i), Y(x[key])) : ctx.moveTo(X(i), Y(x[key])));
-    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke();
-  };
-  line('atl', '#e0663c', 1.2);
-  line('ctl', '#4a9eff', 2);
-
-  const last = m[m.length - 1];
-  ctx.font = '10px ' + CSSVAR('--mono'); ctx.textAlign = 'left';
-  ctx.fillStyle = '#4a9eff'; ctx.fillText('CTL ' + last.ctl.toFixed(0), pad.l + 4, pad.t + 10);
-  ctx.fillStyle = '#e0663c'; ctx.fillText('ATL ' + last.atl.toFixed(0), pad.l + 4, pad.t + 22);
-  ctx.fillStyle = last.tsb >= 0 ? CSSVAR('--ok') : CSSVAR('--warn');
-  ctx.fillText('TSB ' + last.tsb.toFixed(0), pad.l + 4, pad.t + 34);
-}
-
-function drawHrv(box) {
-  const H = DATA.health.filter(x => x.hrv != null).slice().reverse();
-  if (H.length < 5) return;
-  const { ctx, w, h } = canvas(box, 150);
-  const pad = { l: 34, r: 12, t: 10, b: 20 };
-  const v = H.map(x => x.hrv);
-  const lo = Math.min(...v) - 3, hi = Math.max(...v) + 3;
-  const X = i => pad.l + i / (H.length - 1) * (w - pad.l - pad.r);
-  const Y = x => h - pad.b - (x - lo) / (hi - lo) * (h - pad.t - pad.b);
-  axes(ctx, w, h, pad);
-  // Median als Referenz
-  const med = baseline('hrv', 30);
-  if (med) {
-    ctx.beginPath(); ctx.moveTo(pad.l, Y(med)); ctx.lineTo(w - pad.r, Y(med));
-    ctx.strokeStyle = CSSVAR('--t5'); ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
-  }
-  ctx.beginPath();
-  H.forEach((x, i) => i ? ctx.lineTo(X(i), Y(x.hrv)) : ctx.moveTo(X(i), Y(x.hrv)));
-  ctx.strokeStyle = '#7ec8a0'; ctx.lineWidth = 1.5; ctx.stroke();
-  H.forEach((x, i) => { ctx.beginPath(); ctx.arc(X(i), Y(x.hrv), 2, 0, 7);
-                        ctx.fillStyle = '#7ec8a0'; ctx.fill(); });
-  ctx.font = '9px ' + CSSVAR('--mono'); ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'right';
-  ctx.fillText(hi.toFixed(0), pad.l - 4, pad.t + 8);
-  ctx.fillText(lo.toFixed(0), pad.l - 4, h - pad.b);
-  if (med) { ctx.textAlign = 'left'; ctx.fillText('Median ' + med, pad.l + 4, Y(med) - 3); }
-}
-
-/* EF-Trend. Nur Fahrten ab EF_MIN_MIN Minuten: bei kurzen, intensiven Fahrten
- * ist der EF systematisch aufgeblaeht, weil die Herzfrequenz der Leistung
- * 30-60 s hinterherhinkt. Ein 20-Minuten-Antritt am Berg sieht dann aus wie
- * Weltklasse-Effizienz. Solche Punkte gehoeren nicht in einen Fitness-Trend. */
-const EF_MIN_MIN = 60;
-
-function drawEF(box) {
-  const A = DATA.acts.filter(a => a.ef && (a.moving_sec || 0) >= EF_MIN_MIN * 60)
-                     .slice().reverse();
-  const { ctx, w, h } = canvas(box, 230);
-  const pad = { l: 40, r: 14, t: 12, b: 24 };
-  axes(ctx, w, h, pad);
-  ctx.font = '10px ' + CSSVAR('--mono');
-  if (A.length < 3) {
-    ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'center';
-    ctx.fillText('zu wenige Fahrten ab ' + EF_MIN_MIN + ' min', w / 2, h / 2);
-    return;
-  }
-  const t0 = d(A[0].date), t1 = today();
-  const span = Math.max(1, dayDiff(t1, t0));
-  const v = A.map(a => a.ef);
-  const lo = Math.min(...v) - .05, hi = Math.max(...v) + .05;
-  const X = a => pad.l + dayDiff(d(a.date), t0) / span * (w - pad.l - pad.r);
-  const Y = e => h - pad.b - (e - lo) / (hi - lo) * (h - pad.t - pad.b);
-
-  // Physiologische Orientierung: FTP / Schwellen-HF
-  const ceiling = CFG.athlete.ftp / (0.90 * CFG.athlete.hrmax);
-  if (ceiling > lo && ceiling < hi) {
-    ctx.beginPath(); ctx.moveTo(pad.l, Y(ceiling)); ctx.lineTo(w - pad.r, Y(ceiling));
-    ctx.strokeStyle = 'rgba(96,165,250,.5)'; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(96,165,250,.7)'; ctx.textAlign = 'right';
-    ctx.fillText('FTP / Schwellen-HF ≈ ' + ceiling.toFixed(2), w - pad.r - 3, Y(ceiling) - 4);
-  }
-  // Punkte, Groesse nach Dauer
-  A.forEach(a => {
-    const r = Math.min(7, 2.5 + Math.log(a.moving_sec / 3600 + 1) * 3);
-    ctx.beginPath(); ctx.arc(X(a), Y(a.ef), r, 0, 7);
-    ctx.fillStyle = 'rgba(232,163,61,.75)'; ctx.fill();
+  if (!box || !window.Chart || m.length < 7) return;
+  box.style.height = '300px';
+  box.innerHTML = '<canvas id="ff-canvas"></canvas>';
+  const t0 = d(m[0].date).getTime();
+  const X = r => Math.round((d(r.date).getTime() - t0) / 86400000);
+  if (_ff) _ff.destroy();
+  _ff = new Chart($('#ff-canvas'), {
+    data: {
+      datasets: [
+        { type: 'bar', label: 'TSS', data: m.map(r => ({ x: X(r), y: r.tss })),
+          backgroundColor: 'rgba(255,255,255,.10)', yAxisID: 'y', barThickness: 2, order: 3 },
+        { type: 'line', label: 'CTL (Fitness)', data: m.map(r => ({ x: X(r), y: r.ctl })),
+          borderColor: '#4a9eff', backgroundColor: 'rgba(74,158,255,.12)',
+          borderWidth: 2, pointRadius: 0, fill: true, yAxisID: 'y', order: 1 },
+        { type: 'line', label: 'ATL (Ermüdung)', data: m.map(r => ({ x: X(r), y: r.atl })),
+          borderColor: '#e0663c', borderWidth: 1.3, pointRadius: 0, fill: false, yAxisID: 'y', order: 1 },
+        { type: 'line', label: 'TSB (Form)', data: m.map(r => ({ x: X(r), y: r.tsb })),
+          borderColor: '#9aa5b1', borderWidth: 1.2, borderDash: [4, 3], pointRadius: 0,
+          fill: false, yAxisID: 'y1', order: 2 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: AX(t0, '').x,
+        y: { position: 'left', title: { display: true, text: 'CTL / ATL / TSS',
+             color: CSSVAR('--t5'), font: { size: 10 } },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+             grid: { color: 'rgba(255,255,255,.05)' } },
+        y1: { position: 'right', title: { display: true, text: 'TSB',
+              color: CSSVAR('--t5'), font: { size: 10 } },
+              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+              grid: { drawOnChartArea: false } },
+      },
+      plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } } },
+    },
   });
-  // Trend, linear
-  const xs = A.map(a => dayDiff(d(a.date), t0)), ys = v, n = A.length;
-  const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
-  const varx = xs.reduce((s, x) => s + (x - mx) ** 2, 0);
-  if (varx) {
-    const b = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / varx, a0 = my - b * mx;
-    ctx.beginPath(); ctx.moveTo(pad.l, Y(a0)); ctx.lineTo(X({ date: iso(t1) }), Y(a0 + b * span));
-    ctx.strokeStyle = 'rgba(249,115,22,.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
-    ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = CSSVAR('--t4'); ctx.textAlign = 'left';
-    ctx.fillText((b * 30 >= 0 ? '+' : '') + (b * 30).toFixed(2) + ' EF / Monat', pad.l + 4, pad.t + 10);
-  }
-  ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'right';
-  ctx.fillText(hi.toFixed(2), pad.l - 4, pad.t + 8);
-  ctx.fillText(lo.toFixed(2), pad.l - 4, h - pad.b);
-  ctx.textAlign = 'center';
-  ctx.fillText(fmtDay(t0), pad.l + 16, h - 6);
-  ctx.fillText(fmtDay(t1), w - pad.r - 16, h - 6);
+}
+
+function renderHrv() {
+  const box = $('#hrv-box');
+  if (!box || !window.Chart) return;
+  const H = DATA.health.filter(x => x.hrv != null || x.resting_hr != null).slice().reverse();
+  if (H.length < 5) { box.innerHTML = '<div class="muted">zu wenige Daten</div>'; return; }
+  box.style.height = '260px';
+  box.innerHTML = '<canvas id="hrv-canvas"></canvas>';
+  const t0 = d(H[0].date).getTime();
+  const X = r => Math.round((d(r.date).getTime() - t0) / 86400000);
+  const hrvPts = H.filter(x => x.hrv != null).map(x => ({ x: X(x), y: x.hrv }));
+  const rhrPts = H.filter(x => x.resting_hr != null).map(x => ({ x: X(x), y: x.resting_hr }));
+  const hE = ewmaBand(hrvPts, 0.1), rE = ewmaBand(rhrPts, 0.1);
+  const band = (e, col, axis) => ([
+    { type: 'line', data: e.upper, borderWidth: 0, pointRadius: 0, fill: '+1',
+      backgroundColor: col.replace('rgb', 'rgba').replace(')', ',.12)'), yAxisID: axis, order: 5 },
+    { type: 'line', data: e.lower, borderWidth: 0, pointRadius: 0, fill: false, yAxisID: axis, order: 5 },
+    { type: 'line', data: e.line, borderColor: col, borderWidth: 2, pointRadius: 0,
+      fill: false, yAxisID: axis, order: 2 },
+  ]);
+  if (_hrv) _hrv.destroy();
+  _hrv = new Chart($('#hrv-canvas'), {
+    data: { datasets: [
+      { type: 'scatter', label: 'HRV', data: hrvPts, backgroundColor: 'rgba(126,200,160,.65)',
+        pointRadius: 2.5, yAxisID: 'y', order: 1 },
+      ...band(hE, 'rgb(126,200,160)', 'y'),
+      { type: 'scatter', label: 'Ruhepuls', data: rhrPts, backgroundColor: 'rgba(224,102,60,.65)',
+        pointRadius: 2.5, yAxisID: 'y1', order: 1 },
+      ...band(rE, 'rgb(224,102,60)', 'y1'),
+    ] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: {
+        x: AX(t0, '').x,
+        y: { position: 'left', title: { display: true, text: 'HRV (ms)',
+             color: '#7ec8a0', font: { size: 10 } },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+             grid: { color: 'rgba(255,255,255,.05)' } },
+        y1: { position: 'right', reverse: true,
+              title: { display: true, text: 'Ruhepuls (bpm)', color: '#e0663c', font: { size: 10 } },
+              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+              grid: { drawOnChartArea: false } },
+      },
+      plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10,
+                 filter: i => ['HRV', 'Ruhepuls'].includes(i.text) } } },
+    },
+  });
 }
 
 // ── Seite ───────────────────────────────────────────────────────────────────
@@ -167,26 +163,29 @@ function renderForm() {
   const last = m.length ? m[m.length - 1] : null;
   const H = DATA.health.slice(0, 10);
   const bHrv = baseline('hrv', 30), bRhr = baseline('resting_hr', 30);
-
   const cmp = (v, base, higherBetter) => {
-    if (v == null || base == null) return '';
+    if (v == null) return '<b>—</b>';
+    if (base == null) return `<b>${v}</b>`;
     const good = higherBetter ? v >= base : v <= base;
-    return `<span style="color:${good ? 'var(--ok)' : 'var(--warn)'}">${v}</span>`;
+    return `<b style="color:${good ? 'var(--ok)' : 'var(--warn)'}">${v}</b>`;
   };
+  const kpi = last
+    ? `<span class="s">CTL ${last.ctl.toFixed(0)} · ATL ${last.atl.toFixed(0)} · TSB ${last.tsb.toFixed(0)}</span>`
+    : '';
 
   box.innerHTML = `
     <div class="card">
-      <div class="card-hd"><span class="t">BELASTUNG</span>
-        <span class="s">CTL ${CTL_TAU} d · ATL ${ATL_TAU} d · TSB = CTL − ATL</span></div>
-      <div class="chartbox" id="c-ff"></div>
-      <div class="ez-hint">TSB positiv = frisch, negativ = ermüdet. Das Modell kennt nur TSS —
+      <div class="card-hd"><span class="t">BELASTUNG</span>${kpi}</div>
+      <div id="ff-box"></div>
+      <div class="ez-hint">CTL = ${CTL_TAU}-Tage-Mittel der TSS (Fitness), ATL = ${ATL_TAU} Tage
+        (Ermüdung), TSB = CTL − ATL (Form). Positiv heißt frisch. Das Modell kennt nur TSS —
         es weiß nichts über Schlaf, Stress oder leere Beine nach einem Rennen.</div>
     </div>
 
     <div class="card">
       <div class="card-hd"><span class="t">ERHOLUNG</span>
-        <span class="s">Basis: Median der letzten 30 Tage · HRV ${bHrv ?? '—'} · RHR ${bRhr ?? '—'}</span></div>
-      <div class="chartbox" id="c-hrv"></div>
+        <span class="s">Band = normale Schwankung (EWMA ± 1σ) · Median 30 d: HRV ${bHrv ?? '—'} · RHR ${bRhr ?? '—'}</span></div>
+      <div id="hrv-box"></div>
       <div class="hrow" style="background:none;border:none">
         <span class="hd">Datum</span><span class="hd">HRV</span><span class="hd">Ruhepuls</span>
         <span class="hd">Schlaf</span><span class="hd">Stress</span></div>
@@ -197,20 +196,10 @@ function renderForm() {
         <span class="hval"><b>${x.sleep_h != null ? x.sleep_h + ' h' : '—'}</b></span>
         <span class="hval"><b>${x.stress_avg ?? '—'}</b></span></div>`).join('')}
       <div class="ez-hint" style="margin-top:8px">HRV und Ruhepuls messen das vegetative
-        Nervensystem. Über Muskelglykogen und müde Beine sagen sie nichts.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><span class="t">EF-TREND</span>
-        <span class="s">NP / Ø-HF · nur Fahrten ab ${EF_MIN_MIN} min</span></div>
-      <div class="chartbox" id="c-ef"></div>
-      <div class="ez-hint">Kurze, intensive Fahrten sind bewusst ausgeschlossen: dort hinkt die
-        Herzfrequenz der Leistung 30–60 s hinterher und täuscht einen hohen EF vor.
-        Die gestrichelte Linie ist die physiologische Orientierung aus FTP und Schwellen-HF —
-        deutlich darüber liegt man auf langen Fahrten nicht.</div>
+        Nervensystem. Über Muskelglykogen und müde Beine sagen sie nichts — nach einem harten
+        Rennen kann die HRV längst wieder gut sein, während die Beine leer sind.</div>
     </div>`;
 
-  drawFF($('#c-ff'));
-  drawHrv($('#c-hrv'));
-  drawEF($('#c-ef'));
+  renderFF();
+  renderHrv();
 }
