@@ -42,7 +42,7 @@ nav{background:var(--bg3);height:52px;display:flex;align-items:center;gap:24px;
 .dot.ok{background:var(--ok);box-shadow:0 0 6px rgba(52,211,153,.5)}
 .dot.warn{background:var(--warn);box-shadow:0 0 6px rgba(251,191,36,.5)}
 .dot.err{background:var(--err);box-shadow:0 0 6px rgba(239,68,68,.6)}
-.status-panel{position:absolute;top:26px;right:0;background:var(--bg2);border:1px solid var(--border);
+.status-panel{position:absolute;top:26px;left:0;background:var(--bg2);border:1px solid var(--border);
               border-radius:8px;padding:12px 14px;min-width:250px;z-index:200;display:none;
               box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .status-panel.open{display:block}
@@ -97,15 +97,15 @@ main{max-width:1180px;margin:0 auto;padding:18px}
 .wcard-hd .wlbl{font-weight:600;color:var(--t2)}
 .wcard-hd .wdates{color:var(--t4);font-family:var(--mono)}
 .wcard-hd .wvol{margin-left:auto;color:var(--t3);font-family:var(--mono)}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)}
-@media(max-width:900px){.days{grid-template-columns:1fr 1fr}}
-.day{background:var(--bg2);padding:8px 9px;min-height:92px;display:flex;flex-direction:column;gap:5px}
+.days{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.day{background:var(--bg2);padding:7px 12px;display:flex;align-items:flex-start;gap:14px;min-height:34px}
+.day-hd{width:74px;flex-shrink:0;display:flex;gap:7px;align-items:baseline}
+.day-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .day.past{opacity:.62}
 .day.today{background:#17201a;box-shadow:inset 0 0 0 1px #2f5f3f}
 .day.empty{opacity:.3}
-.day-hd{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px}
-.day-hd .dow{font-weight:700;color:var(--t2)}
-.day-hd .dat{color:var(--t5)}
+.day-hd .dow{font-weight:700;color:var(--t2);font-family:var(--mono);font-size:11px}
+.day-hd .dat{color:var(--t5);font-family:var(--mono);font-size:10px}
 .p-part{border-left:2px solid var(--t5);padding-left:6px}
 .p-part.t-comm{border-color:#3f6b52}
 .p-part.t-roll{border-color:#d9673c}
@@ -140,9 +140,20 @@ main{max-width:1180px;margin:0 auto;padding:18px}
 .rdet{border-top:1px solid var(--border);padding:14px;display:none}
 .rdet.on{display:block}
 .chartbox{position:relative;width:100%;margin-bottom:12px}
-.chartbox canvas{width:100%;display:block}
+.chartbox canvas{display:block;width:100%!important}
+.sq{aspect-ratio:1/1;max-height:340px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:840px){.grid2{grid-template-columns:1fr}}
+
+/* Zonentabelle in der Fahrt-Detailansicht */
+.zrow{display:grid;grid-template-columns:104px 84px 1fr 58px;gap:8px;align-items:center;
+      padding:4px 0;font-family:var(--mono);font-size:10.5px}
+.zrow .hd{color:var(--t5)}
+.zrow .zb{height:7px;background:#222;border-radius:2px;overflow:hidden;display:block}
+.zrow .zb span{display:block;height:100%}
+.zrow .zv{text-align:right;color:var(--t3)}
+.zrow .zv b{color:var(--t1)}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4px;border-radius:3px}
 
 /* ── Form ────────────────────────────────────────────────────────────────── */
 .hrow{display:grid;grid-template-columns:96px repeat(4,1fr);gap:10px;padding:7px 12px;
@@ -183,18 +194,34 @@ main{max-width:1180px;margin:0 auto;padding:18px}
   <div class="page"    id="page-form"></div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="js/config.js"></script>
 <script src="js/shared.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/rides.js"></script>
 <script src="js/form.js"></script>
 <script>
+/* Seiten werden erst gezeichnet, wenn sie sichtbar sind. Vorher ist
+ * clientWidth = 0 (display:none), und jeder Canvas kaeme mit 0 px Puffer
+ * heraus und wuerde von CSS auf volle Breite gezerrt. */
+const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm };
+const drawn = {};
+let curPage = 'plan';
+
 function showPage(name, btn){
+  curPage = name;
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'page-' + name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === btn));
-  // Kein Auto-Scroll: der aktuelle Tag steht auf jeder Seite oben.
+  if (!drawn[name]) { RENDER[name](); drawn[name] = true; }
   window.scrollTo({ top: 0 });
 }
+
+// Bei Groessenaenderung die sichtbare Seite neu zeichnen (Canvas ist fix).
+let rt;
+window.addEventListener('resize', () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => { drawn[curPage] = false; RENDER[curPage](); drawn[curPage] = true; }, 250);
+});
 
 // ── Status-Ampel ──────────────────────────────────────────────────────────
 function toggleStatus(ev){
@@ -246,9 +273,8 @@ function renderStatus(){
     await loadAll();
     $('#loading').style.display = 'none';
     renderStatus();
-    renderPlan();
-    renderRides();
-    renderForm();
+    renderPlan();          // nur die sichtbare Seite
+    drawn.plan = true;
   } catch (e) {
     $('#loading').textContent = 'Fehler beim Laden: ' + e.message;
     console.error(e);
