@@ -154,7 +154,8 @@ function timeAxis() {
 function timeScale(T) {
   return {
     type: 'linear', min: T.min, max: T.max,
-    ticks: { color: CSSVAR('--t4'), font: { size: 9 }, maxTicksLimit: 9,
+    ticks: { color: CSSVAR('--t4'), font: { size: 9 },
+             stepSize: CFG.ui.timeAxis.tickStepDays, autoSkip: false,
              callback: v => fmtDay(addDays(new Date(T.t0), v)) },
     grid: { color: 'rgba(255,255,255,.05)' },
   };
