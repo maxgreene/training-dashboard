@@ -42,6 +42,8 @@ jobs:
           cp -r data/activities.json _site/data/ 2>/dev/null || true
           cp -r data/health.json _site/data/ 2>/dev/null || true
           cp -r data/analysis/. _site/data/analysis/ 2>/dev/null || true
+          # Frontend-Module (config/shared/plan/rides/form)
+          cp -r js _site/ 2>/dev/null || true
           # alles andere im Root das die Seite evtl. braucht (css/js/img/favicon)
           for f in *.css *.js *.png *.ico *.svg *.webmanifest .nojekyll; do
             [ -e "$f" ] && cp "$f" _site/ 2>/dev/null || true
