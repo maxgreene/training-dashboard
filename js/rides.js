@@ -300,8 +300,7 @@ function renderEF() {
     a.ef && a.ef > 0.8 && a.ef < 2.5 && (a.moving_sec || 0) >= C.minDurMin * 60);
   if (!acts.length) { box.innerHTML = '<div class="muted">keine Fahrten im Filter</div>'; return; }
 
-  const t0 = d(acts[acts.length - 1].date).getTime();
-  const dayOf = x => Math.round((d(x).getTime() - t0) / 86400000);
+  const T = timeAxis();
   const span = Math.log(C.dotMaxDur / C.dotMinDur);
   const rOf = min => C.dotMinR + (C.dotMaxR - C.dotMinR) *
     Math.max(0, Math.min(1, Math.log(Math.max(min, C.dotMinDur) / C.dotMinDur) / span));
@@ -314,7 +313,7 @@ function renderEF() {
   };
   const pts = acts.map(a => {
     const min = (a.moving_sec || 0) / 60;
-    return { x: dayOf(a.date), y: a.ef, r: rOf(min),
+    return { x: T.dayOf(a.date), y: a.ef, r: rOf(min),
              bg: colOf(a.name || '', min), name: a.name || 'Fahrt', dur: Math.round(min) };
   });
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y), n = xs.length;
@@ -336,11 +335,7 @@ function renderEF() {
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       scales: {
-        x: { title: { display: true, text: 'Tage seit ' + fmtDay(d(acts[acts.length - 1].date)),
-                      color: CSSVAR('--t5'), font: { size: 10 } },
-             ticks: { color: CSSVAR('--t4'), font: { size: 9 },
-                      callback: v => fmtDay(addDays(new Date(t0), v)) },
-             grid: { color: 'rgba(255,255,255,.05)' } },
+        x: timeScale(T),
         y: { min: C.yMin, max: C.yMax,
              title: { display: true, text: 'EF (NP / Ø-HF)', color: CSSVAR('--t5'), font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
