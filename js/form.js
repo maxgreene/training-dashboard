@@ -55,18 +55,6 @@ function baseline(key, days) {
   return v.length ? v[Math.floor(v.length / 2)] : null;
 }
 
-const AX = (t0, ttl) => ({
-  // type MUSS gesetzt sein: sobald ein bar-Datensatz dabei ist, nimmt Chart.js
-  // sonst eine Kategorie-Achse an und alle Punkte landen auf derselben Stelle.
-  x: { type: 'linear',
-       ticks: { color: CSSVAR('--t4'), font: { size: 9 },
-                callback: v => fmtDay(addDays(new Date(t0), v)), maxTicksLimit: 9 },
-       grid: { color: 'rgba(255,255,255,.05)' } },
-  y: { title: { display: true, text: ttl, color: CSSVAR('--t5'), font: { size: 10 } },
-       ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
-       grid: { color: 'rgba(255,255,255,.05)' } },
-});
-
 // ── Charts ──────────────────────────────────────────────────────────────────
 let _ff = null, _hrv = null;
 
@@ -76,8 +64,8 @@ function renderFF() {
   if (!box || !window.Chart || m.length < 7) return;
   box.style.height = '300px';
   box.innerHTML = '<canvas id="ff-canvas"></canvas>';
-  const t0 = d(m[0].date).getTime();
-  const X = r => Math.round((d(r.date).getTime() - t0) / 86400000);
+  const T = timeAxis();
+  const X = r => T.dayOf(r.date);
   const settleEnd = m.filter(r => r.settling).length;
   if (_ff) _ff.destroy();
   _ff = new Chart($('#ff-canvas'), {
@@ -99,7 +87,7 @@ function renderFF() {
       responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: 'index', intersect: false },
       scales: {
-        x: AX(t0, '').x,
+        x: timeScale(T),
         y: { position: 'left', title: { display: true, text: 'CTL / ATL / TSS',
              color: CSSVAR('--t5'), font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
@@ -140,8 +128,8 @@ function renderHrv() {
   if (H.length < 5) { box.innerHTML = '<div class="muted">zu wenige Daten</div>'; return; }
   box.style.height = '260px';
   box.innerHTML = '<canvas id="hrv-canvas"></canvas>';
-  const t0 = d(H[0].date).getTime();
-  const X = r => Math.round((d(r.date).getTime() - t0) / 86400000);
+  const T = timeAxis();
+  const X = r => T.dayOf(r.date);
   const hrvPts = H.filter(x => x.hrv != null).map(x => ({ x: X(x), y: x.hrv }));
   const rhrPts = H.filter(x => x.resting_hr != null).map(x => ({ x: X(x), y: x.resting_hr }));
   const hE = ewmaBand(hrvPts, 0.1), rE = ewmaBand(rhrPts, 0.1);
@@ -165,7 +153,7 @@ function renderHrv() {
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       scales: {
-        x: AX(t0, '').x,
+        x: timeScale(T),
         y: { position: 'left', title: { display: true, text: 'HRV (ms)',
              color: '#7ec8a0', font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
