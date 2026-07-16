@@ -143,7 +143,7 @@ const CFG = {
       yMin: 1.1, yMax: 2.0,
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
       dotMinDur: 15, dotMaxDur: 500,
-      alpha: 0.79,
+      alpha: 0.59,
       showTrend: true,
     },
 
