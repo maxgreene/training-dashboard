@@ -8,7 +8,7 @@ TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt 
 HEADERS = {'Authorization': 'Bearer ' + TOKEN} if TOKEN else {}
 DATA_FILE   = 'data/activities.json'
 STREAMS_DIR = 'data/streams'
-ANALYSIS_VERSION = 15
+ANALYSIS_VERSION = 16
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
 
