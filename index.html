@@ -140,8 +140,7 @@ main{max-width:1180px;margin:0 auto;padding:18px}
 .rdet{border-top:1px solid var(--border);padding:14px;display:none}
 .rdet.on{display:block}
 .chartbox{position:relative;width:100%;margin-bottom:12px}
-.chartbox canvas{display:block;width:100%!important}
-.sq{aspect-ratio:1/1;max-height:340px}
+.chartbox canvas{display:block;margin:0 auto}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:840px){.grid2{grid-template-columns:1fr}}
 
@@ -254,9 +253,14 @@ function showPage(name, btn){
   window.scrollTo({ top: 0 });
 }
 
-// Bei Groessenaenderung die sichtbare Seite neu zeichnen (Canvas ist fix).
-let rt;
+/* Neu zeichnen nur bei BREITEN-Aenderung. iOS Safari feuert resize bei jedem
+ * Scrollen (die Adressleiste faehrt ein und aus, die Viewport-Hoehe aendert
+ * sich). Ein Neuaufbau ersetzt innerHTML und wirft die Scroll-Position weg —
+ * die Seite springt dann beim Scrollen staendig nach oben. */
+let rt, lastW = window.innerWidth;
 window.addEventListener('resize', () => {
+  if (window.innerWidth === lastW) return;
+  lastW = window.innerWidth;
   clearTimeout(rt);
   rt = setTimeout(() => { drawn[curPage] = false; RENDER[curPage](); drawn[curPage] = true; }, 250);
 });
