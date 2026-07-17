@@ -153,7 +153,7 @@ const CFG = {
       // null = automatisch aus den Daten (mit yPad Luft). Feste Zahlen
       // schneiden Punkte ab, sobald minDurMin sich aendert: bei 60 min liegt
       // der EF zwischen 1.25 und 1.79, bei 15 min zwischen 0.95 und 2.32.
-      yMin: null, yMax: null, yPad: 0.06,
+      yMin: 0.9, yMax: 2.3, yPad: 0.06,
       padRight: 16,   // px Luft am rechten Rand, damit die Blase von "heute"
                       // nicht halb abgeschnitten wird
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
