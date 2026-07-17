@@ -150,7 +150,12 @@ const CFG = {
       minDurMin: 15,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
                        // 30-60 s hinterher und taeuscht einen hohen EF vor.
                        // Auf 10 setzen, um wieder alles zu sehen.
-      yMin: 1.1, yMax: 2.0,
+      // null = automatisch aus den Daten (mit yPad Luft). Feste Zahlen
+      // schneiden Punkte ab, sobald minDurMin sich aendert: bei 60 min liegt
+      // der EF zwischen 1.25 und 1.79, bei 15 min zwischen 0.95 und 2.32.
+      yMin: null, yMax: null, yPad: 0.06,
+      padRight: 16,   // px Luft am rechten Rand, damit die Blase von "heute"
+                      // nicht halb abgeschnitten wird
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
       dotMinDur: 15, dotMaxDur: 500,
       alpha: 0.5,
