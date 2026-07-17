@@ -311,6 +311,11 @@ function renderEF() {
     if (min >= 90) return `rgba(249,115,22,${a})`;
     return `rgba(96,165,250,${a})`;
   };
+  // y-Grenzen: feste Werte aus der Config, sonst automatisch aus den Daten.
+  const efs = acts.map(a => a.ef);
+  const yMin = C.yMin != null ? C.yMin : Math.min(...efs) - C.yPad;
+  const yMax = C.yMax != null ? C.yMax : Math.max(...efs) + C.yPad;
+
   const pts = acts.map(a => {
     const min = (a.moving_sec || 0) / 60;
     return { x: T.dayOf(a.date), y: a.ef, r: rOf(min),
@@ -327,16 +332,20 @@ function renderEF() {
   _efChart = new Chart($('#ef-canvas'), {
     type: 'bubble',
     data: { datasets: [
-      { label: 'EF', data: pts, backgroundColor: pts.map(p => p.bg), borderWidth: 0 },
+      // clip:false — sonst schneidet Chart.js die Blase am rechten Rand
+      // (heute = x-Maximum) an der Plotkante ab. padRight gibt ihr Platz.
+      { label: 'EF', data: pts, backgroundColor: pts.map(p => p.bg),
+        borderWidth: 0, clip: false },
       ...(C.showTrend ? [{ label: 'Trend', type: 'line',
           data: [{ x: x0, y: ic + sl * x0 }, { x: x1, y: ic + sl * x1 }],
           borderColor: 'rgba(249,115,22,.45)', borderWidth: 1.5, borderDash: [5, 4],
           pointRadius: 0, fill: false, order: -1 }] : []) ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
+      layout: { padding: { right: C.padRight, top: 4 } },
       scales: {
         x: timeScale(T),
-        y: { min: C.yMin, max: C.yMax,
+        y: { min: yMin, max: yMax,
              title: { display: true, text: 'EF (NP / Ø-HF)', color: CSSVAR('--t5'), font: { size: 10 } },
              ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
              grid: { color: 'rgba(255,255,255,.05)' } },
