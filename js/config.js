@@ -147,7 +147,7 @@ const CFG = {
     // EF-Trend (Chart.js-Bubble, wie frueher)
     efTrend: {
       height: 340,
-      minDurMin: 15,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
+      minDurMin: 30,   // kuerzere Fahrten raus: dort hinkt die HF der Leistung
                        // 30-60 s hinterher und taeuscht einen hohen EF vor.
                        // Auf 10 setzen, um wieder alles zu sehen.
       // null = automatisch aus den Daten (mit yPad Luft). Feste Zahlen
@@ -157,7 +157,7 @@ const CFG = {
       padRight: 16,   // px Luft am rechten Rand, damit die Blase von "heute"
                       // nicht halb abgeschnitten wird
       dotMinR: 3, dotMaxR: 12,      // Punktgroesse nach Fahrtdauer
-      dotMinDur: 15, dotMaxDur: 500,
+      dotMinDur: 30, dotMaxDur: 500,
       alpha: 0.5,
       showTrend: true,
     },
