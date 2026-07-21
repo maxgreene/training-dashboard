@@ -88,8 +88,8 @@ const CFG = {
     // Termine, die das Template ueberschreiben. Datum ISO, damit kein Jahr
     // irgendwo hartcodiert werden muss.
     events: [
-      { date: '2026-07-22', type: 'test', title: '20-Min-Test',
-        desc: 'Rolle · Nullpunkt für den FTP-300-Block · nach 15 min Einfahren all-out',
+      { date: '2026-07-22', type: 'test', title: 'Rampentest',
+        desc: 'Rolle · Nullpunkt für den FTP-300-Block · Rampe bis zum Abbruch',
         protected: true },
       { date: '2026-09-16', type: 'test', title: '20-Min-Retest',
         desc: 'Rolle · gleiche Bedingungen wie der Nullpunkt',
