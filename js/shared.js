@@ -5,7 +5,7 @@
  */
 
 // ── Daten (einmal geladen, von allen Seiten genutzt) ────────────────────────
-const DATA = { acts: [], health: [], updatedAt: null, loaded: false };
+const DATA = { acts: [], health: [], updatedAt: null, wahooSkipped: false, loaded: false };
 
 async function loadAll() {
   const bust = '?_=' + Date.now();
@@ -13,6 +13,7 @@ async function loadAll() {
   DATA.acts = (a.activities || []).filter(x => !x.hidden)
     .sort((x, y) => (y.date + (y.start_time || '')).localeCompare(x.date + (x.start_time || '')));
   DATA.updatedAt = a.updated_at;
+  DATA.wahooSkipped = !!a.wahoo_skipped;
   try {
     const h = await fetch('data/health.json' + bust).then(r => r.json());
     DATA.health = (h.days || []).sort((x, y) => y.date.localeCompare(x.date));
