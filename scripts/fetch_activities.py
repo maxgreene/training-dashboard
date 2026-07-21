@@ -1,28 +1,50 @@
 #!/usr/bin/env python3
-# fetch_activities.py
-import os
-import re, json, urllib.request, urllib.error
-from datetime import datetime, timezone
+"""fetch_activities.py — neue Fahrten von Wahoo holen.
 
-TOKEN = os.environ.get('STRAVA_ACCESS_TOKEN', '')   # optional: Strava gesperrt seit 30.06.2026
-HEADERS = {'Authorization': 'Bearer ' + TOKEN} if TOKEN else {}
-DATA_FILE   = 'data/activities.json'
-STREAMS_DIR = 'data/streams'
+LOGIK (bewusst einfach)
+-----------------------
+  1. Bestand laden          data/activities.json ist die Wahrheit.
+  2. Wahoo fragen           Welche Fahrten gibt es seit dem Stichtag?
+  3. Fuer jede: bekannt?    ID schon im Bestand  -> ueberspringen.
+                            Neu                   -> FIT laden, verarbeiten,
+                                                     hinzufuegen.
+  4. Speichern              Nur wenn wirklich etwas Neues dazukam.
+
+Die Vergangenheit wird nie neu berechnet. Kennzahlen (NP, Power-Kurve, TSS, EF)
+setzt ausschliesslich analyze_activities.py, das direkt danach im selben
+Workflow-Schritt laeuft. fetch schreibt nur Rohdaten und Metadaten.
+
+Strava ist seit 30.06.2026 gesperrt und wurde entfernt. Wahoo ist die Quelle.
+"""
+import os, io, json, urllib.request
+from datetime import datetime, timezone, timedelta
+
+DATA_FILE        = 'data/activities.json'
+STREAMS_DIR      = 'data/streams'
 ANALYSIS_VERSION = 16
 PLAN_START_DATE  = '2026-05-04'
-WAHOO_START_DATE = '2026-07-01'   # ab hier Wahoo als Quelle (davor Strava-Streams)
+WAHOO_START_DATE = '2026-07-01'      # ab hier ist Wahoo die Quelle
+FTP, HRMAX       = 250, 172
 
-# Namens-Korrektur: Fahrten deren Strava-Name durch generischen Wahoo-Titel
-# ueberschrieben wurde. id -> korrekter Name. Wird beim Fetch wiederhergestellt.
-NAME_FIXES = {
-    '19093792211': 'ClassicCrew ™ 😎🙌',
-}
-PLAN_START_EPOCH = int(datetime(2026, 5, 4, 0, 0, 0, tzinfo=timezone.utc).timestamp())
+WAHOO_BASE = 'https://api.wahooligan.com'
+
+# Fahrten, deren Wahoo-Auto-Titel einen frueheren, spezifischen Namen
+# ueberschrieben hat. id -> korrekter Name.
+NAME_FIXES = {'19093792211': 'ClassicCrew ™ 😎🙌'}
+
+# True, sobald der Wahoo-Abruf uebersprungen/abgebrochen wurde. Landet als
+# 'wahoo_skipped' in activities.json, damit die Status-Ampel einen stillen
+# Ausfall zeigt statt gruen zu bleiben.
+WAHOO_SKIPPED = False
 
 
-# ── FIT-Datei Parsing (fuer Wahoo-Streams) ──────────────────────────────────
+# ── FIT-Datei -> Streams ─────────────────────────────────────────────────────
 def parse_fit_streams(fit_url):
-    """Laedt eine FIT-Datei und extrahiert Streams im Strava-Format."""
+    """Laedt eine FIT-Datei und macht daraus Sekunden-Streams.
+
+    GPS, Hoehe, Tempo und Gefaelle werden mitgenommen, auch wenn analyze sie
+    aktuell nicht nutzt - falls sie spaeter ins Dashboard sollen.
+    """
     try:
         import fitparse
     except ImportError:
@@ -30,23 +52,16 @@ def parse_fit_streams(fit_url):
         return None
     try:
         raw = urllib.request.urlopen(fit_url, timeout=60).read()
+        recs = list(fitparse.FitFile(io.BytesIO(raw)).get_messages('record'))
     except Exception as e:
-        print(f'    FIT-Download fehlgeschlagen: {e}')
-        return None
-    try:
-        import io
-        fit = fitparse.FitFile(io.BytesIO(raw))
-        recs = list(fit.get_messages('record'))
-    except Exception as e:
-        print(f'    FIT-Parse fehlgeschlagen: {e}')
+        print(f'    FIT fehlgeschlagen: {e}')
         return None
     if not recs:
         return None
 
     time, latlng, distance, altitude = [], [], [], []
-    heartrate, cadence, watts, velocity, grade, moving = [], [], [], [], [], []
+    heartrate, cadence, watts, velocity, grade = [], [], [], [], []
     t0 = None
-    prev_dist = 0
     for r in recs:
         v = {d.name: d.value for d in r}
         ts = v.get('timestamp')
@@ -55,332 +70,60 @@ def parse_fit_streams(fit_url):
         if t0 is None:
             t0 = ts
         time.append(int((ts - t0).total_seconds()))
-        lat = v.get('position_lat'); lon = v.get('position_long')
-        if lat is not None and lon is not None:
-            # FIT speichert als semicircles
-            latlng.append([lat * (180/2**31), lon * (180/2**31)])
-        else:
-            latlng.append(None)
+        lat, lon = v.get('position_lat'), v.get('position_long')
+        latlng.append([lat * (180 / 2**31), lon * (180 / 2**31)]
+                      if lat is not None and lon is not None else None)
         dist = v.get('distance')
         distance.append(round(float(dist), 1) if dist is not None else (distance[-1] if distance else 0.0))
         alt = v.get('enhanced_altitude', v.get('altitude'))
         altitude.append(round(float(alt), 1) if alt is not None else (altitude[-1] if altitude else 0.0))
         hr = v.get('heart_rate')
         heartrate.append(int(hr) if hr is not None else (heartrate[-1] if heartrate else 0))
-        cad = v.get('cadence')
-        cadence.append(int(cad) if cad is not None else 0)
-        pw = v.get('power')
-        watts.append(int(pw) if pw is not None else 0)
+        watts.append(int(v['power']) if v.get('power') is not None else 0)
+        cadence.append(int(v['cadence']) if v.get('cadence') is not None else 0)
         spd = v.get('enhanced_speed', v.get('speed'))
         velocity.append(round(float(spd), 3) if spd is not None else 0.0)
-        grade.append(round(float(v.get('grade')), 1) if v.get('grade') is not None else 0.0)
+        grade.append(round(float(v['grade']), 1) if v.get('grade') is not None else 0.0)
 
-    # moving-Stream aus Geschwindigkeit ableiten (>0.5 m/s = in Bewegung)
-    moving = [bool(s and s > 0.5) for s in velocity]
-    # latlng-Luecken auffuellen (letzte gueltige Position)
-    last_ll = None
+    # latlng-Luecken mit letzter gueltiger Position fuellen
+    last = None
     for i in range(len(latlng)):
         if latlng[i] is None:
-            latlng[i] = last_ll
+            latlng[i] = last
         else:
-            last_ll = latlng[i]
+            last = latlng[i]
     latlng = [ll for ll in latlng if ll is not None] if any(latlng) else []
 
     streams = {
         'time': time, 'distance': distance, 'altitude': altitude,
         'heartrate': heartrate, 'cadence': cadence, 'watts': watts,
-        'velocity_smooth': velocity, 'grade_smooth': grade, 'moving': moving,
+        'velocity_smooth': velocity, 'grade_smooth': grade,
+        'moving': [bool(s and s > 0.5) for s in velocity],
     }
     if latlng and len(latlng) == len(time):
         streams['latlng'] = latlng
-    has_pw = any(w > 0 for w in watts)
-    has_hr = any(h > 0 for h in heartrate)
-    print(f'    FIT: {len(time)} Punkte, Power={has_pw}, HR={has_hr}')
+    print(f'    FIT: {len(time)} Punkte, Power={any(w>0 for w in watts)}, HR={any(h>0 for h in heartrate)}')
     return streams
 
-# ── WAHOO API ──────────────────────────────────────────────────────────────
-WAHOO_CLIENT_ID     = 'Dyxm-b7rOkV4VZtxrba512mnIhx70WqlzW4xSoEadQQ'
-WAHOO_CLIENT_SECRET = 'eCwM2BdsNZxhoXzHzzobQv8T0BiaGEk9x1jw8rl0krY'
-WAHOO_BASE          = 'https://api.wahooligan.com'
 
-# Wird True, sobald der Wahoo-Abruf uebersprungen oder abgebrochen wurde.
-# Landet als 'wahoo_skipped' in activities.json, damit die Status-Ampel im
-# Dashboard einen stillen Ausfall zeigt statt gruen zu bleiben.
-WAHOO_SKIPPED = False
-
-def wahoo_refresh_token():
-    global WAHOO_SKIPPED
-    at = os.environ.get('WAHOO_ACCESS_TOKEN', '')
-    if not at:
-        print('  No WAHOO_ACCESS_TOKEN — skipping Wahoo fetch')
-        WAHOO_SKIPPED = True
-        return None, None
-    return at, None
-
+# ── Wahoo ────────────────────────────────────────────────────────────────────
 def wahoo_api(path, token):
     req = urllib.request.Request(f'{WAHOO_BASE}{path}',
                                  headers={'Authorization': f'Bearer {token}'})
     try:
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read())
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())
     except Exception as e:
-        print(f'    Wahoo API error {path}: {e}')
+        print(f'    Wahoo API {path}: {e}')
         return None
-
-def fetch_wahoo_workouts(token):
-    """Fetch all workouts since plan start, return list of processed activities."""
-    CYCLING_TYPES = {
-        'cycling', 'indoor_cycling', 'mountain_biking', 'gravel_cycling',
-        'virtual_cycling', 'road_cycling'
-    }
-    acts = []
-    page = 1
-    while True:
-        data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
-        if not data:
-            print('  Wahoo API returned no data')
-            break
-        items = data.get('workouts', []) if isinstance(data, dict) else data
-        if not items:
-            print(f'  Wahoo page {page}: empty')
-            break
-        print(f'  Wahoo page {page}: {len(items)} workouts')
-        # Show first few to diagnose types and dates
-        for w in items[:3]:
-            wt = (w.get('workout_type') or {}).get('name', 'unknown')
-            print(f'    sample: {w.get("starts","")[:10]} type={wt!r} name={w.get("name","")!r}')
-        for w in items:
-            wt = (w.get('workout_type') or {}).get('name', '').lower().replace(' ', '_')
-            starts = w.get('starts', '')[:10]
-            # Nur Fahrten ab dem Wahoo-Stichtag (davor liefern Strava-Streams die Daten)
-            if starts < WAHOO_START_DATE:
-                continue
-            # Filter: name-based since workout_type is unreliable
-            # workout_type_id: 0=cycling, others=running/strength/etc.
-            # Also filter by name for safety
-            name_lower = w.get('name','').lower()
-            type_id = w.get('workout_type_id', -1)
-            CYCLING_IDS = {0, 1, 2}  # 0=cycling, expand if needed
-            is_cycling = (type_id in CYCLING_IDS
-                         or 'radfahren' in name_lower or 'cycling' in name_lower
-                         or 'commute' in name_lower or 'ride' in name_lower
-                         or 'morning' in name_lower or 'afternoon' in name_lower
-                         or 'interval' in name_lower or 'rolle' in name_lower
-                         or 'tour' in name_lower)
-            if not is_cycling:
-                continue
-            # Parse summary — Wahoo returns strings for numeric values!
-            def f(d, k): 
-                v = d.get(k)
-                return round(float(v), 1) if v is not None else None
-            s = w.get('workout_summary') or {}
-            fit_url = (s.get('file') or {}).get('url')
-            # Startzeit robust aus starts ODER started_at (Summary) parsen,
-            # von UTC nach Europe/Berlin umrechnen (sonst 00:00 / falsche Zeit).
-            starts_raw = w.get('starts','') or (s.get('started_at','') if isinstance(s,dict) else '')
-            local_date, local_hm = _parse_local(starts_raw, starts)
-            print(f'    starts_raw={starts_raw!r} -> {local_date} {local_hm}')
-            acts.append({
-                '_wahoo':       True,
-                'id':           f"wahoo_{w['id']}",
-                'wahoo_id':     w['id'],
-                'name':         w.get('name') or 'Wahoo Ride',
-                'date':         local_date,
-                'start_time':   local_hm,
-                'type':         'Ride',
-                'duration_sec': int(float(s.get('duration_active_accum') or w.get('minutes',0)*60 or 0)),
-                'elapsed_sec':  int(float(s.get('duration_total_accum')  or w.get('minutes',0)*60 or 0)),
-                'distance_m':   round(float(s.get('distance_accum') or 0)),
-                'elevation_m':  round(float(s.get('ascent_accum')   or 0)),
-                # Kennzahlen setzt AUSSCHLIESSLICH analyze_activities.py aus den
-                # Sekundendaten. Wahoos Summary-Werte sind hier bewusst nicht
-                # uebernommen: avg_power rechnet ohne Nullen (zu hoch), tss mit
-                # dem FTP aus der Wahoo-App (falsch oder fehlend).
-                'kilojoules':   round(float(s.get('work_accum') or 0)/1000, 1) if s.get('work_accum') else None,
-                '_fit_url':     fit_url,
-            })
-        # Wahoo liefert neueste zuerst: wenn die ganze Seite vor Plan-Start liegt, stoppen
-        page_dates = [w.get('starts','')[:10] for w in items]
-        if page_dates and max(page_dates) < WAHOO_START_DATE:
-            print(f'  Seite komplett vor Wahoo-Stichtag ({WAHOO_START_DATE}) — stoppe Pagination')
-            break
-        if len(items) < 100:
-            break
-        page += 1
-    return acts
-
-STREAM_KEYS = ['time','latlng','distance','altitude','heartrate','cadence','watts','velocity_smooth','grade_smooth','moving']
-FTP   = 250
-HRMAX = 172
-
-def api(path):
-    req = urllib.request.Request('https://www.strava.com/api/v3' + path, headers=HEADERS)
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
-
-def fetch_streams(aid):
-    keys = ','.join(STREAM_KEYS)
-    url = '/activities/' + str(aid) + '/streams?keys=' + keys + '&key_by_type=true&resolution=high&series_type=time'
-    try:
-        data = api(url)
-        return {k: data[k]['data'] for k in STREAM_KEYS if k in data}
-    except Exception as e:
-        print('  Stream error: ' + str(e))
-        return {}
-
-def mini_chart(streams, n=80):
-    ts  = streams.get('time', [])
-    pw  = streams.get('watts', [])
-    hr  = streams.get('heartrate', [])
-    alt = streams.get('altitude', [])
-    spd = [round(v * 3.6, 1) for v in streams.get('velocity_smooth', [])]
-    if not ts: return {}
-    step = max(1, len(ts) // n)
-    return {'time': ts[::step], 'watts': pw[::step] if pw else [], 'hr': hr[::step] if hr else [], 'altitude': alt[::step] if alt else [], 'speed': spd[::step] if spd else []}
-
-def stream_path(aid):
-    return os.path.join(STREAMS_DIR, str(aid) + '.json')
-
-def process_activity(act, force_fetch=False):
-    # Wahoo activities: parse FIT file for full streams
-    if act.get('_wahoo'):
-        aid = act['id']
-        spath = stream_path(aid)
-        # FREEZE-SCHUTZ: bestehende Stream-Datei wird NIEMALS ueberschrieben.
-        # Vergangenheit bleibt eingefroren, nur wirklich neue Fahrten laden FIT.
-        if os.path.exists(spath):
-            print(f'  {aid}: {act.get("name","")} (Streams eingefroren, kein Reload)')
-            with open(spath) as f:
-                streams = json.load(f).get('streams', {})
-        else:
-            fit_url = act.get('_fit_url')
-            if not fit_url:
-                print(f'  {aid}: {act.get("name","")} (Wahoo, keine FIT-URL)')
-                return act
-            print(f'  {aid}: {act.get("name","")} (NEU, lade FIT...)')
-            streams = parse_fit_streams(fit_url)
-            if not streams or not streams.get('time'):
-                print(f'    Keine Streams — nutze nur Summary')
-                return act
-            os.makedirs(STREAMS_DIR, exist_ok=True)
-            with open(spath, 'w') as f:
-                json.dump({'streams': streams}, f)
-        # Aus Streams die Detailwerte ableiten (max power/hr, gps)
-        pw = streams.get('watts', [])
-        hr = streams.get('heartrate', [])
-        ll = streams.get('latlng', [])
-        if pw:
-            act['max_power'] = max(pw) if pw else None
-            act['has_power'] = any(w > 0 for w in pw)
-        if hr:
-            act['max_hr'] = max(hr) if hr else None
-            act['has_hr'] = any(h > 0 for h in hr)
-        if ll:
-            act['has_latlng'] = True
-            act['gps_ok'] = True
-        return act
-
-    aid = act['id']
-    print('  Processing ' + str(aid) + ': ' + act['name'])
-    spath = stream_path(aid)
-    streams = {}
-    if os.path.exists(spath) and not force_fetch:
-        with open(spath) as f:
-            streams = json.load(f).get('streams', {})
-        print('    Cached: ' + str(len(streams.get('time', []))) + ' pts')
-    else:
-        print('    Fetching streams...')
-        streams = fetch_streams(aid)
-        if streams:
-            os.makedirs(STREAMS_DIR, exist_ok=True)
-            payload = {'activity_id': aid, 'date': act.get('start_date_local', '')[:10], 'name': act.get('name', ''), 'fetched_at': datetime.now(timezone.utc).isoformat(), 'resolution': 'high', 'keys_present': list(streams.keys()), 'streams': streams}
-            with open(spath, 'w') as f:
-                json.dump(payload, f)
-            print('    Saved ' + str(len(streams.get('time', []))) + ' pts')
-    pw     = streams.get('watts', [])
-    hr     = streams.get('heartrate', [])
-    latlng = streams.get('latlng', [])
-    dist_s = streams.get('distance', [])
-    moving_time  = act.get('moving_time', 0)
-    gps_distance = act.get('distance', 0)
-    has_gps = len(latlng) > 0
-    gps_ok  = has_gps
-    gps_coverage_pct = None
-    if pw and dist_s:
-        gps_coverage_pct = round(len(dist_s) / len(pw) * 100)
-        if gps_coverage_pct < 85: gps_ok = False
-    result = {
-        'id': aid, 'name': act['name'],
-        'date': act['start_date_local'][:10],
-        'start_time': act['start_date_local'][11:16],
-        'type': act.get('sport_type', act.get('type', 'Ride')),
-        'duration_sec': moving_time,
-        'elapsed_sec': act.get('elapsed_time', 0),
-        'distance_m': round(gps_distance) if gps_ok else None,
-        'elevation_m': round(act.get('total_elevation_gain', 0)) if gps_ok else None,
-        'avg_speed_kmh': round(gps_distance / max(moving_time, 1) * 3.6, 1) if gps_ok else None,
-        'avg_power': act.get('average_watts'),
-        'max_power': act.get('max_watts'),
-        'avg_hr': act.get('average_heartrate'),
-        'max_hr': act.get('max_heartrate'),
-        'avg_cadence': act.get('average_cadence'),
-        'kilojoules': act.get('kilojoules'),
-        'gps_ok': gps_ok, 'gps_coverage_pct': gps_coverage_pct,
-        'has_power': act.get('device_watts', False),
-        'has_hr': act.get('average_heartrate') is not None,
-        'has_latlng': has_gps,
-        'np': None, 'power_curve': {}, 'hr_zones': [], 'power_zones': [],
-        'decoupling_pct': None,
-        'power_duration_sec': len(pw) if pw else None,
-        'streams': mini_chart(streams),
-    }
-    # Abgeleitete Kennzahlen (NP, power_curve, zones, decoupling) berechnet
-    # ausschliesslich analyze_activities.py — das ist die einzige Quelle der Wahrheit.
-    # fetch schreibt nur Rohdaten + Metadaten. Die Felder bleiben als Platzhalter (None/leer)
-    # und werden direkt danach von analyze befuellt (laeuft im selben Workflow-Schritt danach).
-    # ── Zeitberechnung: bewegte Zeit vs. Gesamtzeit sauber trennen ──
-    # Strava cappt High-Res-Streams bei ~10000 Punkten, daher ist die
-    # Sample-Anzahl NICHT die Sekundenzahl. Wir nutzen echte Zeitstempel.
-    time_stream = streams.get('time', [])
-    moving_stream = streams.get('moving', [])
-    # 1) Gesamtzeit (elapsed): aus Activity-Metadaten (zuverlässig)
-    elapsed = act.get('elapsed_time', 0)
-    # 2) Bewegte Zeit (moving): bevorzugt aus dem moving-Stream summiert,
-    #    da dieser auch bei gecappten Streams die echte Bewegungszeit trägt
-    moving_sec = 0
-    if time_stream and len(time_stream) >= 2 and moving_stream and len(moving_stream) == len(time_stream):
-        # Summe der Zeitintervalle in denen moving==True
-        for i in range(1, len(time_stream)):
-            dt = time_stream[i] - time_stream[i-1]
-            if moving_stream[i]:
-                moving_sec += dt
-        moving_sec = int(moving_sec)
-    elif time_stream and len(time_stream) >= 2:
-        # Kein moving-Stream: Zeitspanne der Daten als Näherung
-        moving_sec = int(time_stream[-1] - time_stream[0])
-    elif moving_time:
-        moving_sec = moving_time
-    # Plausibilitäts-Check: moving darf nicht größer als elapsed sein
-    if elapsed and moving_sec > elapsed:
-        moving_sec = elapsed
-    result['duration_sec'] = moving_sec or moving_time      # bewegte Zeit (primär)
-    result['elapsed_sec']  = elapsed or moving_sec          # Gesamtzeit
-    result['moving_sec']   = moving_sec                     # explizit benannt
-    # Avg speed aus bewegter Zeit (Standard-Konvention)
-    if result.get('distance_m') and moving_sec:
-        result['avg_speed_kmh'] = round(result['distance_m'] / moving_sec * 3.6, 1)
-    # hr_zones + decoupling ebenfalls durch analyze (nicht hier doppelt rechnen)
-    return result
 
 
 def _parse_local(ts_raw, fallback_date):
-    """Wahoo-Timestamp (UTC ISO) -> (lokales Datum, 'HH:MM') in Europe/Berlin.
-    Robust gegen fehlende Zeit / abweichende Formate. Fallback: Datum + '00:00'."""
-    from datetime import datetime, timezone, timedelta
+    """Wahoo-UTC-Zeitstempel -> (lokales Datum, 'HH:MM') in Europe/Berlin.
+    Grobe DST-Naeherung (Sommerzeit Apr-Okt): fuer die Anzeige ausreichend."""
     if not ts_raw:
         return fallback_date, '00:00'
     s = ts_raw.strip().replace('Z', '+00:00')
-    # Wenn kein Zeit-Anteil vorhanden ist (kein 'T' oder Doppelpunkt), nur Datum
     if 'T' not in s and ':' not in s:
         return (ts_raw[:10] or fallback_date), '00:00'
     try:
@@ -389,309 +132,172 @@ def _parse_local(ts_raw, fallback_date):
         return (ts_raw[:10] or fallback_date), '00:00'
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    # Europe/Berlin: Sommerzeit (CEST) = UTC+2 zwischen Ende Maerz und Ende Oktober.
-    # Ohne zoneinfo-Abhaengigkeit: einfache DST-Naeherung fuer Rad-Saison.
-    month = dt.month
-    offset = 2 if 3 <= month <= 10 else 1   # grobe DST-Naeherung, fuer Anzeige ausreichend
+    offset = 2 if 3 <= dt.month <= 10 else 1
     local = dt + timedelta(hours=offset)
     return local.strftime('%Y-%m-%d'), local.strftime('%H:%M')
 
 
+def is_cycling(w):
+    tid = w.get('workout_type_id', -1)
+    n = (w.get('name') or '').lower()
+    return (tid in {0, 1, 2}
+            or any(k in n for k in ('radfahren', 'cycling', 'commute', 'ride',
+                                     'morning', 'afternoon', 'interval', 'rolle', 'tour')))
+
+
+def fetch_new_wahoo(token, known_ids):
+    """Wahoo-Fahrten seit Stichtag, die noch nicht im Bestand sind."""
+    new = []
+    page = 1
+    while True:
+        data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
+        if not data:
+            break
+        items = data.get('workouts', []) if isinstance(data, dict) else data
+        if not items:
+            break
+        for w in items:
+            starts = (w.get('starts') or '')[:10]
+            if starts < WAHOO_START_DATE or not is_cycling(w):
+                continue
+            aid = f"wahoo_{w['id']}"
+            if aid in known_ids:
+                continue                      # schon im Bestand -> nichts tun
+            s = w.get('workout_summary') or {}
+            date, hm = _parse_local(w.get('starts') or s.get('started_at', ''), starts)
+            new.append({
+                'id':          aid,
+                'name':        w.get('name') or 'Wahoo Ride',
+                'date':        date,
+                'start_time':  hm,
+                'type':        'Ride',
+                'duration_sec': int(float(s.get('duration_active_accum') or w.get('minutes', 0) * 60 or 0)),
+                'elapsed_sec':  int(float(s.get('duration_total_accum')  or w.get('minutes', 0) * 60 or 0)),
+                'distance_m':   round(float(s.get('distance_accum') or 0)),
+                'elevation_m':  round(float(s.get('ascent_accum')   or 0)),
+                'kilojoules':   round(float(s.get('work_accum') or 0) / 1000, 1) if s.get('work_accum') else None,
+                '_fit_url':     (s.get('file') or {}).get('url'),
+            })
+        # Wahoo liefert neueste zuerst: ganze Seite vor Stichtag -> fertig
+        if max((w.get('starts') or '')[:10] for w in items) < WAHOO_START_DATE:
+            break
+        if len(items) < 100:
+            break
+        page += 1
+    return new
+
+
+def process_new(act):
+    """FIT einer neuen Fahrt laden, Stream speichern, Detailwerte ableiten."""
+    spath = os.path.join(STREAMS_DIR, act['id'] + '.json')
+    if os.path.exists(spath):
+        # Sollte bei einer neuen Fahrt nicht vorkommen, aber sicher ist sicher:
+        # vorhandene Streams werden NIE ueberschrieben.
+        with open(spath) as f:
+            streams = json.load(f).get('streams', {})
+    else:
+        if not act.get('_fit_url'):
+            print(f"  {act['id']}: keine FIT-URL, nur Summary")
+            act.pop('_fit_url', None)
+            return act
+        print(f"  {act['id']}: {act['name']} (NEU, lade FIT...)")
+        streams = parse_fit_streams(act['_fit_url'])
+        if not streams or not streams.get('time'):
+            print('    keine Streams, nur Summary')
+            act.pop('_fit_url', None)
+            return act
+        os.makedirs(STREAMS_DIR, exist_ok=True)
+        with open(spath, 'w') as f:
+            json.dump({'streams': streams}, f)
+
+    pw, hr, ll = streams.get('watts', []), streams.get('heartrate', []), streams.get('latlng', [])
+    if pw:
+        act['max_power'] = max(pw) or None
+        act['has_power'] = any(w > 0 for w in pw)
+    if hr:
+        act['max_hr'] = max(hr) or None
+        act['has_hr'] = any(h > 0 for h in hr)
+    if ll:
+        act['has_latlng'] = True
+    act.pop('_fit_url', None)
+    return act
+
+
+# ── Hauptlauf ────────────────────────────────────────────────────────────────
 def main():
-    existing = {}
-    existing_version = 0
+    global WAHOO_SKIPPED
+
+    # 1. Bestand laden
+    activities, existing_version = [], 0
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE) as f:
             data = json.load(f)
-            existing = {str(a['id']): a for a in data.get('activities', [])}  # IDs normalisiert (gemischt int/str aus Migration)
-            existing_version = data.get('analysis_version', 0)
-    print('Existing: ' + str(len(existing)))
-    force_reprocess = existing_version < ANALYSIS_VERSION
-    if force_reprocess: print('Version bump: reprocessing all')
-    # Paginate through all activities since plan start (Strava returns oldest-first with 'after')
-    CYCLING_TYPES = {'Ride','GravelRide','MountainBikeRide','VirtualRide','EBikeRide','Cycling','Handcycle','Velomobile','BMX'}
-    strava_acts = []
-    page = 1
-    strava_ok = bool(TOKEN)
-    if not TOKEN:
-        print('  Kein Strava-Token (Strava abgeschaltet) — nutze nur Wahoo + vorhandene Streams.')
-    while TOKEN:
-        try:
-            batch = api(f'/athlete/activities?per_page=100&after={PLAN_START_EPOCH}&page={page}')
-        except urllib.error.HTTPError as e:
-            if e.code == 403:
-                print('  ⚠ Strava 403 — API-Zugang gesperrt (Abo-Pflicht seit 30.06.2026).')
-                print('  → Fahre fort mit Wahoo + vorhandenen Daten.')
-                strava_ok = False
-                break
-            raise
-        if not batch:
-            break
-        strava_acts.extend(batch)
-        print(f"  Page {page}: {len(batch)} activities (total so far: {len(strava_acts)})")
-        if len(batch) < 100:
-            break
-        page += 1
-    cycling = [a for a in strava_acts if a.get('sport_type') in CYCLING_TYPES or a.get('type') == 'Ride']
-    print(f"Fetched {len(strava_acts)} total, {len(cycling)} cycling (Strava {'OK' if strava_ok else 'GESPERRT'})")
+        activities = data.get('activities', [])
+        existing_version = data.get('analysis_version', 0)
+    known_ids = {str(a['id']) for a in activities}
+    print(f'Bestand: {len(activities)} Fahrten (v{existing_version})')
 
-    # Recover activities whose stream files exist but are missing from API response
-    # Reconstruct directly from stream files — no Strava API needed
-    import glob
-    api_ids = {str(a['id']) for a in cycling}
-    stream_files = glob.glob(os.path.join(STREAMS_DIR, '*.json'))
-    stream_ids = {os.path.basename(f).replace('.json','') for f in stream_files}
-    missing_ids = stream_ids - api_ids
-    if missing_ids:
-        print(f"Recovering {len(missing_ids)} activities from stream files (no API needed)...")
-        for sf in stream_files:
-            aid = os.path.basename(sf).replace('.json','')
-            if aid not in missing_ids:
-                continue
-            try:
-                with open(sf) as f2:
-                    sd = json.load(f2)
-                streams = sd.get('streams', {})
-                t_arr  = streams.get('time', [])
-                w_arr  = streams.get('watts', [])
-                h_arr  = streams.get('heartrate', [])
-                d_arr  = streams.get('distance', [])
-                alt    = streams.get('altitude', [])
-                ll     = streams.get('latlng', [])
-                dur    = t_arr[-1] if t_arr else 0
-                dist   = d_arr[-1] if d_arr else 0
-                # Elevation gain from altitude stream
-                elev = 0
-                for i in range(1, len(alt)):
-                    diff = alt[i] - alt[i-1]
-                    if diff > 0:
-                        elev += diff
-                w_pos = [w for w in w_arr if w and w > 0]
-                h_pos = [h for h in h_arr if h and h > 50]
-                avg_w = round(sum(w_pos)/len(w_pos), 1) if w_pos else None
-                max_w = max(w_pos) if w_pos else None
-                avg_h = round(sum(h_pos)/len(h_pos), 1) if h_pos else None
-                max_h = max(h_pos) if h_pos else None
-                # Vorhandene Daten aus existing ZUERST holen (werden als Fallback gebraucht).
-                prev = existing.get(str(aid), {})
-                # Wahoo-Stream-Dateien enthalten nur {'streams': ...} - KEIN date/name.
-                # Ohne Fallback wuerde start_date_local zu 'T22:03:00Z' (Datum fehlt)
-                # und date danach auf diesen Muell gesetzt -> 'Invalid Date' im Dashboard.
-                date_str = sd.get('date') or prev.get('date') or ''
-                if not re.match(r'^\d{4}-\d{2}-\d{2}$', str(date_str)):
-                    print(f"  ! skip {aid}: kein valides Datum (sd={sd.get('date')!r} prev={prev.get('date')!r})")
-                    continue
-                name     = sd.get('name') or prev.get('name') or 'Ride'
-                prev_st = prev.get('start_time')
-                sdl_time = f"T{prev_st}:00Z" if (prev_st and prev_st != '00:00') else 'T00:00:00Z'
-                fake_act = {
-                    'id':             aid,
-                    'name':           name,
-                    'start_date_local': date_str + sdl_time,
-                    'sport_type':     'Ride',
-                    'type':           'Ride',
-                    'moving_time':    dur,
-                    'elapsed_time':   dur,
-                    'distance':       dist,
-                    'total_elevation_gain': round(elev, 1),
-                    'average_watts':  avg_w,
-                    'max_watts':      max_w,
-                    'average_heartrate': avg_h,
-                    'max_heartrate':  max_h,
-                    'has_heartrate':  bool(h_pos),
-                    'device_watts':   bool(w_pos),
-                }
-                cycling.append(fake_act)
-                print(f"  + {date_str} {name} ({dur//60}min)")
-            except Exception as e:
-                print(f"  ! skip {aid}: {e}")
-    cycling.sort(key=lambda a: a.get('start_date_local',''), reverse=True)
-
-    # ── WAHOO fetch (prepared, activates once credentials are set) ──
-    try:
-        wahoo_token, _ = wahoo_refresh_token()  # token refreshed by workflow
-        wahoo_acts = []
-        if wahoo_token:
-            wahoo_acts = fetch_wahoo_workouts(wahoo_token)
-            print(f'Wahoo: {len(wahoo_acts)} cycling workouts since plan start')
-            existing_ids = set(existing.keys())
-            for wa in wahoo_acts:
-                # Wahoo-Fahrt hinzufuegen wenn ihre ID noch nicht bekannt ist.
-                # Dedup nach Datum macht mark_duplicates spaeter (reichere Version gewinnt).
-                if wa['id'] not in existing_ids:
-                    cycling.append({**wa,
-                        'start_date_local': wa['date'] + 'T' + wa['start_time'] + ':00',
-                    })
-            new_wahoo = sum(1 for wa in wahoo_acts if wa['id'] not in existing_ids)
-            print(f"  Wahoo: {new_wahoo} neue Fahrten zum Verarbeiten (FIT-Streams)")
-    except Exception as e:
-        print(f'  Wahoo skipped: {e}')
+    # 2.+3. Neue Wahoo-Fahrten holen
+    token = os.environ.get('WAHOO_ACCESS_TOKEN', '')
+    added = 0
+    if not token:
+        print('  Kein WAHOO_ACCESS_TOKEN — Wahoo uebersprungen')
         WAHOO_SKIPPED = True
+    else:
+        try:
+            new = fetch_new_wahoo(token, known_ids)
+            print(f'  Wahoo: {len(new)} neue Fahrt(en)')
+            for act in new:
+                activities.append(process_new(act))
+                added += 1
+        except Exception as e:
+            print(f'  Wahoo abgebrochen: {e}')
+            WAHOO_SKIPPED = True
 
-    print('Found ' + str(len(cycling)) + ' cycling activities total')
-    activities = []
-    for act in cycling:
-        aid = str(act['id'])
-        if aid in existing and os.path.exists(stream_path(aid)) and not force_reprocess:
-            cached = existing[aid]
-            # Namen NUR aktualisieren wenn der neue nicht generisch ist.
-            # Wahoo vergibt Auto-Titel ("Radfahren"/"Cycling") — die duerfen
-            # einen bestehenden spezifischen Namen (z.B. "ClassicCrew") nie ueberschreiben.
-            GENERIC = {'radfahren', 'cycling', 'ride', 'fahrt', 'workout', ''}
-            new_name = (act.get('name') or '').strip()
-            old_name = (cached.get('name') or '').strip()
-            if new_name and new_name.lower() not in GENERIC:
-                cached['name'] = new_name
-            elif not old_name:
-                cached['name'] = new_name
-            # sonst: alten (spezifischen) Namen behalten
-            # Startzeit NUR aktualisieren wenn die neue echt ist (nicht 00:00) ODER
-            # bisher keine da war. Schuetzt Backfill-Startzeiten vor Ueberschreibung.
-            new_st = act.get('start_date_local', '')[11:16]
-            old_st = cached.get('start_time')
-            if new_st and new_st != '00:00':
-                cached['start_time'] = new_st
-            elif not old_st:
-                cached['start_time'] = new_st
-            # sonst: bestehende (Backfill-)Startzeit behalten
-            cached['id'] = str(cached['id'])   # ID-Typ vereinheitlichen (String)
-            activities.append(cached)
-        else:
-            activities.append(process_activity(act, force_fetch=force_reprocess))
-    activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
-    # (Namens-Korrekturen werden ganz am Ende angewendet, siehe unten)
+    # Namens-Korrekturen
+    for a in activities:
+        fix = NAME_FIXES.get(str(a.get('id')))
+        if fix and a.get('name') != fix:
+            a['name'] = fix
 
-    # Add back any existing activities not covered by the Strava fetch or stream recovery
-    # This ensures old activities are NEVER lost — merge, don't rebuild
-    processed_ids = {str(a['id']) for a in activities}   # String-normalisiert gegen int/str-Mix
-    recovered = 0
-    for aid, old_act in existing.items():
-        if aid not in processed_ids:
-            activities.append(old_act)
-            recovered += 1
-    if recovered:
-        print(f'Kept {recovered} existing activities not in current fetch')
-        activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
+    activities.sort(key=lambda a: (a.get('date', ''), a.get('start_time', '')), reverse=True)
 
-    # ── ID-Dedup: exakte Duplikate (gleiche ID mehrfach) ENTFERNEN, nicht nur
-    # verstecken. Entsteht bei int/str-ID-Mix in existing vs Recovery. Behaelt
-    # den reichhaltigeren Eintrag (mehr ausgefuellte Felder).
-    def dedup_by_id(acts):
-        from collections import OrderedDict
-        best = OrderedDict()
-        for a in acts:
-            key = str(a.get('id'))
-            if key not in best:
-                best[key] = a
-            else:
-                # reicheren behalten (mehr non-null Felder)
-                def richness(x):
-                    return sum(1 for v in x.values() if v not in (None, '', [], {}, 0))
-                if richness(a) > richness(best[key]):
-                    best[key] = a
-        removed = len(acts) - len(best)
-        if removed:
-            print(f'ID-Dedup: {removed} exakte Duplikate entfernt')
-        return list(best.values())
-
-    activities = dedup_by_id(activities)
-
-    # ── Mark duplicates: Strava + Wahoo often report the SAME ride twice
-    # (identical start_time, near-identical duration). Keep BOTH in storage,
-    # but flag the weaker one as hidden=True so the dashboard shows/sums only one.
-    def mark_duplicates(acts):
-        from collections import defaultdict
-        groups = defaultdict(list)
-        for a in acts:
-            a['hidden'] = False  # reset flag each run
-            a['dup_of'] = None
-            groups[a.get('date', '')].append(a)
-        marked = 0
-        for date, day_acts in groups.items():
-            used = [False] * len(day_acts)
-            for i in range(len(day_acts)):
-                if used[i]:
-                    continue
-                group = [day_acts[i]]
-                used[i] = True
-                for j in range(i + 1, len(day_acts)):
-                    if used[j]:
-                        continue
-                    a, b = day_acts[i], day_acts[j]
-                    if a.get('start_time') == b.get('start_time'):
-                        da = a.get('duration_sec') or 0
-                        db = b.get('duration_sec') or 0
-                        if abs(da - db) <= 60:
-                            group.append(b)
-                            used[j] = True
-                if len(group) > 1:
-                    def score(x):
-                        s = 0
-                        if x.get('has_power'):
-                            s += 10000
-                        if x.get('has_hr'):
-                            s += 1000
-                        if x.get('has_latlng'):
-                            s += 100
-                        streams = x.get('streams') or {}
-                        s += len(streams.get('time') or [])
-                        return s
-                    best = max(group, key=score)
-                    for g in group:
-                        if g is not best:
-                            g['hidden'] = True
-                            g['dup_of'] = best['id']
-                            marked += 1
-                    print(f"  Dup {date} {best.get('start_time')}: showing '{best['name']}', hiding {[g['name'] for g in group if g is not best]}")
-        if marked:
-            print(f'Marked {marked} duplicate activities as hidden (kept in storage)')
-
-    mark_duplicates(activities)
-    activities.sort(key=lambda a: a['date'] + a['start_time'], reverse=True)
-
-    # Namens-Korrekturen VOR dem Vergleich (greift unabhaengig vom Pfad)
-    for _a in activities:
-        _fix = NAME_FIXES.get(str(_a.get('id')))
-        if _fix and _a.get('name') != _fix:
-            print(f"  [name] {_a.get('id')}: '{_a.get('name')}' -> '{_fix}'")
-            _a['name'] = _fix
-
+    # 4. Ausgabe bauen. Version-Bump erzwingt einen Durchlauf von analyze
+    #    (dieses Skript selbst berechnet keine Kennzahlen).
     visible = [a for a in activities if not a.get('hidden')]
-    recent = [a for a in visible if a['date'] >= PLAN_START_DATE]
+    recent = [a for a in visible if a.get('date', '') >= PLAN_START_DATE]
     output = {
         'updated_at': datetime.now(timezone.utc).isoformat(),
-        'analysis_version': ANALYSIS_VERSION,
-        'athlete': {'id': 13589996, 'name': 'Wolf Harmening', 'ftp_estimate': FTP, 'hrmax_estimate': HRMAX, 'weight_kg': 81},
-        'summary': {'total_activities': len(visible), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
-        # Signal fuer die Status-Ampel: konnte der Wahoo-Abruf nicht laufen
-        # (abgelaufener Token o.ae.), bleibt der Workflow gruen, obwohl keine
-        # neuen Fahrten kommen. Dieses Flag macht das sichtbar.
+        'analysis_version': existing_version if existing_version >= ANALYSIS_VERSION else ANALYSIS_VERSION,
+        'athlete': {'id': 13589996, 'name': 'Wolf Harmening',
+                    'ftp_estimate': FTP, 'hrmax_estimate': HRMAX, 'weight_kg': 81},
+        'summary': {'total_activities': len(visible), 'recent_count': len(recent),
+                    'recent_hours': round(sum(a.get('duration_sec', 0) for a in recent) / 3600, 1)},
         'wahoo_skipped': WAHOO_SKIPPED,
         'activities': activities,
     }
 
-    # DEPLOY-LAST SENKEN: updated_at NUR neu setzen wenn sich inhaltlich etwas
-    # geaendert hat. Sonst bleibt die Datei bit-identisch -> kein Commit (git diff
-    # --staged --quiet greift) -> kein Deploy. Verhindert ~96 Deploys/Tag ohne
-    # echte Aenderung. Vergleich ohne updated_at (das aendert sich ja immer).
+    # Nur schreiben, wenn sich inhaltlich etwas geaendert hat. Sonst bleibt die
+    # Datei bit-identisch -> kein Commit -> kein Deploy. (updated_at und
+    # wahoo_skipped aendern sich staendig und zaehlen nicht als Inhalt.)
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE) as f:
                 prev = json.load(f)
-            _ignore = ('updated_at', 'wahoo_skipped')
-            prev_cmp = {k: v for k, v in prev.items() if k not in _ignore}
-            new_cmp  = {k: v for k, v in output.items() if k not in _ignore}
-            if json.dumps(prev_cmp, sort_keys=True) == json.dumps(new_cmp, sort_keys=True):
+            skip = ('updated_at', 'wahoo_skipped')
+            a = {k: v for k, v in prev.items()  if k not in skip}
+            b = {k: v for k, v in output.items() if k not in skip}
+            if json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True):
                 output['updated_at'] = prev.get('updated_at', output['updated_at'])
-                print('Keine inhaltliche Aenderung -> updated_at unveraendert (kein Deploy)')
+                print('Keine Aenderung -> kein Deploy')
         except Exception as e:
-            print(f'  (Vergleich mit altem Stand fehlgeschlagen: {e})')
+            print(f'  (Vergleich fehlgeschlagen: {e})')
 
     os.makedirs('data', exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(output, f, indent=2)
-    n_streams = sum(1 for a in activities if os.path.exists(stream_path(a['id'])))
-    print('Done: ' + str(len(activities)) + ' activities, ' + str(n_streams) + ' stream files')
+    print(f'Fertig: {len(activities)} Fahrten, {added} neu')
+
 
 if __name__ == '__main__':
     main()
