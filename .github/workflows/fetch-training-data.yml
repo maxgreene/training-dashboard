@@ -20,9 +20,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+          cache: 'pip'                        # Pakete zwischenspeichern
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install garth fitparse
+        run: pip install -r requirements.txt
 
       - name: Refresh Wahoo Token
         id: wahoo_token
