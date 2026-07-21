@@ -284,10 +284,14 @@ function renderStatus(){
   const hDay = DATA.health.length ? dayDiff(today(), d(DATA.health[0].date)) : Infinity;
   const aDay = DATA.acts.length   ? dayDiff(today(), d(DATA.acts[0].date))   : Infinity;
 
-  const lvl = (hDay >= st.healthErrDays || fetchAge >= st.fetchErrH) ? 'err'
-            : (hDay >= st.healthWarnDays || fetchAge >= st.fetchWarnH) ? 'warn' : 'ok';
+  let lvl = (hDay >= st.healthErrDays || fetchAge >= st.fetchErrH) ? 'err'
+          : (hDay >= st.healthWarnDays || fetchAge >= st.fetchWarnH) ? 'warn' : 'ok';
+  // Wahoo uebersprungen (abgelaufener Token o.ae.): der Fetch laeuft, holt aber
+  // keine Fahrten. Mindestens 'warn', damit der stille Ausfall auffaellt.
+  if (DATA.wahooSkipped && lvl === 'ok') lvl = 'warn';
   $('#status-dot').className = 'dot ' + lvl;
-  $('#status-sum').textContent = lvl === 'err' ? 'Daten hängen' : lvl === 'warn' ? 'Daten verspätet' : 'aktuell';
+  $('#status-sum').textContent = DATA.wahooSkipped ? 'Aktivitäten hängen'
+    : lvl === 'err' ? 'Daten hängen' : lvl === 'warn' ? 'Daten verspätet' : 'aktuell';
 
   const ago = n => n <= 0 ? 'heute' : n === 1 ? 'gestern' : isFinite(n) ? `vor ${n} Tagen` : '—';
   const stamp = iso_ => {
@@ -299,7 +303,9 @@ function renderStatus(){
   const cF = fetchAge >= st.fetchErrH ? 'err' : fetchAge >= st.fetchWarnH ? 'warn' : 'ok';
   const cH = hDay >= st.healthErrDays ? 'err' : hDay >= st.healthWarnDays ? 'warn' : 'ok';
   const col = c => c === 'err' ? 'var(--err)' : c === 'warn' ? 'var(--warn)' : 'var(--ok)';
-  const hint = hDay >= st.healthWarnDays
+  const hint = DATA.wahooSkipped
+    ? 'Wahoo-Abruf übersprungen — meist abgelaufener WAHOO_REFRESH_TOKEN. Neu autorisieren.'
+    : hDay >= st.healthWarnDays
     ? 'Health hängt. Garmin-Token prüfen: refresh.log auf ukb457.'
     : fetchAge >= st.fetchWarnH
     ? 'Fetch läuft nicht. cron-job.org und GitHub Actions prüfen.'
@@ -308,7 +314,7 @@ function renderStatus(){
   $('#status-panel').innerHTML = `
     <div class="sp-row"><span style="color:${col(cF)}">Letzter Fetch</span><span class="val">${stamp(DATA.updatedAt)}</span></div>
     <div class="sp-row"><span style="color:${col(cH)}">Health-Daten</span><span class="val">${ago(hDay)}</span></div>
-    <div class="sp-row"><span style="color:var(--ok)">Letzte Aktivität</span><span class="val">${ago(aDay)}</span></div>
+    <div class="sp-row"><span style="color:${DATA.wahooSkipped ? 'var(--warn)' : 'var(--ok)'}">Letzte Aktivität</span><span class="val">${ago(aDay)}${DATA.wahooSkipped ? ' ⚠' : ''}</span></div>
     <div class="sp-hint">${hint}</div>`;
 }
 
