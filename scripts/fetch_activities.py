@@ -103,11 +103,17 @@ WAHOO_CLIENT_ID     = 'Dyxm-b7rOkV4VZtxrba512mnIhx70WqlzW4xSoEadQQ'
 WAHOO_CLIENT_SECRET = 'eCwM2BdsNZxhoXzHzzobQv8T0BiaGEk9x1jw8rl0krY'
 WAHOO_BASE          = 'https://api.wahooligan.com'
 
+# Wird True, sobald der Wahoo-Abruf uebersprungen oder abgebrochen wurde.
+# Landet als 'wahoo_skipped' in activities.json, damit die Status-Ampel im
+# Dashboard einen stillen Ausfall zeigt statt gruen zu bleiben.
+WAHOO_SKIPPED = False
+
 def wahoo_refresh_token():
-    # Access token is now refreshed by the workflow (like Strava)
+    global WAHOO_SKIPPED
     at = os.environ.get('WAHOO_ACCESS_TOKEN', '')
     if not at:
         print('  No WAHOO_ACCESS_TOKEN — skipping Wahoo fetch')
+        WAHOO_SKIPPED = True
         return None, None
     return at, None
 
@@ -520,6 +526,7 @@ def main():
             print(f"  Wahoo: {new_wahoo} neue Fahrten zum Verarbeiten (FIT-Streams)")
     except Exception as e:
         print(f'  Wahoo skipped: {e}')
+        WAHOO_SKIPPED = True
 
     print('Found ' + str(len(cycling)) + ' cycling activities total')
     activities = []
@@ -656,6 +663,10 @@ def main():
         'analysis_version': ANALYSIS_VERSION,
         'athlete': {'id': 13589996, 'name': 'Wolf Harmening', 'ftp_estimate': FTP, 'hrmax_estimate': HRMAX, 'weight_kg': 81},
         'summary': {'total_activities': len(visible), 'recent_count': len(recent), 'recent_hours': round(sum(a['duration_sec'] for a in recent) / 3600, 1)},
+        # Signal fuer die Status-Ampel: konnte der Wahoo-Abruf nicht laufen
+        # (abgelaufener Token o.ae.), bleibt der Workflow gruen, obwohl keine
+        # neuen Fahrten kommen. Dieses Flag macht das sichtbar.
+        'wahoo_skipped': WAHOO_SKIPPED,
         'activities': activities,
     }
 
@@ -667,8 +678,9 @@ def main():
         try:
             with open(DATA_FILE) as f:
                 prev = json.load(f)
-            prev_cmp = {k: v for k, v in prev.items() if k != 'updated_at'}
-            new_cmp  = {k: v for k, v in output.items() if k != 'updated_at'}
+            _ignore = ('updated_at', 'wahoo_skipped')
+            prev_cmp = {k: v for k, v in prev.items() if k not in _ignore}
+            new_cmp  = {k: v for k, v in output.items() if k not in _ignore}
             if json.dumps(prev_cmp, sort_keys=True) == json.dumps(new_cmp, sort_keys=True):
                 output['updated_at'] = prev.get('updated_at', output['updated_at'])
                 print('Keine inhaltliche Aenderung -> updated_at unveraendert (kein Deploy)')
