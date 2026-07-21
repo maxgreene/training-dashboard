@@ -13,6 +13,7 @@ const CFG = {
     hrmax: 172,        // ACHTUNG: auch in scripts/analyze_activities.py setzen
     weight: 81,
     ftpGoal: 300,      // Ziel des laufenden Aufbaus
+    ftpGoalDate: '2026-11-15', // Wunschtermin fuer FTP 300
   },
 
   // ── Zonen ─────────────────────────────────────────────────────────────────
@@ -101,12 +102,14 @@ const CFG = {
   // × 0.95 abgeleitet.
   tests: [
     { date: '2026-05-21', kind: 'ramp', id: '18599770325', ftp: 237, map: 313 },
+    // 23.06.: früh abgebrochen (müde Beine), Peak 307 W. MAP = 60s-Bestwert.
+    { date: '2026-06-23', kind: 'ramp', id: '19040836155', ftp: 229, map: 305 },
   ],
 
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
     easyTarget: [75, 80],        // Zielfenster Easy-Anteil in %
-    easyWindowDays: 28,          // Fenster fuer den Easy-Anteil
+    easyWindowDays: 14,          // Fenster fuer den Easy-Anteil
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
     // 4DP-Benchmarks als Vielfaches der FTP (bei FTP 250: 1200/800/400/250 W)
     dp4: [
