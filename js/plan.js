@@ -111,6 +111,10 @@ function zbar(act) {
 }
 
 // ── FTP-Widget ──────────────────────────────────────────────────────────────
+/* Gemessene Tests aufbereiten. Rampe und 20-Min messen verschieden, deshalb
+ * traegt jeder Punkt seine Art (fuer die Punktform in der Timeline). FTP wird,
+ * falls nicht angegeben, aus der 20-Min-Bestleistung der verknuepften Fahrt
+ * abgeleitet. */
 function testPoints() {
   return CFG.tests.map(t => {
     let ftp = t.ftp, map = t.map;
@@ -126,77 +130,114 @@ function testPoints() {
   }).filter(t => t.ftp).sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/* Test-Timeline als SVG. Zeitachse vom ersten Test bis zum Zieldatum, die
+ * 300-Marke als waagerechte Referenz oben. KEINE Soll-Linie: die echten
+ * Punkte sollen fuer sich sprechen. Rampe = Dreieck, 20-Min = Kreis, weil die
+ * Methoden 10-20 W auseinanderliegen und nicht als Fitness-Sprung
+ * missverstanden werden duerfen. */
+function testTimeline(tp, goal, goalDate) {
+  const W = 300, H = 150, pad = { l: 30, r: 14, t: 14, b: 22 };
+  if (!tp.length) return '<div class="ez-none">Noch keine Tests erfasst.</div>';
+
+  const t0 = d(tp[0].date).getTime();
+  const t1 = d(goalDate).getTime();
+  const span = Math.max(1, (t1 - t0) / 86400000);
+  const vals = tp.map(t => t.ftp).concat([goal]);
+  const lo = Math.min(...vals) - 8, hi = Math.max(...vals) + 8;
+  const X = ds => pad.l + ((d(ds).getTime() - t0) / 86400000) / span * (W - pad.l - pad.r);
+  const Y = v => H - pad.b - (v - lo) / (hi - lo) * (H - pad.t - pad.b);
+
+  const KCOL = { ramp: '#a855f7', '20min': '#60a5fa', '4dp': '#f59e0b' };
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+
+  // Gitter: waagerechte Werte-Ticks
+  for (let i = 0; i <= 3; i++) {
+    const v = lo + (hi - lo) * i / 3, y = Y(v);
+    s += `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${W - pad.r}" y2="${y.toFixed(1)}"
+          stroke="rgba(255,255,255,.05)"/>
+          <text x="${pad.l - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end"
+          font-size="8" font-family="var(--mono)" fill="var(--t5)">${Math.round(v)}</text>`;
+  }
+  // 300-Marke
+  s += `<line x1="${pad.l}" y1="${Y(goal).toFixed(1)}" x2="${W - pad.r}" y2="${Y(goal).toFixed(1)}"
+        stroke="#34d399" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <text x="${W - pad.r}" y="${(Y(goal) - 4).toFixed(1)}" text-anchor="end"
+        font-size="9" font-weight="700" font-family="var(--mono)" fill="#34d399">Ziel ${goal} W</text>`;
+
+  // Verbindungslinie der Tests (chronologisch), dezent
+  if (tp.length > 1) {
+    s += `<path d="${tp.map((t, i) => (i ? 'L' : 'M') + X(t.date).toFixed(1) + ' ' + Y(t.ftp).toFixed(1)).join(' ')}"
+          fill="none" stroke="#4a6a8a" stroke-width="1.2"/>`;
+  }
+  // Zieldatum als senkrechte Markierung
+  s += `<line x1="${X(goalDate).toFixed(1)}" y1="${pad.t}" x2="${X(goalDate).toFixed(1)}" y2="${H - pad.b}"
+        stroke="#34d399" stroke-width="1" stroke-dasharray="2 2" opacity=".4"/>`;
+
+  // Punkte: Rampe = Dreieck, sonst Kreis
+  tp.forEach(t => {
+    const x = X(t.date), y = Y(t.ftp), col = KCOL[t.kind] || '#60a5fa';
+    if (t.kind === 'ramp') {
+      s += `<path d="M${x.toFixed(1)} ${(y-4).toFixed(1)} L${(x+3.6).toFixed(1)} ${(y+3).toFixed(1)} L${(x-3.6).toFixed(1)} ${(y+3).toFixed(1)} Z" fill="${col}"/>`;
+    } else {
+      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${col}"/>`;
+    }
+  });
+  // x-Achse: erster Test + Zieldatum
+  s += `<text x="${pad.l}" y="${H - 6}" font-size="8" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(tp[0].date))}</text>
+        <text x="${W - pad.r}" y="${H - 6}" text-anchor="end" font-size="8" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(goalDate))}</text>`;
+  s += '</svg>';
+  return s;
+}
+
 function ftpWidget() {
   const goal = CFG.athlete.ftpGoal;
-  const p20Goal = Math.round(goal / 0.95);
-  const cur = easyShare(CFG.ui.easyWindowDays, 0);
-  const prev = easyShare(CFG.ui.easyWindowDays, CFG.ui.easyWindowDays);
-  const p20 = best('1200', 42);
+  const goalDate = CFG.athlete.ftpGoalDate;
+  const win = CFG.ui.easyWindowDays;
+  const cur = easyShare(win, 0);
   const [tLo, tHi] = CFG.ui.easyTarget;
+  const tp = testPoints();
+  const best20 = best('1200', 42);
 
-  const bar = (val, label, hint) => {
+  // ── Rechts: 14-Tage-Bilanz ──
+  const ezBar = (val, label) => {
     if (val == null) return `<div class="ez-none">${label}: keine Daten</div>`;
     const col = val >= tLo ? '#34d399' : val >= 65 ? '#fbbf24' : '#f97316';
     return `<div class="ez-item">
       <div class="ez-head"><span class="ez-name">${label}</span>
         <span class="ez-val" style="color:${col}">${val.toFixed(0)}<small> %</small></span></div>
       <div class="ez-bar"><div class="ez-fill" style="width:${Math.min(100, val)}%;background:${col}"></div>
-        <div class="ez-tgt" style="left:${tLo}%;right:${100 - tHi}%"></div></div>
-      <div class="ez-hint">${hint}</div></div>`;
+        <div class="ez-tgt" style="left:${tLo}%;right:${100 - tHi}%"></div></div></div>`;
   };
 
-  let delta = '';
-  if (prev.power != null && cur.power != null) {
-    const dv = cur.power - prev.power;
-    delta = `<span style="color:${dv >= 0 ? '#34d399' : '#ef4444'}">${dv >= 0 ? '▲' : '▼'} ${Math.abs(dv).toFixed(0)} Pp. vs. Vormonat</span>`;
-  }
+  // ── Links: Test-Fortschritt ──
+  const latest = tp.length ? tp[tp.length - 1] : null;
+  const KIND = { ramp: 'Rampe △', '20min': '20-Min ○', '4dp': '4DP' };
+  const gap = latest ? goal - latest.ftp : goal;
+  const daysLeft = Math.max(0, dayDiff(d(goalDate), today()));
+  const testRows = tp.slice().reverse().map(t =>
+    `<div>${fmtDay(d(t.date))} · ${KIND[t.kind] || t.kind} · <b>${t.ftp} W</b>${t.map ? ` · MAP ${t.map}` : ''}</div>`
+  ).join('');
 
-  let p20html = '<div class="ez-none">Noch kein 20-Min-Wert in den letzten 6 Wochen.</div>';
-  if (p20) {
-    const prog = Math.min(100, 100 * p20.w / p20Goal);
-    p20html = `<div><span class="big" style="color:#60a5fa">${p20.w}</span><small> W</small>
-        <span class="muted"> beste 20 Min · ${fmtDay(d(p20.date))}</span></div>
-      <div class="ez-bar"><div class="ez-fill" style="width:${prog}%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
-      <div class="ez-hint">FTP ≈ 20min × 0.95 = <b>${Math.round(p20.w * 0.95)} W</b> ·
-        noch <b>${Math.max(0, p20Goal - p20.w)} W</b> · aus Ausfahrt = Untergrenze</div>`;
-  }
+  const best20html = best20
+    ? `20-Min-Bestwert <b>${best20.w} W</b> (FTP ≈ ${Math.round(best20.w * 0.95)}) · ${fmtDay(d(best20.date))}`
+    : 'Noch kein 20-Min-Wert in den letzten 6 Wochen';
 
-  const tp = testPoints();
-  let spark = '<div class="ez-none">Noch keine Rollentests erfasst.</div>';
-  if (tp.length) {
-    const W = 170, H = 48, pad = 6;
-    const lo = Math.min(goal, ...tp.map(t => t.ftp)) - 10;
-    const hi = Math.max(goal, ...tp.map(t => t.ftp)) + 10;
-    const X = i => tp.length === 1 ? W / 2 : pad + i * (W - 2 * pad) / (tp.length - 1);
-    const Y = v => H - pad - ((v - lo) / (hi - lo)) * (H - 2 * pad);
-    let s = `<svg width="${W}" height="${H}">
-      <line x1="0" y1="${Y(goal).toFixed(1)}" x2="${W}" y2="${Y(goal).toFixed(1)}"
-            stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`;
-    if (tp.length > 1) s += `<path d="${tp.map((t, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(t.ftp).toFixed(1)).join(' ')}"
-            fill="none" stroke="#60a5fa" stroke-width="2"/>`;
-    tp.forEach((t, i) => s += `<circle cx="${X(i).toFixed(1)}" cy="${Y(t.ftp).toFixed(1)}" r="3" fill="#60a5fa"/>`);
-    s += '</svg>';
-    const KIND = { ramp: 'Rampe', '4dp': '4DP', '20min': '20-Min' };
-    const rows = tp.slice().reverse().slice(0, 3).map(t =>
-      `<div>${fmtDay(d(t.date))} · ${KIND[t.kind] || t.kind} · FTP <b>${t.ftp} W</b>${t.map ? ` · MAP ${t.map} W` : ''}</div>`).join('');
-    spark = `<div class="tst-row"><div>${s}</div><div class="tst-list">${rows}</div></div>`;
-  }
-
-  return `<div class="card ftp3">
+  return `<div class="card">
     <div class="card-hd"><span class="t">WEG ZU FTP ${goal}</span>
-      <span class="s">Steuergrößen des Aufbaus</span></div>
+      <span class="s">${latest ? `zuletzt ${latest.ftp} W · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
     <div class="ftp3-grid">
       <div>
-        <div class="lbl">Easy-Anteil · letzte ${CFG.ui.easyWindowDays} Tage</div>
-        ${bar(cur.hr, 'nach HF', 'was der Kreislauf gemerkt hat')}
-        ${bar(cur.power, 'nach Leistung', 'zählt auch Spitzen, die die HF nie erreicht')}
-        <div class="ez-meta">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten · Ziel ${tLo}–${tHi} % ${delta}</div>
+        <div class="lbl">FTP-Tests · Ziel ${goal} bis ${fmtDay(d(goalDate))}</div>
+        ${testTimeline(tp, goal, goalDate)}
+        <div class="tst-list" style="margin-top:6px">${testRows}</div>
+        <div class="ez-hint">△ Rampe · ○ 20-Min · Methoden ~10-20 W verschieden</div>
       </div>
       <div>
-        <div class="lbl">20-Min-Bestleistung</div>
-        ${p20html}
-        <div class="lbl" style="margin-top:14px">Rollentests · gemessene FTP</div>
-        ${spark}
+        <div class="lbl">Letzte ${win} Tage</div>
+        ${ezBar(cur.hr, 'Easy nach HF')}
+        ${ezBar(cur.power, 'Easy nach Leistung')}
+        <div class="ez-meta">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten · Ziel Easy ${tLo}–${tHi} %</div>
+        <div class="ez-hint" style="margin-top:10px">${best20html}</div>
       </div>
     </div>
   </div>`;
