@@ -1,0 +1,11 @@
+# Feste Versionen = reproduzierbare Laeufe + stabiler Cache-Schluessel.
+# Stand: erfolgreicher Lauf 21.07.2026. Zum Aktualisieren Version aendern,
+# der naechste Lauf holt dann einmal frisch und cached neu.
+#
+# Direkt genutzt:
+#   fitparse -> fetch_activities.py (FIT-Dateien lesen)
+#   garth    -> fetch_garmin.py     (Garmin Health)
+# garth zieht ~30 Unterpakete (logfire, opentelemetry, pydantic, rich ...)
+# automatisch mit; pip loest die aus diesen zwei Pins reproduzierbar auf.
+fitparse==1.2.0
+garth==0.8.0
