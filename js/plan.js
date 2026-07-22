@@ -111,12 +111,36 @@ function zbar(act) {
 }
 
 // ── FTP-Widget ──────────────────────────────────────────────────────────────
-/* Gemessene Tests aufbereiten. Rampe und 20-Min messen verschieden, deshalb
- * traegt jeder Punkt seine Art (fuer die Punktform in der Timeline). FTP wird,
- * falls nicht angegeben, aus der 20-Min-Bestleistung der verknuepften Fahrt
- * abgeleitet. */
+/* Rampentests AUTOMATISCH aus den Fahrten ableiten.
+ *
+ * Eine Fahrt gilt als Rampentest, wenn ihr Datum auf einen geplanten Test
+ * faellt (CFG.plan.events, type:'test') ODER ihr Name "ramp" enthaelt. Der FTP
+ * folgt dann der Rampen-Konvention dieses Projekts: FTP = 0.75 x MAP, wobei
+ * MAP der beste 60-s-Wert ist. So muss kein Rampentest mehr von Hand in
+ * CFG.tests eingetragen werden - er erscheint nach der Analyse von selbst. */
+function autoRampTests() {
+  const testDates = new Set(
+    (CFG.plan.events || []).filter(e => e.type === 'test').map(e => e.date));
+  const out = [];
+  for (const a of DATA.acts) {
+    const isRamp = testDates.has(a.date) || /ramp/i.test(a.name || '');
+    const map = a.power_curve && a.power_curve['60'];
+    if (isRamp && a.has_power && map) {
+      out.push({ date: a.date, kind: 'ramp', id: String(a.id),
+                 map, ftp: Math.round(map * 0.75), auto: true });
+    }
+  }
+  return out;
+}
+
+/* Gemessene Tests aufbereiten. Zwei Quellen, zusammengefuehrt nach Datum:
+ *   1. autoRampTests()  - Rampen aus den Fahrten (0.75 x MAP), keine Pflege noetig.
+ *   2. CFG.tests        - Handeintraege: Altfahrten ohne Daten hier sowie
+ *                         20-Min-Tests; ein Handeintrag mit gesetztem ftp hat
+ *                         Vorrang (Override) vor dem automatischen Wert.
+ * Fuer 20-Min-Handeintraege ohne ftp bleibt die 20-Min-Ableitung (x0.95). */
 function testPoints() {
-  return CFG.tests.map(t => {
+  const manual = CFG.tests.map(t => {
     let ftp = t.ftp, map = t.map;
     if (t.id) {
       const a = DATA.acts.find(x => String(x.id) === String(t.id));
@@ -127,7 +151,26 @@ function testPoints() {
       }
     }
     return { ...t, ftp, map };
-  }).filter(t => t.ftp).sort((a, b) => a.date.localeCompare(b.date));
+  });
+
+  const byDate = new Map();
+  autoRampTests().forEach(t => byDate.set(t.date, t));      // Auto zuerst …
+  manual.forEach(t => { if (t.ftp) byDate.set(t.date, t); });// … Handeintrag gewinnt
+  return [...byDate.values()].filter(t => t.ftp)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/* Kerngroesse fuer den Plan: der FTP des juengsten Tests. Der Plan (Zonen,
+ * IF, Intervall-Vorgaben "% FTP") richtet sich danach.
+ *
+ * OFFEN (Entscheidung, siehe PR): Soll dieser Wert auch CFG.athlete.ftp (heute
+ * 250, zusaetzlich in scripts/analyze_activities.py) ersetzen? Das steuert IF,
+ * Zonen und die im Backend vorberechnete TSS - eine Aenderung braucht dort
+ * einen Reprocess, damit IF und TSS konsistent bleiben. Bis dahin bleibt
+ * athlete.ftp die Rechengroesse; planFtp() ist die angezeigte Kerngroesse. */
+function planFtp() {
+  const tp = testPoints();
+  return tp.length ? tp[tp.length - 1] : null;
 }
 
 /* Test-Timeline als SVG. Zeitachse vom ersten Test bis zum Zieldatum, die
@@ -235,9 +278,10 @@ function ftpWidget() {
     ? `20-Min-Bestwert <b>${best20.w} W</b> (FTP ≈ ${Math.round(best20.w * 0.95)}) · ${fmtDay(d(best20.date))}`
     : 'Noch kein 20-Min-Wert in den letzten 6 Wochen';
 
+  const wkg = latest ? (latest.ftp / CFG.athlete.weight).toFixed(2) : null;
   return `<div class="card">
     <div class="card-hd"><span class="t">WEG ZU FTP ${goal}</span>
-      <span class="s">${latest ? `zuletzt ${latest.ftp} W · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
+      <span class="s">${latest ? `Plan-FTP <b>${latest.ftp} W</b> (${wkg} W/kg) · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
     <div class="ftp3-grid">
       <div>
         <div class="lbl">FTP-Tests · Ziel ${goal} bis ${fmtDay(d(goalDate))}</div>
