@@ -104,6 +104,8 @@ const CFG = {
     { date: '2026-05-21', kind: 'ramp', id: '18599770325', ftp: 237, map: 313 },
     // 23.06.: früh abgebrochen (müde Beine), Peak 307 W. MAP = 60s-Bestwert.
     { date: '2026-06-23', kind: 'ramp', id: '19040836155', ftp: 229, map: 305 },
+    // 22.07.: Nullpunkt fuer den FTP-300-Block. FTP = 0.75 x MAP (361 W 60s-Best).
+    { date: '2026-07-22', kind: 'ramp', id: 'garmin_23694693519', ftp: 271, map: 361 },
   ],
 
   // ── Darstellung ───────────────────────────────────────────────────────────
