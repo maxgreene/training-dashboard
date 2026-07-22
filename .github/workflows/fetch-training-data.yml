@@ -51,6 +51,12 @@ jobs:
         env:
           WAHOO_ACCESS_TOKEN: ${{ steps.wahoo_token.outputs.wahoo_access }}
 
+      - name: Fetch Garmin Rides
+        continue-on-error: true
+        run: python3 scripts/fetch_garmin_activities.py
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+
       - name: Analyze Activities
         run: python3 scripts/analyze_activities.py
 
