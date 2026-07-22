@@ -16,8 +16,10 @@ Workflow-Schritt laeuft. fetch schreibt nur Rohdaten und Metadaten.
 
 Strava ist seit 30.06.2026 gesperrt und wurde entfernt. Wahoo ist die Quelle.
 """
-import os, io, json, urllib.request
+import os, json, urllib.request
 from datetime import datetime, timezone, timedelta
+
+from fit_streams import streams_from_fit_url
 
 DATA_FILE        = 'data/activities.json'
 STREAMS_DIR      = 'data/streams'
@@ -40,70 +42,12 @@ WAHOO_SKIPPED = False
 
 # ── FIT-Datei -> Streams ─────────────────────────────────────────────────────
 def parse_fit_streams(fit_url):
-    """Laedt eine FIT-Datei und macht daraus Sekunden-Streams.
+    """Laedt eine FIT-Datei von einer URL und macht daraus Sekunden-Streams.
 
-    GPS, Hoehe, Tempo und Gefaelle werden mitgenommen, auch wenn analyze sie
-    aktuell nicht nutzt - falls sie spaeter ins Dashboard sollen.
+    Die eigentliche Umwandlung liegt in fit_streams.py, damit Wahoo (URL) und
+    Garmin (Bytes/ZIP) exakt dieselbe Aufbereitung nutzen.
     """
-    try:
-        import fitparse
-    except ImportError:
-        print('    fitparse nicht installiert')
-        return None
-    try:
-        raw = urllib.request.urlopen(fit_url, timeout=60).read()
-        recs = list(fitparse.FitFile(io.BytesIO(raw)).get_messages('record'))
-    except Exception as e:
-        print(f'    FIT fehlgeschlagen: {e}')
-        return None
-    if not recs:
-        return None
-
-    time, latlng, distance, altitude = [], [], [], []
-    heartrate, cadence, watts, velocity, grade = [], [], [], [], []
-    t0 = None
-    for r in recs:
-        v = {d.name: d.value for d in r}
-        ts = v.get('timestamp')
-        if ts is None:
-            continue
-        if t0 is None:
-            t0 = ts
-        time.append(int((ts - t0).total_seconds()))
-        lat, lon = v.get('position_lat'), v.get('position_long')
-        latlng.append([lat * (180 / 2**31), lon * (180 / 2**31)]
-                      if lat is not None and lon is not None else None)
-        dist = v.get('distance')
-        distance.append(round(float(dist), 1) if dist is not None else (distance[-1] if distance else 0.0))
-        alt = v.get('enhanced_altitude', v.get('altitude'))
-        altitude.append(round(float(alt), 1) if alt is not None else (altitude[-1] if altitude else 0.0))
-        hr = v.get('heart_rate')
-        heartrate.append(int(hr) if hr is not None else (heartrate[-1] if heartrate else 0))
-        watts.append(int(v['power']) if v.get('power') is not None else 0)
-        cadence.append(int(v['cadence']) if v.get('cadence') is not None else 0)
-        spd = v.get('enhanced_speed', v.get('speed'))
-        velocity.append(round(float(spd), 3) if spd is not None else 0.0)
-        grade.append(round(float(v['grade']), 1) if v.get('grade') is not None else 0.0)
-
-    # latlng-Luecken mit letzter gueltiger Position fuellen
-    last = None
-    for i in range(len(latlng)):
-        if latlng[i] is None:
-            latlng[i] = last
-        else:
-            last = latlng[i]
-    latlng = [ll for ll in latlng if ll is not None] if any(latlng) else []
-
-    streams = {
-        'time': time, 'distance': distance, 'altitude': altitude,
-        'heartrate': heartrate, 'cadence': cadence, 'watts': watts,
-        'velocity_smooth': velocity, 'grade_smooth': grade,
-        'moving': [bool(s and s > 0.5) for s in velocity],
-    }
-    if latlng and len(latlng) == len(time):
-        streams['latlng'] = latlng
-    print(f'    FIT: {len(time)} Punkte, Power={any(w>0 for w in watts)}, HR={any(h>0 for h in heartrate)}')
-    return streams
+    return streams_from_fit_url(fit_url)
 
 
 # ── Wahoo ────────────────────────────────────────────────────────────────────

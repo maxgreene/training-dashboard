@@ -3,8 +3,9 @@
 # der naechste Lauf holt dann einmal frisch und cached neu.
 #
 # Direkt genutzt:
-#   fitparse -> fetch_activities.py (FIT-Dateien lesen)
-#   garth    -> fetch_garmin.py     (Garmin Health)
+#   fitparse -> fit_streams.py              (FIT-Dateien lesen, Wahoo + Garmin)
+#   garth    -> fetch_garmin.py             (Garmin Health)
+#            -> fetch_garmin_activities.py  (Garmin Indoor-/Rollen-Fahrten)
 # garth zieht ~30 Unterpakete (logfire, opentelemetry, pydantic, rich ...)
 # automatisch mit; pip loest die aus diesen zwei Pins reproduzierbar auf.
 fitparse==1.2.0
