@@ -173,6 +173,19 @@ function testTimeline(tp, goal, goalDate) {
   s += `<line x1="${X(goalDate).toFixed(1)}" y1="${pad.t}" x2="${X(goalDate).toFixed(1)}" y2="${H - pad.b}"
         stroke="#34d399" stroke-width="1" stroke-dasharray="2 2" opacity=".4"/>`;
 
+  // Geplante Tests (CFG.plan.events, type:'test', heute oder spaeter): leere
+  // Marker auf der x-Achse mit senkrechter Datumslinie. Kein Y-Wert, weil noch
+  // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt".
+  (CFG.plan.events || [])
+    .filter(e => e.type === 'test' && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
+    .forEach(e => {
+      const x = X(e.date), yb = H - pad.b;
+      s += `<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${yb.toFixed(1)}"
+            stroke="${KCOL.ramp}" stroke-width="1" stroke-dasharray="2 3" opacity=".45"/>
+            <path d="M${x.toFixed(1)} ${(yb-6).toFixed(1)} L${(x+3.6).toFixed(1)} ${yb.toFixed(1)} L${(x-3.6).toFixed(1)} ${yb.toFixed(1)} Z"
+            fill="none" stroke="${KCOL.ramp}" stroke-width="1.2"/>`;
+    });
+
   // Punkte: Rampe = Dreieck, sonst Kreis
   tp.forEach(t => {
     const x = X(t.date), y = Y(t.ftp), col = KCOL[t.kind] || '#60a5fa';
@@ -230,7 +243,7 @@ function ftpWidget() {
         <div class="lbl">FTP-Tests · Ziel ${goal} bis ${fmtDay(d(goalDate))}</div>
         ${testTimeline(tp, goal, goalDate)}
         <div class="tst-list" style="margin-top:6px">${testRows}</div>
-        <div class="ez-hint">△ Rampe · ○ 20-Min · Methoden ~10-20 W verschieden</div>
+        <div class="ez-hint">△ Rampe · ○ 20-Min · leerer △ = geplant · Methoden ~10-20 W verschieden</div>
       </div>
       <div>
         <div class="lbl">Letzte ${win} Tage</div>
