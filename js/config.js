@@ -1,16 +1,22 @@
 /* config.js — alle Parameter an einem Ort.
  *
  * Was hier steht, steht NUR hier. Wenn ein Wert im Code auftaucht, ist das ein
- * Fehler. Zwei Ausnahmen, die technisch notwendig sind und unten markiert sind:
- * FTP und HRMAX stehen zusaetzlich in scripts/analyze_activities.py, weil das
- * Backend TSS vorberechnet.
+ * Fehler.
+ *
+ * FTP und HRmax sind hier nur noch BASISWERTE (Fallback). Beim Start leitet
+ * resolveAthlete() in shared.js die AKTUELLEN Werte aus den Daten ab — FTP aus
+ * dem juengsten Rampentest (0.75 x MAP), HRmax aus der hoechsten gemessenen HF —
+ * und ueberschreibt athlete.ftp/hrmax damit. Ab dann ziehen Zonen, IF, TSS,
+ * dp4 und alle Schaetzungen aus dieser EINEN Quelle. Das Backend
+ * (scripts/analyze_activities.py) rechnet eine TSS mit seinem eigenen FTP nur
+ * noch als Fallback vor; die Anzeige rechnet TSS live aus NP + aktuellem FTP.
  */
 const CFG = {
 
   // ── Athlet ────────────────────────────────────────────────────────────────
   athlete: {
-    ftp: 250,          // ACHTUNG: auch in scripts/analyze_activities.py setzen
-    hrmax: 172,        // ACHTUNG: auch in scripts/analyze_activities.py setzen
+    ftp: 250,          // Basiswert/Fallback — real: juengster Rampentest (s.o.)
+    hrmax: 172,        // Basiswert/Fallback — real: hoechste gemessene max_hr
     weight: 81,
     ftpGoal: 300,      // Ziel des laufenden Aufbaus
     ftpGoalDate: '2026-11-15', // Wunschtermin fuer FTP 300

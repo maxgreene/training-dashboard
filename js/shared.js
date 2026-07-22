@@ -203,6 +203,94 @@ function best(key, days) {
   return b;
 }
 
+// ── FTP / HRmax: EINE Quelle, aus den Daten aufgeloest ──────────────────────
+/* Rampentests automatisch aus den Fahrten ableiten. Eine Fahrt ist ein
+ * Rampentest, wenn ihr Datum auf einen geplanten Test faellt (CFG.plan.events,
+ * type:'test') ODER ihr Name "ramp" enthaelt. FTP = 0.75 x MAP (bester 60-s-
+ * Wert) - die Rampen-Konvention dieses Projekts. Kein Handeintrag noetig. */
+function autoRampTests() {
+  const testDates = new Set(
+    (CFG.plan.events || []).filter(e => e.type === 'test').map(e => e.date));
+  const out = [];
+  for (const a of DATA.acts) {
+    const isRamp = testDates.has(a.date) || /ramp/i.test(a.name || '');
+    const map = a.power_curve && a.power_curve['60'];
+    if (isRamp && a.has_power && map) {
+      out.push({ date: a.date, kind: 'ramp', id: String(a.id),
+                 map, ftp: Math.round(map * 0.75), auto: true });
+    }
+  }
+  return out;
+}
+
+/* Alle Tests: automatisch erkannte Rampen + Handeintraege aus CFG.tests
+ * (Altfahrten ohne Daten hier, 20-Min-Tests). Zusammenfuehrung nach Datum; ein
+ * Handeintrag mit gesetztem ftp gewinnt (Override). 20-Min-Handeintraege ohne
+ * ftp: aus der 20-Min-Bestleistung der verknuepften Fahrt (x0.95). */
+function testPoints() {
+  const manual = CFG.tests.map(t => {
+    let ftp = t.ftp, map = t.map;
+    if (t.id) {
+      const a = DATA.acts.find(x => String(x.id) === String(t.id));
+      const pc = a && a.power_curve;
+      if (pc) {
+        if (ftp == null && pc['1200']) ftp = Math.round(pc['1200'] * 0.95);
+        if (map == null && pc['300']) map = pc['300'];
+      }
+    }
+    return { ...t, ftp, map };
+  });
+  const byDate = new Map();
+  autoRampTests().forEach(t => byDate.set(t.date, t));       // Auto zuerst …
+  manual.forEach(t => { if (t.ftp) byDate.set(t.date, t); });// … Handeintrag gewinnt
+  return [...byDate.values()].filter(t => t.ftp)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/* Juengster Test = angezeigte Kerngroesse des Plans. */
+function planFtp() {
+  const tp = testPoints();
+  return tp.length ? tp[tp.length - 1] : null;
+}
+
+/* Aktueller FTP: der des juengsten Tests, sonst der Basiswert aus config. */
+function currentFtp() {
+  const p = planFtp();
+  return p ? p.ftp : CFG.athlete.ftpBase;
+}
+
+/* Aktueller HRmax: hoechste je gemessene max_hr (aus einem Maximaltest wie der
+ * Rampe), sonst der Basiswert. Unter 150 gilt als unplausibel -> Basiswert. */
+function currentHrmax() {
+  let m = 0;
+  DATA.acts.forEach(a => { if (a.max_hr && a.max_hr > m) m = a.max_hr; });
+  return m >= 150 ? m : CFG.athlete.hrmaxBase;
+}
+
+/* EINE Aufloesung nach dem Laden: setzt CFG.athlete.ftp/hrmax auf die aus den
+ * Daten abgeleiteten aktuellen Werte. Ab hier ziehen ALLE Verbraucher (Zonen,
+ * IF, TSS, dp4, Schaetzungen, W/kg) automatisch nach - genau eine Quelle. Die
+ * config-Werte bleiben als Basis/Fallback erhalten (ftpBase/hrmaxBase). */
+function resolveAthlete() {
+  if (CFG.athlete.ftpBase == null) CFG.athlete.ftpBase = CFG.athlete.ftp;
+  if (CFG.athlete.hrmaxBase == null) CFG.athlete.hrmaxBase = CFG.athlete.hrmax;
+  CFG.athlete.ftp = currentFtp();
+  CFG.athlete.hrmax = currentHrmax();
+}
+
+/* TSS aus NP und AKTUELLEM FTP - live gerechnet, damit TSS derselben einen
+ * Quelle folgt wie IF und die Zonen. Weil TSS ~ NP^2/FTP^2, skaliert ein
+ * geaenderter FTP jede Fahrt um denselben Faktor: die Form-Kurve (CTL/ATL/TSB)
+ * behaelt ihre Gestalt, nur das Niveau verschiebt sich. Fallback auf den im
+ * Backend vorberechneten Wert, wenn keine NP vorliegt. */
+function tssOf(a) {
+  if (a.np && a.moving_sec) {
+    const f = CFG.athlete.ftp;
+    return Math.round(a.moving_sec * a.np * a.np / (f * f * 3600) * 100 * 10) / 10;
+  }
+  return a.tss || 0;
+}
+
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
  * holt sie hier - so gibt es sie genau einmal. */

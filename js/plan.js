@@ -111,67 +111,9 @@ function zbar(act) {
 }
 
 // ── FTP-Widget ──────────────────────────────────────────────────────────────
-/* Rampentests AUTOMATISCH aus den Fahrten ableiten.
- *
- * Eine Fahrt gilt als Rampentest, wenn ihr Datum auf einen geplanten Test
- * faellt (CFG.plan.events, type:'test') ODER ihr Name "ramp" enthaelt. Der FTP
- * folgt dann der Rampen-Konvention dieses Projekts: FTP = 0.75 x MAP, wobei
- * MAP der beste 60-s-Wert ist. So muss kein Rampentest mehr von Hand in
- * CFG.tests eingetragen werden - er erscheint nach der Analyse von selbst. */
-function autoRampTests() {
-  const testDates = new Set(
-    (CFG.plan.events || []).filter(e => e.type === 'test').map(e => e.date));
-  const out = [];
-  for (const a of DATA.acts) {
-    const isRamp = testDates.has(a.date) || /ramp/i.test(a.name || '');
-    const map = a.power_curve && a.power_curve['60'];
-    if (isRamp && a.has_power && map) {
-      out.push({ date: a.date, kind: 'ramp', id: String(a.id),
-                 map, ftp: Math.round(map * 0.75), auto: true });
-    }
-  }
-  return out;
-}
-
-/* Gemessene Tests aufbereiten. Zwei Quellen, zusammengefuehrt nach Datum:
- *   1. autoRampTests()  - Rampen aus den Fahrten (0.75 x MAP), keine Pflege noetig.
- *   2. CFG.tests        - Handeintraege: Altfahrten ohne Daten hier sowie
- *                         20-Min-Tests; ein Handeintrag mit gesetztem ftp hat
- *                         Vorrang (Override) vor dem automatischen Wert.
- * Fuer 20-Min-Handeintraege ohne ftp bleibt die 20-Min-Ableitung (x0.95). */
-function testPoints() {
-  const manual = CFG.tests.map(t => {
-    let ftp = t.ftp, map = t.map;
-    if (t.id) {
-      const a = DATA.acts.find(x => String(x.id) === String(t.id));
-      const pc = a && a.power_curve;
-      if (pc) {
-        if (ftp == null && pc['1200']) ftp = Math.round(pc['1200'] * 0.95);
-        if (map == null && pc['300']) map = pc['300'];
-      }
-    }
-    return { ...t, ftp, map };
-  });
-
-  const byDate = new Map();
-  autoRampTests().forEach(t => byDate.set(t.date, t));      // Auto zuerst …
-  manual.forEach(t => { if (t.ftp) byDate.set(t.date, t); });// … Handeintrag gewinnt
-  return [...byDate.values()].filter(t => t.ftp)
-    .sort((a, b) => a.date.localeCompare(b.date));
-}
-
-/* Kerngroesse fuer den Plan: der FTP des juengsten Tests. Der Plan (Zonen,
- * IF, Intervall-Vorgaben "% FTP") richtet sich danach.
- *
- * OFFEN (Entscheidung, siehe PR): Soll dieser Wert auch CFG.athlete.ftp (heute
- * 250, zusaetzlich in scripts/analyze_activities.py) ersetzen? Das steuert IF,
- * Zonen und die im Backend vorberechnete TSS - eine Aenderung braucht dort
- * einen Reprocess, damit IF und TSS konsistent bleiben. Bis dahin bleibt
- * athlete.ftp die Rechengroesse; planFtp() ist die angezeigte Kerngroesse. */
-function planFtp() {
-  const tp = testPoints();
-  return tp.length ? tp[tp.length - 1] : null;
-}
+/* Die FTP-Herleitung (autoRampTests / testPoints / planFtp / currentFtp) liegt
+ * zentral in shared.js - genau eine Quelle, die auch Zonen, IF und TSS speist.
+ * Hier wird sie nur noch angezeigt. */
 
 /* Test-Timeline als SVG. Zeitachse vom ersten Test bis zum Zieldatum, die
  * 300-Marke als waagerechte Referenz oben. KEINE Soll-Linie: die echten
@@ -218,9 +160,13 @@ function testTimeline(tp, goal, goalDate) {
 
   // Geplante Tests (CFG.plan.events, type:'test', heute oder spaeter): leere
   // Marker auf der x-Achse mit senkrechter Datumslinie. Kein Y-Wert, weil noch
-  // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt".
+  // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt". Sobald an dem
+  // Datum ein echter Test vorliegt (heute gefahrene Rampe), faellt der geplante
+  // Marker samt Datumslinie weg — der gemessene Punkt ersetzt ihn.
+  const doneDates = new Set(tp.map(t => t.date));
   (CFG.plan.events || [])
-    .filter(e => e.type === 'test' && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
+    .filter(e => e.type === 'test' && !doneDates.has(e.date)
+      && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
     .forEach(e => {
       const x = X(e.date), yb = H - pad.b;
       s += `<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${yb.toFixed(1)}"
@@ -321,7 +267,7 @@ function dayTile(day) {
           <div class="act-num">${fmtDur(a.moving_sec || a.duration_sec)}
             ${a.np ? `· NP <b>${a.np}</b>` : ''}
             ${i ? `· IF <b>${i.toFixed(2)}</b>` : ''}
-            ${a.tss ? `· TSS <b>${Math.round(a.tss)}</b>` : ''}
+            ${tssOf(a) ? `· TSS <b>${Math.round(tssOf(a))}</b>` : ''}
             ${a.ef ? `· EF <b>${a.ef.toFixed(2)}</b>` : ''}</div>
           ${zbar(a)}
         </div>${dp4Rings(a, 30)}</div>`;
@@ -344,7 +290,7 @@ function dayTile(day) {
 
 // ── Woche ───────────────────────────────────────────────────────────────────
 function weekCard(w) {
-  const tss = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + (a.tss || 0), 0), 0);
+  const tss = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + tssOf(a), 0), 0);
   const hrs = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + (a.moving_sec || 0), 0), 0) / 3600;
   const end = addDays(w.mon, 6);
   const deload = ((w.weekIdx + 1) % CFG.plan.deloadEvery) === 0 && w.weekIdx >= 0;
