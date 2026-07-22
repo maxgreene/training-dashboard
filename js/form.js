@@ -28,25 +28,7 @@ function loadModel() {
   return out;
 }
 
-/* EWMA mit exponentiell gewichteter Streuung -> Trendlinie plus Band.
- * Das Band zeigt, was normale Schwankung ist: nur was daraus ausbricht,
- * ist ein Signal. */
-function ewmaBand(pts, alpha) {
-  if (!pts.length) return { line: [], upper: [], lower: [] };
-  let e = pts[0].y, v = 0;
-  const line = [], upper = [], lower = [];
-  pts.forEach(p => {
-    const prev = e;
-    e = e + alpha * (p.y - e);
-    const dev = p.y - prev;
-    v = (1 - alpha) * (v + alpha * dev * dev);
-    const sd = Math.sqrt(v);
-    line.push({ x: p.x, y: +e.toFixed(2) });
-    upper.push({ x: p.x, y: +(e + sd).toFixed(2) });
-    lower.push({ x: p.x, y: +(e - sd).toFixed(2) });
-  });
-  return { line, upper, lower };
-}
+// ewmaBand ist nach shared.js gewandert (auch vom EF-Trend genutzt).
 
 function baseline(key, days) {
   const lo = addDays(today(), -days);

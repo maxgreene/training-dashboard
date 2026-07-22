@@ -163,6 +163,9 @@ const CFG = {
       dotMinDur: 30, dotMaxDur: 500,
       alpha: 0.5,
       showTrend: true,
+      trendAlpha: 0.15,   // EWMA-Glaettung der Trendlinie: kleiner = glatter,
+                          // groesser = folgt den letzten Fahrten schneller
+      bandAlpha: 0.1,     // Deckkraft der +-1sigma-Flaeche
     },
 
     // Status-Ampel

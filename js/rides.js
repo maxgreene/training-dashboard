@@ -321,17 +321,11 @@ function renderEF() {
     return { x: T.dayOf(a.date), y: a.ef, r: rOf(min),
              bg: colOf(a.name || '', min), name: a.name || 'Fahrt', dur: Math.round(min) };
   });
-  // Gewichtete Regression: Gewicht = Dauer in Minuten. Lange, ruhige Fahrten
-  // bestimmen die Steigung, kurze Commute-Spikes ziehen kaum noch.
-  const xs = pts.map(p => p.x), ys = pts.map(p => p.y), ws = pts.map(p => p.dur);
-  const sw = ws.reduce((a, w) => a + w, 0);
-  const swx = xs.reduce((a, x, i) => a + ws[i] * x, 0);
-  const swy = ys.reduce((a, y, i) => a + ws[i] * y, 0);
-  const swxy = xs.reduce((a, x, i) => a + ws[i] * x * ys[i], 0);
-  const swx2 = xs.reduce((a, x, i) => a + ws[i] * x * x, 0);
-  const sl = (sw * swxy - swx * swy) / (sw * swx2 - swx * swx) || 0;
-  const ic = (swy - sl * swx) / sw;
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  // EWMA-Band statt Gerade: die Linie folgt der Form (Bloecke, Entlastung),
+  // das Band (+-1sigma) zeigt die normale Streuung. Chronologisch sortiert,
+  // sonst laeuft die Glaettung rueckwaerts.
+  const ewma = ewmaBand(pts.slice().sort((a, b) => a.x - b.x), C.trendAlpha);
+  const bandFill = `rgba(249,115,22,${C.bandAlpha})`;
 
   box.innerHTML = '<canvas id="ef-canvas"></canvas>';
   if (_efChart) _efChart.destroy();
@@ -342,10 +336,16 @@ function renderEF() {
       // (heute = x-Maximum) an der Plotkante ab. padRight gibt ihr Platz.
       { label: 'EF', data: pts, backgroundColor: pts.map(p => p.bg),
         borderWidth: 0, clip: false },
-      ...(C.showTrend ? [{ label: 'Trend', type: 'line',
-          data: [{ x: x0, y: ic + sl * x0 }, { x: x1, y: ic + sl * x1 }],
-          borderColor: 'rgba(249,115,22,.45)', borderWidth: 1.5, borderDash: [5, 4],
-          pointRadius: 0, fill: false, order: -1 }] : []) ] },
+      ...(C.showTrend ? [
+        // Reihenfolge: obere (fuellt bis zur naechsten = untere), untere, Linie.
+        { label: 'obere', type: 'line', data: ewma.upper, borderWidth: 0, pointRadius: 0,
+          fill: '+1', backgroundColor: bandFill, order: 5 },
+        { label: 'untere', type: 'line', data: ewma.lower, borderWidth: 0, pointRadius: 0,
+          fill: false, order: 5 },
+        { label: 'Trend', type: 'line', data: ewma.line,
+          borderColor: 'rgba(249,115,22,.75)', borderWidth: 2, pointRadius: 0,
+          fill: false, order: 3 },
+      ] : []) ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       layout: { padding: { right: C.padRight, top: 4 } },
@@ -358,7 +358,8 @@ function renderEF() {
       },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => `${c.raw.name} · ${c.raw.dur} min · EF ${c.raw.y.toFixed(2)}` } },
+        tooltip: { filter: c => c.dataset.label === 'EF',
+          callbacks: { label: c => `${c.raw.name} · ${c.raw.dur} min · EF ${c.raw.y.toFixed(2)}` } },
       },
     },
   });

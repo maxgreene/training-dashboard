@@ -111,6 +111,27 @@ function pct(arr) {
   return arr.map(x => 100 * x / t);
 }
 
+/* EWMA mit exponentiell gewichteter Streuung -> Trendlinie plus Band.
+ * Das Band zeigt, was normale Schwankung ist: nur was daraus ausbricht,
+ * ist ein Signal. pts muessen chronologisch sortiert sein (aeltester zuerst).
+ * Genutzt von der Form-Seite (HRV/RHR, taeglich) und dem EF-Trend (je Fahrt). */
+function ewmaBand(pts, alpha) {
+  if (!pts.length) return { line: [], upper: [], lower: [] };
+  let e = pts[0].y, v = 0;
+  const line = [], upper = [], lower = [];
+  pts.forEach(p => {
+    const prev = e;
+    e = e + alpha * (p.y - e);
+    const dev = p.y - prev;
+    v = (1 - alpha) * (v + alpha * dev * dev);
+    const sd = Math.sqrt(v);
+    line.push({ x: p.x, y: +e.toFixed(2) });
+    upper.push({ x: p.x, y: +(e + sd).toFixed(2) });
+    lower.push({ x: p.x, y: +(e - sd).toFixed(2) });
+  });
+  return { line, upper, lower };
+}
+
 /* Easy-Anteil = Zeit in Z1+Z2 am Gesamtvolumen, ueber ein Zeitfenster.
  * Wird fuer Leistung UND HF gerechnet: die beiden Zahlen sagen Verschiedenes.
  * Kurze Antritte am Berg schlagen in der Leistung durch, waehrend die HF gar
