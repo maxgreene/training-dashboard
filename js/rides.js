@@ -321,10 +321,16 @@ function renderEF() {
     return { x: T.dayOf(a.date), y: a.ef, r: rOf(min),
              bg: colOf(a.name || '', min), name: a.name || 'Fahrt', dur: Math.round(min) };
   });
-  const xs = pts.map(p => p.x), ys = pts.map(p => p.y), n = xs.length;
-  const sx = xs.reduce((a, b) => a + b, 0), sy = ys.reduce((a, b) => a + b, 0);
-  const sxy = xs.reduce((a, x, i) => a + x * ys[i], 0), sx2 = xs.reduce((a, x) => a + x * x, 0);
-  const sl = (n * sxy - sx * sy) / (n * sx2 - sx * sx) || 0, ic = (sy - sl * sx) / n;
+  // Gewichtete Regression: Gewicht = Dauer in Minuten. Lange, ruhige Fahrten
+  // bestimmen die Steigung, kurze Commute-Spikes ziehen kaum noch.
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y), ws = pts.map(p => p.dur);
+  const sw = ws.reduce((a, w) => a + w, 0);
+  const swx = xs.reduce((a, x, i) => a + ws[i] * x, 0);
+  const swy = ys.reduce((a, y, i) => a + ws[i] * y, 0);
+  const swxy = xs.reduce((a, x, i) => a + ws[i] * x * ys[i], 0);
+  const swx2 = xs.reduce((a, x, i) => a + ws[i] * x * x, 0);
+  const sl = (sw * swxy - swx * swy) / (sw * swx2 - swx * swx) || 0;
+  const ic = (swy - sl * swx) / sw;
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
 
   box.innerHTML = '<canvas id="ef-canvas"></canvas>';
