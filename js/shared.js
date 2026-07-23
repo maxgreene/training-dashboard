@@ -346,6 +346,23 @@ function cpModel() {
            durations: pts.map(p => p.t), n };
 }
 
+/* Wochen-Bestwert eines Ankers seit Start: pro Kalenderwoche (Mo-Bin) der
+ * hoechste power_curve-Wert. Fuer den zeitlichen Verlaufsplot. Wochen ohne
+ * Effort an der Dauer fehlen (spanGaps verbindet). */
+function weeklyBest(key) {
+  const since = d(CFG.profile.since);
+  const byWeek = {};
+  DATA.acts.forEach(a => {
+    const dt = d(a.date);
+    if (dt < since) return;
+    const v = a.power_curve && a.power_curve[key];
+    if (!v) return;
+    const wk = iso(mondayOf(dt));
+    if (byWeek[wk] == null || v > byWeek[wk]) byWeek[wk] = v;
+  });
+  return Object.keys(byWeek).sort().map(wk => ({ date: wk, w: byWeek[wk] }));
+}
+
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
  * holt sie hier - so gibt es sie genau einmal. */

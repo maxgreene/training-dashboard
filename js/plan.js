@@ -330,7 +330,47 @@ function profileCard() {
     <div class="card-hd"><span class="t">LEISTUNGSPROFIL</span>
       <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
     <div class="stats">${tiles}${cpTile}</div>
+    <div id="pt-box"></div>
+    <div class="ez-hint">Wochen-Bestwerte je Anker · 1-Wochen-Bins · Linie verbindet Wochen mit Effort</div>
   </div>`;
+}
+
+/* Zeitlicher Verlauf der Wochen-Bestwerte je Anker (Mehrlinien-Zeitreihe).
+ * Gleiche Zeitachse (timeScale) wie die anderen Charts. */
+let _pt = null;
+function drawProfileTrend() {
+  const box = $('#pt-box');
+  if (!box || !window.Chart) return;
+  const series = CFG.profile.anchors.map(an => ({ an, pts: weeklyBest(an.key) }))
+    .filter(s => s.pts.length);
+  if (!series.length) return;
+  box.style.height = '240px';
+  box.innerHTML = '<canvas id="pt-canvas"></canvas>';
+  const T = timeAxis();
+  const X = p => T.dayOf(p.date);
+  if (_pt) _pt.destroy();
+  _pt = new Chart($('#pt-canvas'), {
+    data: {
+      datasets: series.map(s => ({
+        type: 'line', label: s.an.label,
+        data: s.pts.map(p => ({ x: X(p), y: p.w })),
+        borderColor: s.an.col, backgroundColor: s.an.col,
+        borderWidth: 1.6, pointRadius: 2, spanGaps: true, tension: 0.2,
+      })),
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: timeScale(T),
+        y: { position: 'left',
+             title: { display: true, text: 'W', color: CSSVAR('--t5'), font: { size: 10 } },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
+             grid: { color: 'rgba(255,255,255,.05)' } },
+      },
+      plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } } },
+    },
+  });
 }
 
 function renderPlan() {
@@ -338,4 +378,5 @@ function renderPlan() {
   if (!box) return;
   const weeks = buildWeeks();
   box.innerHTML = ftpWidget() + profileCard() + weeks.map(weekCard).join('');
+  drawProfileTrend();
 }
