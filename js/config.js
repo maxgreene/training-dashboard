@@ -121,10 +121,10 @@ const CFG = {
     since:     '2026-05-04',   // Fenster: ab Trainingsstart (wie PLAN_START)
     freshDays: 21,             // bis hier gilt ein Bestwert als frisch
     anchors: [                 // Dauer-Anker (Schluessel = Sekunde in power_curve)
-      { key: '5',    label: 'NM',       full: 'Neuromuskulaer · Sprint 5 s' },
-      { key: '60',   label: 'AC',       full: 'Anaerobe Kapazitaet · 1 min' },
-      { key: '300',  label: 'MAP',      full: 'Max. aerobe Leistung · 5 min' },
-      { key: '1200', label: 'Schwelle', full: 'Schwelle · 20 min' },
+      { key: '5',    label: 'NM',       full: 'Neuromuskulaer · Sprint 5 s',  col: '#a855f7' },
+      { key: '60',   label: 'AC',       full: 'Anaerobe Kapazitaet · 1 min',  col: '#ef4444' },
+      { key: '300',  label: 'MAP',      full: 'Max. aerobe Leistung · 5 min', col: '#f59e0b' },
+      { key: '1200', label: 'Schwelle', full: 'Schwelle · 20 min',            col: '#3b82f6' },
     ],
     cpDurations: [120, 300, 600, 1200], // Bestwerte fuer den CP/W'-Fit (2-20 min)
   },
