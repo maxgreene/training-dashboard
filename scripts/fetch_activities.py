@@ -26,6 +26,7 @@ STREAMS_DIR      = 'data/streams'
 ANALYSIS_VERSION = 16
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'      # ab hier ist Wahoo die Quelle
+RENAME_RECHECK_DAYS = 2              # bekannte Fahrten so lange auf Umbenennung pruefen
 FTP, HRMAX       = 250, 172
 
 WAHOO_BASE = 'https://api.wahooligan.com'
@@ -89,9 +90,16 @@ def is_cycling(w):
                                      'morning', 'afternoon', 'interval', 'rolle', 'tour')))
 
 
-def fetch_new_wahoo(token, known_ids):
-    """Wahoo-Fahrten seit Stichtag, die noch nicht im Bestand sind."""
+def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
+    """Wahoo-Fahrten seit Stichtag holen.
+
+    Neue Fahrten kommen dazu. Zusaetzlich wird bei bereits bekannten, kuerzlich
+    geholten Fahrten (Datum >= recheck_from) der Name aktualisiert, falls Wolf
+    ihn in der Wahoo-App nachtraeglich geaendert hat (Fetch laeuft oft, bevor er
+    am Handy umbenennt). NAME_FIXES bleibt unberuehrt, die haben Vorrang.
+    """
     new = []
+    renamed = 0
     page = 1
     while True:
         data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
@@ -106,7 +114,16 @@ def fetch_new_wahoo(token, known_ids):
                 continue
             aid = f"wahoo_{w['id']}"
             if aid in known_ids:
-                continue                      # schon im Bestand -> nichts tun
+                # Namens-Nachpruefung fuer kuerzlich geholte Fahrten
+                if (by_id is not None and recheck_from and starts >= recheck_from
+                        and str(w['id']) not in NAME_FIXES and aid not in NAME_FIXES):
+                    act = by_id.get(aid)
+                    nm = w.get('name')
+                    if act and nm and act.get('name') != nm:
+                        print(f"  {aid}: Name '{act.get('name')}' -> '{nm}'")
+                        act['name'] = nm
+                        renamed += 1
+                continue                      # bekannt -> nur Name evtl. aktualisiert
             s = w.get('workout_summary') or {}
             date, hm = _parse_local(w.get('starts') or s.get('started_at', ''), starts)
             new.append({
@@ -128,7 +145,7 @@ def fetch_new_wahoo(token, known_ids):
         if len(items) < 100:
             break
         page += 1
-    return new
+    return new, renamed
 
 
 def process_new(act):
@@ -179,9 +196,12 @@ def main():
         activities = data.get('activities', [])
         existing_version = data.get('analysis_version', 0)
     known_ids = {str(a['id']) for a in activities}
+    by_id = {str(a['id']): a for a in activities}
+    recheck_from = (datetime.now(timezone.utc)
+                    - timedelta(days=RENAME_RECHECK_DAYS)).strftime('%Y-%m-%d')
     print(f'Bestand: {len(activities)} Fahrten (v{existing_version})')
 
-    # 2.+3. Neue Wahoo-Fahrten holen
+    # 2.+3. Neue Wahoo-Fahrten holen + Namen kuerzlicher Fahrten aktualisieren
     token = os.environ.get('WAHOO_ACCESS_TOKEN', '')
     added = 0
     if not token:
@@ -189,8 +209,8 @@ def main():
         WAHOO_SKIPPED = True
     else:
         try:
-            new = fetch_new_wahoo(token, known_ids)
-            print(f'  Wahoo: {len(new)} neue Fahrt(en)')
+            new, renamed = fetch_new_wahoo(token, known_ids, by_id, recheck_from)
+            print(f'  Wahoo: {len(new)} neue Fahrt(en), {renamed} umbenannt')
             for act in new:
                 activities.append(process_new(act))
                 added += 1
