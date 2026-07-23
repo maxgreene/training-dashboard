@@ -90,6 +90,15 @@ def is_cycling(w):
                                      'morning', 'afternoon', 'interval', 'rolle', 'tour')))
 
 
+def _wahoo_name(w):
+    """Der in der Wahoo-App sichtbare Name. Wolf benennt oft erst am Handy um.
+    Diese Umbenennung landet in workout_summary.name, waehrend der Top-Level-
+    'name' der beim Upload eingefrorene Geraetename bleibt (z. B. 'Radfahren').
+    Deshalb den Summary-Namen bevorzugen, sonst Top-Level, sonst Platzhalter."""
+    s = w.get('workout_summary') or {}
+    return s.get('name') or w.get('name') or 'Wahoo Ride'
+
+
 def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
     """Wahoo-Fahrten seit Stichtag holen.
 
@@ -118,7 +127,7 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
                 if (by_id is not None and recheck_from and starts >= recheck_from
                         and str(w['id']) not in NAME_FIXES and aid not in NAME_FIXES):
                     act = by_id.get(aid)
-                    nm = w.get('name')
+                    nm = _wahoo_name(w)
                     if act and nm and act.get('name') != nm:
                         print(f"  {aid}: Name '{act.get('name')}' -> '{nm}'")
                         act['name'] = nm
@@ -128,7 +137,7 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
             date, hm = _parse_local(w.get('starts') or s.get('started_at', ''), starts)
             new.append({
                 'id':          aid,
-                'name':        w.get('name') or 'Wahoo Ride',
+                'name':        _wahoo_name(w),
                 'date':        date,
                 'start_time':  hm,
                 'type':        'Ride',
