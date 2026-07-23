@@ -259,9 +259,16 @@ function currentFtp() {
   return p ? p.ftp : CFG.athlete.ftpBase;
 }
 
-/* Aktueller HRmax: hoechste je gemessene max_hr (aus einem Maximaltest wie der
- * Rampe), sonst der Basiswert. Unter 150 gilt als unplausibel -> Basiswert. */
+/* Aktueller HRmax: die max_hr aus dem JUENGSTEN Rampentest - dieselbe Quelle
+ * wie der FTP, also der aktuelle maximale Effort. Fehlt sie (kein Test / kein
+ * HF-Signal), Fallback auf die hoechste je gemessene max_hr, sonst den
+ * Basiswert. Unter 150 gilt als unplausibel. */
 function currentHrmax() {
+  const p = planFtp();
+  if (p && p.id) {
+    const a = DATA.acts.find(x => String(x.id) === String(p.id));
+    if (a && a.max_hr && a.max_hr >= 150) return a.max_hr;
+  }
   let m = 0;
   DATA.acts.forEach(a => { if (a.max_hr && a.max_hr > m) m = a.max_hr; });
   return m >= 150 ? m : CFG.athlete.hrmaxBase;
