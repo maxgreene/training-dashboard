@@ -225,9 +225,11 @@ function ftpWidget() {
     : 'Noch kein 20-Min-Wert in den letzten 6 Wochen';
 
   const wkg = latest ? (latest.ftp / CFG.athlete.weight).toFixed(2) : null;
+  const cp = cpModel();
+  const cpTag = cp ? ` · CP ${cp.cp} W` : '';
   return `<div class="card">
     <div class="card-hd"><span class="t">WEG ZU FTP ${goal}</span>
-      <span class="s">${latest ? `Plan-FTP <b>${latest.ftp} W</b> (${wkg} W/kg) · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
+      <span class="s">${latest ? `Plan-FTP <b>${latest.ftp} W</b> (${wkg} W/kg)${cpTag} · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
     <div class="ftp3-grid">
       <div>
         <div class="lbl">FTP-Tests · Ziel ${goal} bis ${fmtDay(d(goalDate))}</div>
@@ -306,9 +308,34 @@ function weekCard(w) {
   </div>`;
 }
 
+// ── Leistungsprofil / Trainingsstatus ───────────────────────────────────────
+/* Kacheln je Anker (Bestwert seit Start, W/kg, Alter, frisch/veraltet) plus
+ * CP/W' als Gegenprobe. Nutzt die vorhandenen .stats/.stat-Stile. */
+function profileCard() {
+  const prof = powerProfile();
+  const cp = cpModel();
+  const stat = (l, v, s) => `<div class="stat"><div class="stat-l">${l}</div>
+    <div class="stat-v">${v}</div><div class="stat-s">${s || ''}</div></div>`;
+  const ageTxt = a => a.age <= 0 ? 'heute' : a.age === 1 ? 'gestern' : `${a.age} d`;
+  const tiles = prof.map(a => a.w == null
+    ? stat(a.label, '—', 'kein Wert im Fenster')
+    : stat(a.label, a.w + '<small> W</small>',
+        `${a.wkg.toFixed(2).replace('.', ',')} W/kg · ${ageTxt(a)}${a.fresh ? '' : ' · veraltet'}`)
+  ).join('');
+  const cpTile = cp
+    ? stat('CP', cp.cp + '<small> W</small>',
+        `W' ${String(cp.wPrime).replace('.', ',')} kJ · Gegenprobe`)
+    : stat('CP', '—', 'zu wenige Bestwerte');
+  return `<div class="card">
+    <div class="card-hd"><span class="t">LEISTUNGSPROFIL</span>
+      <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
+    <div class="stats">${tiles}${cpTile}</div>
+  </div>`;
+}
+
 function renderPlan() {
   const box = $('#page-plan');
   if (!box) return;
   const weeks = buildWeeks();
-  box.innerHTML = ftpWidget() + weeks.map(weekCard).join('');
+  box.innerHTML = ftpWidget() + profileCard() + weeks.map(weekCard).join('');
 }

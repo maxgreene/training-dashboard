@@ -114,6 +114,21 @@ const CFG = {
     { date: '2026-07-22', kind: 'ramp', id: 'garmin_23694693519', ftp: 271, map: 361 },
   ],
 
+  // ── Leistungsprofil / Trainingsstatus ────────────────────────────────────
+  // Kennzahlen aus ALLEN Fahrten seit Trainingsstart: je Anker der Bestwert
+  // der Mean-Maximal-Power-Kurve. CP/W' als Gegenprobe zum Rampen-FTP.
+  profile: {
+    since:     '2026-05-04',   // Fenster: ab Trainingsstart (wie PLAN_START)
+    freshDays: 21,             // bis hier gilt ein Bestwert als frisch
+    anchors: [                 // Dauer-Anker (Schluessel = Sekunde in power_curve)
+      { key: '5',    label: 'NM',       full: 'Neuromuskulaer · Sprint 5 s' },
+      { key: '60',   label: 'AC',       full: 'Anaerobe Kapazitaet · 1 min' },
+      { key: '300',  label: 'MAP',      full: 'Max. aerobe Leistung · 5 min' },
+      { key: '1200', label: 'Schwelle', full: 'Schwelle · 20 min' },
+    ],
+    cpDurations: [120, 300, 600, 1200], // Bestwerte fuer den CP/W'-Fit (2-20 min)
+  },
+
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
     easyTarget: [75, 80],        // Zielfenster Easy-Anteil in %

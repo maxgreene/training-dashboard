@@ -298,6 +298,54 @@ function tssOf(a) {
   return a.tss || 0;
 }
 
+// ── Leistungsprofil / Trainingsstatus ───────────────────────────────────────
+/* Bestwert eines Power-Kurven-Ankers seit dem Profil-Start (CFG.profile.since),
+ * ueber ALLE Fahrten, mit Datum und Fahrt-id. */
+function bestSince(key) {
+  const since = d(CFG.profile.since);
+  let b = null;
+  DATA.acts.forEach(a => {
+    const v = a.power_curve && a.power_curve[key];
+    if (!v || d(a.date) < since) return;
+    if (!b || v > b.w) b = { w: v, date: a.date, id: a.id };
+  });
+  return b;
+}
+
+/* Leistungsprofil: je Anker der Bestwert seit Start, mit W/kg, Alter in Tagen
+ * und Frische-Flag. Ohne Bestwert -> w:null (ehrlich "kein Wert"). */
+function powerProfile() {
+  return CFG.profile.anchors.map(an => {
+    const b = bestSince(an.key);
+    if (!b) return { ...an, w: null };
+    const age = dayDiff(today(), d(b.date));
+    return { ...an, w: b.w, date: b.date, id: b.id, age,
+             wkg: b.w / CFG.athlete.weight,
+             fresh: age <= CFG.profile.freshDays };
+  });
+}
+
+/* CP/W'-Modell (2 Parameter, lineares Work-Time-Modell: Arbeit = CP*t + W').
+ * Bestwerte der cpDurations seit Start als Punkte (t, p*t), lineare Regression
+ * -> Steigung = CP (W), Achsenabschnitt = W' (J). Braucht >= 2 Dauern. W' < 0
+ * heisst: die langen Efforts liegen relativ zu hoch (kein echter Kurz-Effort im
+ * Fenster) -> CP dann eher Obergrenze, wird im UI geflaggt. */
+function cpModel() {
+  const pts = CFG.profile.cpDurations
+    .map(t => { const b = bestSince(String(t)); return b ? { t, p: b.w } : null; })
+    .filter(Boolean);
+  if (pts.length < 2) return null;
+  let n = pts.length, st = 0, sw = 0, stt = 0, stw = 0;
+  pts.forEach(({ t, p }) => { const w = p * t; st += t; sw += w; stt += t * t; stw += t * w; });
+  const denom = n * stt - st * st;
+  if (!denom) return null;
+  const cp = (n * stw - st * sw) / denom;      // W
+  const wPrime = (sw - cp * st) / n;           // J
+  return { cp: Math.round(cp),
+           wPrime: Math.round(wPrime / 100) / 10,   // kJ, 1 Dezimale
+           durations: pts.map(p => p.t), n };
+}
+
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
  * holt sie hier - so gibt es sie genau einmal. */
