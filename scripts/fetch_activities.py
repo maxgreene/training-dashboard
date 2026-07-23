@@ -109,6 +109,8 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
         if not items:
             break
         for w in items:
+            if str(w.get('id')) == '479050093':
+                print('DEBUG_WORKOUT ' + json.dumps(w, default=str))
             starts = (w.get('starts') or '')[:10]
             if starts < WAHOO_START_DATE or not is_cycling(w):
                 continue
