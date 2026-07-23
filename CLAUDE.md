@@ -29,6 +29,10 @@ Nachfragen statt zurücksetzen.
   oder die stündliche Automatik lahmlegt.
 - Im Zweifel kurz fragen, statt blind auf `main` zu pushen.
 
+**Diese CLAUDE.md immer mitpflegen.** Bei jeder relevanten Änderung (neue
+Skripte, geänderte Pipeline, neue Kennzahlen, geänderte Konventionen) die
+betroffene Stelle hier direkt mit aktualisieren, im selben Zug wie die Änderung.
+
 **Nie raten.** Nachschauen, nachrechnen, an echten Daten prüfen. Wolf hat
 mehrfach falsche Diagnosen korrigiert, die aus Vermutungen entstanden. Wenn
 etwas unklar ist: Daten laden und messen.
@@ -96,6 +100,13 @@ identische Aufbereitung und Kennzahlen.
 hat der Fetch sie meist schon geholt. `fetch_activities.py` gleicht deshalb bei
 Fahrten der letzten `RENAME_RECHECK_DAYS` (2) Tage den Wahoo-Namen ab und zieht
 Änderungen nach. `NAME_FIXES` (manuelle Korrekturen) bleiben geschützt.
+
+**Wichtig: Der App-Name steht in `workout_summary.name`, nicht im Top-Level
+`name`.** Der Top-Level `name` ist der beim Upload eingefrorene Geräte-Name
+(z. B. `Radfahren`) und ändert sich bei einer App-Umbenennung nie. Die
+Umbenennung landet in `workout_summary.name` (mit eigenem `updated_at`).
+`_wahoo_name(w)` bevorzugt deshalb `workout_summary.name`, Fallback Top-Level.
+Verifiziert am rohen Workout-Objekt (Top `Radfahren`, Summary `Sprintründchen`).
 
 ---
 
