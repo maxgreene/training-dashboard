@@ -12,7 +12,7 @@ function loadModel() {
   if (!DATA.acts.length) return [];
   const L = CFG.ui.load;
   const byDay = {};
-  DATA.acts.forEach(a => { byDay[a.date] = (byDay[a.date] || 0) + (a.tss || 0); });
+  DATA.acts.forEach(a => { byDay[a.date] = (byDay[a.date] || 0) + tssOf(a); });
   // Korrekte Abklingkonstanten (nicht 1/tau, sondern 1-exp(-1/tau)).
   const kC = 1 - Math.exp(-1 / L.ctlTau), kA = 1 - Math.exp(-1 / L.atlTau);
   const out = [];

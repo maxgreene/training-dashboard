@@ -111,24 +111,9 @@ function zbar(act) {
 }
 
 // ── FTP-Widget ──────────────────────────────────────────────────────────────
-/* Gemessene Tests aufbereiten. Rampe und 20-Min messen verschieden, deshalb
- * traegt jeder Punkt seine Art (fuer die Punktform in der Timeline). FTP wird,
- * falls nicht angegeben, aus der 20-Min-Bestleistung der verknuepften Fahrt
- * abgeleitet. */
-function testPoints() {
-  return CFG.tests.map(t => {
-    let ftp = t.ftp, map = t.map;
-    if (t.id) {
-      const a = DATA.acts.find(x => String(x.id) === String(t.id));
-      const pc = a && a.power_curve;
-      if (pc) {
-        if (ftp == null && pc['1200']) ftp = Math.round(pc['1200'] * 0.95);
-        if (map == null && pc['300']) map = pc['300'];
-      }
-    }
-    return { ...t, ftp, map };
-  }).filter(t => t.ftp).sort((a, b) => a.date.localeCompare(b.date));
-}
+/* Die FTP-Herleitung (autoRampTests / testPoints / planFtp / currentFtp) liegt
+ * zentral in shared.js - genau eine Quelle, die auch Zonen, IF und TSS speist.
+ * Hier wird sie nur noch angezeigt. */
 
 /* Test-Timeline als SVG. Zeitachse vom ersten Test bis zum Zieldatum, die
  * 300-Marke als waagerechte Referenz oben. KEINE Soll-Linie: die echten
@@ -175,9 +160,13 @@ function testTimeline(tp, goal, goalDate) {
 
   // Geplante Tests (CFG.plan.events, type:'test', heute oder spaeter): leere
   // Marker auf der x-Achse mit senkrechter Datumslinie. Kein Y-Wert, weil noch
-  // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt".
+  // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt". Sobald an dem
+  // Datum ein echter Test vorliegt (heute gefahrene Rampe), faellt der geplante
+  // Marker samt Datumslinie weg — der gemessene Punkt ersetzt ihn.
+  const doneDates = new Set(tp.map(t => t.date));
   (CFG.plan.events || [])
-    .filter(e => e.type === 'test' && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
+    .filter(e => e.type === 'test' && !doneDates.has(e.date)
+      && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
     .forEach(e => {
       const x = X(e.date), yb = H - pad.b;
       s += `<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${yb.toFixed(1)}"
@@ -235,9 +224,10 @@ function ftpWidget() {
     ? `20-Min-Bestwert <b>${best20.w} W</b> (FTP ≈ ${Math.round(best20.w * 0.95)}) · ${fmtDay(d(best20.date))}`
     : 'Noch kein 20-Min-Wert in den letzten 6 Wochen';
 
+  const wkg = latest ? (latest.ftp / CFG.athlete.weight).toFixed(2) : null;
   return `<div class="card">
     <div class="card-hd"><span class="t">WEG ZU FTP ${goal}</span>
-      <span class="s">${latest ? `zuletzt ${latest.ftp} W · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
+      <span class="s">${latest ? `Plan-FTP <b>${latest.ftp} W</b> (${wkg} W/kg) · noch ${gap > 0 ? gap : 0} W · ${daysLeft} Tage bis ${fmtDay(d(goalDate))}` : 'noch keine Tests'}</span></div>
     <div class="ftp3-grid">
       <div>
         <div class="lbl">FTP-Tests · Ziel ${goal} bis ${fmtDay(d(goalDate))}</div>
@@ -277,7 +267,7 @@ function dayTile(day) {
           <div class="act-num">${fmtDur(a.moving_sec || a.duration_sec)}
             ${a.np ? `· NP <b>${a.np}</b>` : ''}
             ${i ? `· IF <b>${i.toFixed(2)}</b>` : ''}
-            ${a.tss ? `· TSS <b>${Math.round(a.tss)}</b>` : ''}
+            ${tssOf(a) ? `· TSS <b>${Math.round(tssOf(a))}</b>` : ''}
             ${a.ef ? `· EF <b>${a.ef.toFixed(2)}</b>` : ''}</div>
           ${zbar(a)}
         </div>${dp4Rings(a, 30)}</div>`;
@@ -300,7 +290,7 @@ function dayTile(day) {
 
 // ── Woche ───────────────────────────────────────────────────────────────────
 function weekCard(w) {
-  const tss = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + (a.tss || 0), 0), 0);
+  const tss = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + tssOf(a), 0), 0);
   const hrs = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + (a.moving_sec || 0), 0), 0) / 3600;
   const end = addDays(w.mon, 6);
   const deload = ((w.weekIdx + 1) % CFG.plan.deloadEvery) === 0 && w.weekIdx >= 0;

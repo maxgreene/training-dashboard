@@ -397,10 +397,9 @@ function renderRides() {
   const A = DATA.acts;
   const withP = A.filter(a => a.has_power);
   const totH = A.reduce((s, a) => s + (a.moving_sec || 0), 0) / 3600;
-  const totTSS = A.reduce((s, a) => s + (a.tss || 0), 0);
+  const totTSS = A.reduce((s, a) => s + tssOf(a), 0);
   const avgW = withP.length ? withP.reduce((s, a) => s + (a.avg_power || 0), 0) / withP.length : 0;
   const bestNP = Math.max(0, ...A.map(a => a.np || 0));
-  const b20 = best('1200', 9999);
   const stat = (l, v, s) => `<div class="stat"><div class="stat-l">${l}</div>
     <div class="stat-v">${v}</div><div class="stat-s">${s || ''}</div></div>`;
 
@@ -416,8 +415,9 @@ function renderRides() {
       ${stat('TSS gesamt', Math.round(totTSS), 'mit FTP ' + CFG.athlete.ftp)}
       ${stat('Ø Watt', Math.round(avgW) + '<small> W</small>', 'inkl. Rollen')}
       ${stat('Beste NP', bestNP + '<small> W</small>', 'normalisiert')}
-      ${stat('FTP-Schätzung', '~' + (b20 ? Math.round(b20.w * 0.95) : CFG.athlete.ftp) + '<small> W</small>',
-             ((b20 ? b20.w * 0.95 : CFG.athlete.ftp) / CFG.athlete.weight).toFixed(2).replace('.', ',') + ' W/kg')}
+      ${stat('FTP aktuell', CFG.athlete.ftp + '<small> W</small>',
+             (CFG.athlete.ftp / CFG.athlete.weight).toFixed(2).replace('.', ',') + ' W/kg · '
+             + (planFtp() ? 'Rampe ' + fmtDay(d(planFtp().date)) : 'Basiswert'))}
     </div>
     <div id="ride-list"></div>`;
 
@@ -433,7 +433,7 @@ function renderRides() {
           <span>${fmtDur(a.moving_sec || a.duration_sec)}</span>
           ${a.np ? `<span>NP <b>${a.np}</b></span>` : ''}
           ${i ? `<span>IF <b>${i.toFixed(2)}</b></span>` : ''}
-          ${a.tss ? `<span>TSS <b>${Math.round(a.tss)}</b></span>` : ''}
+          ${tssOf(a) ? `<span>TSS <b>${Math.round(tssOf(a))}</b></span>` : ''}
           ${a.ef ? `<span>EF <b>${a.ef.toFixed(2)}</b></span>` : ''}
         </span>
         ${dp4Rings(a, 34)}

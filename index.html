@@ -322,6 +322,7 @@ function renderStatus(){
 (async () => {
   try {
     await loadAll();
+    resolveAthlete();      // FTP/HRmax aus den Daten -> eine Quelle fuer alle Seiten
     $('#loading').style.display = 'none';
     renderStatus();
     renderPlan();          // nur die sichtbare Seite
