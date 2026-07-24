@@ -186,8 +186,10 @@ const CFG = {
       dotMinDur: 30, dotMaxDur: 500,
       alpha: 0.5,
       showTrend: true,
-      trendAlpha: 0.15,   // EWMA-Glaettung der Trendlinie: kleiner = glatter,
-                          // groesser = folgt den letzten Fahrten schneller
+      trendTau: 12,       // Tage: Zeit-Konstante des zeit-gewichteten EWMA der
+                          // Trendlinie. Groesser = glatter/traeger. Behebt das
+                          // Zacken durch ungleich verteilte Fahrten.
+      trendAlpha: 0.15,   // Fallback, falls trendTau mal null gesetzt wird
       bandAlpha: 0.1,     // Deckkraft der +-1sigma-Flaeche
     },
 

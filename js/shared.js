@@ -114,20 +114,32 @@ function pct(arr) {
 /* EWMA mit exponentiell gewichteter Streuung -> Trendlinie plus Band.
  * Das Band zeigt, was normale Schwankung ist: nur was daraus ausbricht,
  * ist ein Signal. pts muessen chronologisch sortiert sein (aeltester zuerst).
- * Genutzt von der Form-Seite (HRV/RHR, taeglich) und dem EF-Trend (je Fahrt). */
-function ewmaBand(pts, alpha) {
+ *
+ * Ohne `tau`: festes `alpha` je Punkt. Passt fuer gleichmaessige Tagesdaten
+ * (HRV/RHR auf der Form-Seite).
+ *
+ * Mit `tau` (Tage): ZEIT-gewichtet, alpha = 1 - exp(-dt / tau), dt = Abstand in
+ * x (Tagen) zur Vorfahrt. Fuer den EF-Trend, wo die Fahrten ungleich verteilt
+ * sind: mehrere Fahrten am selben Tag (dt=0 -> alpha=0) schieben die Linie
+ * nicht, eine Fahrt nach langer Pause angemessen. Das behebt das Zacken, das
+ * entsteht, wenn ein fixes Alpha pro Fahrt auf eine Zeitachse gezeichnet wird
+ * (dichte Wochen liefen sonst steiler als duenne). Gleiches Prinzip wie CTL/ATL. */
+function ewmaBand(pts, alpha, tau) {
   if (!pts.length) return { line: [], upper: [], lower: [] };
-  let e = pts[0].y, v = 0;
+  let e = pts[0].y, v = 0, prevX = pts[0].x;
   const line = [], upper = [], lower = [];
-  pts.forEach(p => {
+  pts.forEach((p, i) => {
+    let a = alpha;
+    if (tau && i > 0) a = 1 - Math.exp(-Math.max(0, p.x - prevX) / tau);
     const prev = e;
-    e = e + alpha * (p.y - e);
+    e = e + a * (p.y - e);
     const dev = p.y - prev;
-    v = (1 - alpha) * (v + alpha * dev * dev);
+    v = (1 - a) * (v + a * dev * dev);
     const sd = Math.sqrt(v);
     line.push({ x: p.x, y: +e.toFixed(2) });
     upper.push({ x: p.x, y: +(e + sd).toFixed(2) });
     lower.push({ x: p.x, y: +(e - sd).toFixed(2) });
+    prevX = p.x;
   });
   return { line, upper, lower };
 }

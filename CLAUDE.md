@@ -259,6 +259,13 @@ HORIZONTALE Achse, die Kinder schrumpfen auf Inhaltsbreite. Im Mobile-Block
 ist ein Kaltstart-Artefakt. Abklingkonstante ist `1 - exp(-1/tau)`, nicht
 `1/tau`. Die ersten 42 Tage sind im Chart als Einschwingphase grau markiert.
 
+**EF-Trend braucht einen ZEIT-gewichteten EWMA.** Ein festes Alpha pro Fahrt,
+auf die Zeitachse gezeichnet, zackt: dichte Wochen laufen steiler als dünne,
+Fahrten am selben Tag geben senkrechte Ecken. `ewmaBand(pts, alpha, tau)` nutzt
+mit `tau` (Tage, `CFG.ui.efTrend.trendTau` = 12) `alpha = 1 - exp(-dt/tau)` je
+Abstand zur Vorfahrt. Gleiches Prinzip wie CTL/ATL. Die tägliche HRV/RHR-Nutzung
+ruft `ewmaBand` ohne `tau` auf (festes Alpha, gleichmäßige Tage).
+
 **`log(0)` existiert nicht.** Die MMP-y-Achse beginnt deshalb bei 50 W, nicht 0.
 
 **Feste Achsen brauchen Clipping und einen Zähler.** Sonst malt etwas über die

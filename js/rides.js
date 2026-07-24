@@ -324,7 +324,7 @@ function renderEF() {
   // EWMA-Band statt Gerade: die Linie folgt der Form (Bloecke, Entlastung),
   // das Band (+-1sigma) zeigt die normale Streuung. Chronologisch sortiert,
   // sonst laeuft die Glaettung rueckwaerts.
-  const ewma = ewmaBand(pts.slice().sort((a, b) => a.x - b.x), C.trendAlpha);
+  const ewma = ewmaBand(pts.slice().sort((a, b) => a.x - b.x), C.trendAlpha, C.trendTau);
   const bandFill = `rgba(249,115,22,${C.bandAlpha})`;
 
   box.innerHTML = '<canvas id="ef-canvas"></canvas>';
