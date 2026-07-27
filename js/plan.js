@@ -200,16 +200,8 @@ function ftpWidget() {
   const tp = testPoints();
   const best20 = best('1200', 42);
 
-  // ── Rechts: 14-Tage-Bilanz ──
-  const ezBar = (val, label) => {
-    if (val == null) return `<div class="ez-none">${label}: keine Daten</div>`;
-    const col = val >= tLo ? '#34d399' : val >= 65 ? '#fbbf24' : '#f97316';
-    return `<div class="ez-item">
-      <div class="ez-head"><span class="ez-name">${label}</span>
-        <span class="ez-val" style="color:${col}">${val.toFixed(0)}<small> %</small></span></div>
-      <div class="ez-bar"><div class="ez-fill" style="width:${Math.min(100, val)}%;background:${col}"></div>
-        <div class="ez-tgt" style="left:${tLo}%;right:${100 - tHi}%"></div></div></div>`;
-  };
+  // ── Rechts: Easy-Verlauf (Punkte je Fahrt, siehe drawEasyTrend) ──
+  const EP = CFG.ui.easyPlot;
 
   // ── Links: Test-Fortschritt ──
   const latest = tp.length ? tp[tp.length - 1] : null;
@@ -238,11 +230,13 @@ function ftpWidget() {
         <div class="ez-hint">△ Rampe · ○ 20-Min · leerer △ = geplant · Methoden ~10-20 W verschieden</div>
       </div>
       <div>
-        <div class="lbl">Letzte ${win} Tage</div>
-        ${ezBar(cur.hr, 'Easy nach HF')}
-        ${ezBar(cur.power, 'Easy nach Leistung')}
-        <div class="ez-meta">${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten · Ziel Easy ${tLo}–${tHi} %</div>
-        <div class="ez-hint" style="margin-top:10px">${best20html}</div>
+        <div class="lbl">Easy-Verlauf · letzte ${win} Tage</div>
+        <div id="easy-box"></div>
+        <div class="ez-meta">Band = Ziel ${tLo}–${tHi} % ·
+          <span style="color:${EP.colP}">●</span> Leistung ·
+          <span style="color:${EP.colHr}">●</span> HF · Größe = Dauer ·
+          ${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten</div>
+        <div class="ez-hint" style="margin-top:8px">${best20html}</div>
       </div>
     </div>
   </div>`;
@@ -312,9 +306,74 @@ function weekCard(w) {
 // (Kapazitaets-Kennzahlen bei den Fahrten-Daten, aus denen sie stammen).
 // Siehe profileCard()/drawProfileTrend() in rides.js.
 
+/* Easy-Verlauf: Punkt je Fahrt (Easy-Anteil nach Leistung und HF), Ziel-Band
+ * als Erwartungsbereich, zeit-gewichtete Trendlinie je Serie. Zeigt anschaulich,
+ * ob und wohin sich die Verteilung ueber die letzten Tage bewegt. */
+let _easy = null;
+function drawEasyTrend() {
+  const box = $('#easy-box');
+  if (!box || !window.Chart) return;
+  const EP = CFG.ui.easyPlot, days = CFG.ui.easyWindowDays;
+  const [tLo, tHi] = CFG.ui.easyTarget;
+  const pts = easyPoints(days);
+  box.style.height = EP.height + 'px';
+  box.innerHTML = '<canvas id="easy-canvas"></canvas>';
+  const lo = addDays(today(), -days);
+  const X = ds => dayDiff(d(ds), lo);
+  const span = Math.log(Math.max(2, EP.dotMaxMin / EP.dotMinMin));
+  const rOf = m => EP.dotMinR + (EP.dotMaxR - EP.dotMinR) *
+    Math.max(0, Math.min(1, Math.log(Math.max(m, EP.dotMinMin) / EP.dotMinMin) / span));
+  const bub = key => pts.filter(p => p[key] != null)
+    .map(p => ({ x: X(p.date), y: p[key], r: rOf(p.dur) }));
+  const trend = key => ewmaBand(
+    pts.filter(p => p[key] != null).map(p => ({ x: X(p.date), y: p[key] })).sort((a, b) => a.x - b.x),
+    0.3, CFG.ui.efTrend.trendTau).line;
+
+  if (_easy) _easy.destroy();
+  _easy = new Chart($('#easy-canvas'), {
+    data: { datasets: [
+      { type: 'bubble', label: 'Leistung', data: bub('p'),  backgroundColor: EP.colP + 'b3', borderWidth: 0, clip: false },
+      { type: 'bubble', label: 'HF',       data: bub('hr'), backgroundColor: EP.colHr + 'b3', borderWidth: 0, clip: false },
+      { type: 'line', data: trend('p'),  borderColor: EP.colP,  borderWidth: 1.6, pointRadius: 0, fill: false },
+      { type: 'line', data: trend('hr'), borderColor: EP.colHr, borderWidth: 1.6, pointRadius: 0, fill: false },
+    ] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: {
+        x: { type: 'linear', min: 0, max: days,
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: Math.ceil(days / 4),
+                      callback: v => fmtDay(addDays(lo, v)) },
+             grid: { color: 'rgba(255,255,255,.05)' } },
+        y: { min: 0, max: 100,
+             title: { display: true, text: 'Easy %', color: CSSVAR('--t5'), font: { size: 10 } },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: 25 },
+             grid: { color: 'rgba(255,255,255,.05)' } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { filter: c => c.dataset.type === 'bubble',
+          callbacks: { label: c => `${c.dataset.label}: ${Math.round(c.raw.y)} %` } },
+      },
+    },
+    // Ziel-Band (Erwartungsbereich) als waagerechte Flaeche.
+    plugins: [{
+      id: 'easyband',
+      beforeDatasetsDraw(ch) {
+        const { ctx, chartArea: ca, scales } = ch;
+        const y1 = scales.y.getPixelForValue(tHi), y2 = scales.y.getPixelForValue(tLo);
+        ctx.save();
+        ctx.fillStyle = `rgba(52,211,153,${EP.bandAlpha})`;
+        ctx.fillRect(ca.left, y1, ca.right - ca.left, y2 - y1);
+        ctx.restore();
+      },
+    }],
+  });
+}
+
 function renderPlan() {
   const box = $('#page-plan');
   if (!box) return;
   const weeks = buildWeeks();
   box.innerHTML = ftpWidget() + weeks.map(weekCard).join('');
+  drawEasyTrend();
 }

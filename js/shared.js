@@ -167,6 +167,23 @@ function easyShare(days, offsetDays) {
   };
 }
 
+/* Easy-Anteil JE FAHRT im Fenster: fuer den Punkteverlauf. Pro Fahrt der Anteil
+ * Z1+Z2 an der Zonenzeit, getrennt nach Leistung und HF. dur in Minuten fuer die
+ * Punktgroesse. Fahrten ohne Power UND ohne HF fallen raus. */
+function easyPoints(days) {
+  const lo = addDays(today(), -days);
+  const share = z => { if (!z) return null; const t = z.reduce((s, v) => s + v, 0); return t ? 100 * (z[0] + z[1]) / t : null; };
+  const out = [];
+  DATA.acts.forEach(a => {
+    const dt = d(a.date);
+    if (dt <= lo || dt > today()) return;
+    const p = share(powerZoneTimes(a)), hr = share(hrZoneTimes(a));
+    if (p == null && hr == null) return;
+    out.push({ date: a.date, dur: (a.moving_sec || 0) / 60, p, hr });
+  });
+  return out;
+}
+
 /* Gemeinsame Zeitachse: Trainingsstart bis heute, fuer jeden Zeitreihen-Chart
  * identisch. t0 ist der Nullpunkt, x-Werte sind Tage seit t0. "heute" waechst
  * mit, ohne dass irgendwo ein Datum haengenbleibt. */
