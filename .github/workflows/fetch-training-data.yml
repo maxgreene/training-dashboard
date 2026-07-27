@@ -14,7 +14,14 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Mit GH_PAT auschecken, damit der Daten-Commit-Push den Deploy ausloest.
+      # Ein Push mit dem Default-GITHUB_TOKEN loest KEINE Folge-Workflows aus,
+      # deshalb lief der Deploy frueher ueber workflow_run (auch bei No-Op-Fetches).
+      # Mit PAT greift der push:[main]-Trigger, also Deploy nur bei echtem Commit.
+      # ACHTUNG: laeuft GH_PAT ab, schlaegt der Push fehl (Status-Ampel zeigt es).
       - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Python
         uses: actions/setup-python@v6

@@ -2,11 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch: {}   # manueller "Run workflow"-Button fuer Tests
-  workflow_run:
-    workflows: ["Fetch Training Data"]
-    types: [completed]
+    branches: [main]        # Fetch pusht mit GH_PAT -> loest hier aus, nur bei echtem Commit
+  workflow_dispatch: {}     # manueller "Run workflow"-Button fuer Tests
 
 permissions:
   contents: read
