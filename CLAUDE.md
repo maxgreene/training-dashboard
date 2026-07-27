@@ -61,9 +61,9 @@ index.html                        Struktur, CSS, Nav, Status-Ampel, Lazy-Render,
 js/config.js                      ALLE Parameter. Einziger Ort für Zahlen.
 js/shared.js                      Datum, Zonen-Engine, timeAxis, DATA, CSSVAR,
                                   FTP/HRmax-Auflösung, Tests, tssOf, Leistungsprofil
-js/plan.js                        Plan-Generator, FTP-Widget, Test-Timeline,
-                                  Leistungsprofil-Karte + Wochen-Plot
-js/rides.js                       EF-Chart, Fahrtenliste, 3 Detailplots
+js/plan.js                        Plan-Generator, FTP-Widget, Test-Timeline
+js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
+                                  EF-Chart, Fahrtenliste, 3 Detailplots
 js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
 scripts/fetch_garmin_activities.py Garmin Indoor/Rolle nach activities.json + streams/
@@ -153,7 +153,7 @@ Overrides: ein Handeintrag mit gesetztem `ftp` gewinnt gegen den automatischen
 Wert. Die Erkennung ist eng genug, dass harte Einheiten (z. B. 3x10 min) nicht
 fälschlich als Test zählen.
 
-**Leistungsprofil (Plan-Seite):** je Anker NM (5 s), AC (60 s), MAP (300 s),
+**Leistungsprofil (Rides-Seite):** je Anker NM (5 s), AC (60 s), MAP (300 s),
 Schwelle (1200 s) der Bestwert seit Trainingsstart (`CFG.profile.since`), mit
 W/kg, Alter, frisch/veraltet. Dazu ein CP/W'-Modell (2-Parameter Work-Time-Fit
 aus 2/5/10/20-min-Bestwerten) als Gegenprobe zum Rampen-FTP, plus ein
