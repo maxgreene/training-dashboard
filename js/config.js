@@ -131,8 +131,17 @@ const CFG = {
 
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
-    easyTarget: [75, 80],        // Zielfenster Easy-Anteil in %
+    easyTarget: [75, 80],        // Zielfenster (Erwartungsbereich) Easy-Anteil in %
     easyWindowDays: 14,          // Fenster fuer den Easy-Anteil
+    // Easy-Verlauf (Punkte je Fahrt + Trendlinie, letzte easyWindowDays Tage)
+    easyPlot: {
+      height: 200,
+      dotMinR: 3, dotMaxR: 9,    // Punktgroesse nach Dauer
+      dotMinMin: 10, dotMaxMin: 300,
+      colP: '#60a5fa',           // Leistung (blau)
+      colHr: '#7ec8a0',          // HF (gruen)
+      bandAlpha: 0.13,           // Deckkraft des Ziel-Bandes
+    },
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
     // 4DP-Benchmarks als Vielfaches der FTP (bei FTP 250: 1200/800/400/250 W)
     dp4: [
