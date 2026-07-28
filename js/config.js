@@ -25,14 +25,21 @@ const CFG = {
   // ── Zonen ─────────────────────────────────────────────────────────────────
   // Grenzen als Anteil von FTP bzw. HRmax. Frei verstellbar: das Frontend
   // rechnet aus den Histogrammen in activities.json live neu, ohne Reprocess.
+  //
+  // INDIVIDUALISIERT nach Laktat-Stufentest (mha-sport, 16.10.2020, MLSS 290 W,
+  // HRmax ~174). Wolfs HF laeuft niedrig fuer die Leistung: die Labor-Bereiche
+  // liegen deutlich unter den Standard-Modellen (Coggan/%HRmax). Gemessen:
+  // REKOM 86-106 · GA1 106-129 · GA2 129-146 · EB/Schwelle 146-163 bpm;
+  // GA1-Obergrenze Leistung 190 W (= 0.66 x MLSS). Deshalb HF-Z2 endet bei
+  // ~0.75 HRmax (nicht 0.83) und Leistungs-Z2 bei ~0.66 FTP (nicht 0.75).
   zones: {
     power: {
-      bounds: [0, 0.55, 0.75, 0.87, 1.05],
+      bounds: [0, 0.55, 0.66, 0.87, 1.05],   // Z2-Top 0.66 (Labor GA1 = 190/290)
       names:  ['Z1 Recovery', 'Z2 Grundlage', 'Z3 Tempo', 'Z4 Schwelle', 'Z5 VO2max'],
       colors: ['#3f6b52', '#4a7fb5', '#d4a03c', '#d9673c', '#c0392b'],
     },
     hr: {
-      bounds: [0, 0.68, 0.83, 0.88, 0.95],
+      bounds: [0, 0.62, 0.75, 0.85, 0.95],   // Labor: 106 / 129 / 146 / 163 bpm bei HRmax 171
       names:  ['Z1 Recovery', 'Z2 Grundlage', 'Z3 Tempo', 'Z4 Schwelle', 'Z5 VO2max'],
       colors: ['#3f6b52', '#4a7fb5', '#d4a03c', '#d9673c', '#c0392b'],
     },

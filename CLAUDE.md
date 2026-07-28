@@ -347,8 +347,15 @@ Push auf `main` löst den Deploy aus.
   FTP-300-Block). Neue kommen automatisch dazu (siehe Test-Erkennung oben).
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei
   2-Minuten-Blöcken verwischt sie und sieht aus wie ein Intervalltraining.
-- Easy-Anteil nach Leistung ~59 %, nach HF ~85 bis 95 % bei denselben Fahrten.
-  Die Differenz ist selbst die Information: Berg-Antritte spiken die Watt,
+- **Zonen sind labor-individualisiert** (Laktat-Stufentest mha-sport 16.10.2020,
+  MLSS 290 W, HRmax ~174), nicht Standard-Coggan/%HRmax. Wolfs HF laeuft niedrig
+  fuer die Leistung: GA1/Z2 endet bei HF 129 und ~0.66 FTP, nicht bei 142/0.75.
+  Grenzen in `CFG.zones` entsprechend gesetzt (`hr.bounds` 0.62/0.75/0.85/0.95,
+  `power.bounds` Z2-Top 0.66). Verifiziert gegen die 2026er-Fahrten (bei 150 bis
+  200 W steht die HF steady bei ~118).
+- Easy-Anteil: nach Leistung war er mit den alten Zonen ~59 %, nach HF ~85 bis
+  95 %. Mit den engeren Labor-Zonen faellt beides etwas, das ist richtiger.
+  Die Differenz HF vs Leistung bleibt die Information: Antritte spiken die Watt,
   die HF folgt nicht.
 - Wochenrhythmus: Mo bis Fr zwei Commutes, Mi Rolle (hart), Sa oder So lange
   Ausfahrt. Blockstruktur vier Wochen, jede vierte ist Entlastung.
