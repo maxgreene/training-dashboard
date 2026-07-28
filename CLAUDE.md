@@ -270,7 +270,17 @@ ruft `ewmaBand` ohne `tau` auf (festes Alpha, gleichmäßige Tage).
 
 **Feste Achsen brauchen Clipping und einen Zähler.** Sonst malt etwas über die
 Achse hinaus oder Punkte verschwinden unbemerkt. Der Scatter zeigt
-`n=241 · 3 außerhalb`.
+`n=241 · 78% drin · 3 außerhalb`.
+
+**Scatter-Zielzone.** Der HF-gegen-Leistung-Scatter (`drawScatter`) legt einen
+blau hinterlegten Kasten unter die beiden Z2/Z3-Decken (Leistung `bounds[2]`
+0.66 x FTP, HF `bounds[2]` 0.75 x HRmax). Obere rechte Ecke = Kreuzung der
+Z2/Z3-Grenzen. Der ganze aerobe Bereich darunter, nicht nur das Z2-Band, weil
+das polarisierte ~80 % Easy alles unter der Z2/Z3-Decke meint (Z1-Rekom
+eingeschlossen). `% drin` = Anteil der stabilen Punkte im Kasten. HF-Zonen als
+gestrichelte Waagerechte (Labels rechts), Leistungszonen als Senkrechte (Labels
+oben), wie bei der MMP-Kurve. Beide Achsen ziehen aus `CFG.athlete.ftp/hrmax`
+(Config-Basis), nicht aus dem live aufgelösten FTP, gleich wie `zoneTable`.
 
 ---
 

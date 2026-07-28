@@ -159,7 +159,16 @@ function drawScatter(box, s) {
   for (let v = C.yMin; v <= yMax; v += 20) yT.push({ v, l: v });
   frame(ctx, w, h, pad, X, Y, xT, yT, 'Watt', 'HF (bpm)');
 
-  // Zonengrenzen
+  // Zielzone: unter beiden Z2/Z3-Decken (Leistung UND HF) = aerober Bereich,
+  // das polarisierte ~80 % Easy. Obere rechte Ecke = Kreuzung der Z2/Z3-Grenzen.
+  const pZ = CFG.zones.power.bounds[2] * CFG.athlete.ftp;
+  const hZ = CFG.zones.hr.bounds[2] * CFG.athlete.hrmax;
+  const bx1 = X(C.xMin), bx2 = X(Math.min(pZ, C.xMax));
+  const by1 = Y(Math.min(hZ, yMax)), by2 = Y(C.yMin);
+  ctx.fillStyle = 'rgba(96,165,250,.10)';
+  ctx.fillRect(bx1, by1, bx2 - bx1, by2 - by1);
+
+  // Leistungs-Zonengrenzen (senkrecht)
   CFG.zones.power.bounds.forEach((b, i) => {
     if (!i) return;
     const x = b * CFG.athlete.ftp;
@@ -170,6 +179,19 @@ function drawScatter(box, s) {
     ctx.fillStyle = CFG.zones.power.colors[i]; ctx.font = '8px ' + CSSVAR('--mono');
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText('Z' + (i + 1), X(x), pad.t + 1);
+  });
+  // HF-Zonengrenzen (waagerecht), Labels rechts, damit sie das Leistungs-Z
+  // oben und die Kennzahl oben links nicht ueberlaufen.
+  CFG.zones.hr.bounds.forEach((b, i) => {
+    if (!i) return;
+    const y = b * CFG.athlete.hrmax;
+    if (y < C.yMin || y > yMax) return;
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(y)); ctx.lineTo(w - pad.r, Y(y));
+    ctx.strokeStyle = CFG.zones.hr.colors[i] + '77'; ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = CFG.zones.hr.colors[i]; ctx.font = '8px ' + CSSVAR('--mono');
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('Z' + (i + 1), w - pad.r - 2, Y(y) - 1);
   });
 
   const win = Math.max(3, Math.round(30 / s.step));
@@ -211,8 +233,10 @@ function drawScatter(box, s) {
   }
   ctx.restore();
   const off = pts.filter(p => p[0] > C.xMax || p[1] > yMax || p[0] < C.xMin || p[1] < C.yMin).length;
+  const inZ = Math.round(100 * pts.filter(p => p[0] <= pZ && p[1] <= hZ).length / n);
   ctx.fillStyle = CSSVAR('--t3'); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillText((r2 != null ? 'R² ' + r2.toFixed(2) + ' · ' : '') + 'n=' + n
+               + ' · ' + inZ + '% drin'
                + (off ? ' · ' + off + ' außerhalb' : ''), pad.l + 5, pad.t + 2);
 }
 
