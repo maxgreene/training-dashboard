@@ -9,6 +9,12 @@
  * Reihenfolge durchgehend: neu oben, alt unten — auf Wochen- wie Tagesebene.
  */
 
+// Watt-Spanne aus einem Intensitaets-Anteil (x aktuellem FTP), live gerechnet.
+function wRange(fr) {
+  const f = CFG.athlete.ftp;
+  return Math.round(fr[0] * f) + '–' + Math.round(fr[1] * f) + ' W';
+}
+
 // ── Was ist an einem Tag geplant? ───────────────────────────────────────────
 function plannedFor(dt, weekIdx) {
   const isoD = iso(dt);
@@ -25,7 +31,15 @@ function plannedFor(dt, weekIdx) {
   const parts = [];
 
   if (t.commutes) {
-    parts.push({ type: 'comm', ...CFG.plan.units.commute });
+    // Quality-Commute: 1 Weg als Sweet-Spot-Block (nur in Aufbauwochen, nur
+    // wenn die Strecke frei ist). Der zeitgeknappte Reiz: Intensitaet statt
+    // Dauer. In Entlastungswochen bleibt alles locker.
+    if (t.commuteQuality === 'ss' && !deload) {
+      parts.push({ type: 'comm', title: 'Commute: Sweet-Spot-Block',
+        desc: `2×10 oder 3×8 min @ ${wRange(CFG.plan.intensity.ss)} · zweiter Weg locker · nur bei freier Strecke` });
+    } else {
+      parts.push({ type: 'comm', ...CFG.plan.units.commute });
+    }
   }
 
   if (t.slot === 'hard') {
@@ -35,7 +49,8 @@ function plannedFor(dt, weekIdx) {
       // Aufbauwochen durchzaehlen (Entlastungswochen zaehlen nicht mit)
       const buildIdx = weekIdx - Math.floor(weekIdx / CFG.plan.deloadEvery);
       const p = CFG.plan.hardProgression[buildIdx % CFG.plan.hardProgression.length];
-      parts.push({ type: 'roll', title: 'Rolle: ' + p.title, desc: p.desc });
+      parts.push({ type: 'roll', title: 'Rolle: ' + p.title,
+                   desc: p.desc + ' · ' + wRange(CFG.plan.intensity.thr) });
     }
   } else if (t.slot === 'long' || t.slot === 'long_alt') {
     const u = deload

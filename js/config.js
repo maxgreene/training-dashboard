@@ -68,9 +68,9 @@ const CFG = {
     // nie am Wochenende, deshalb kann hier kein Pflicht-Commute entstehen).
     template: {
       Mo: { commutes: 2, slot: null },
-      Di: { commutes: 2, slot: null },
+      Di: { commutes: 2, slot: null, commuteQuality: 'ss' }, // 1 Weg als SS-Block
       Mi: { commutes: 2, slot: 'hard' },     // Rolle, die harte Einheit
-      Do: { commutes: 2, slot: null },
+      Do: { commutes: 2, slot: null, commuteQuality: 'ss' }, // 1 Weg als SS-Block
       Fr: { commutes: 2, slot: null },
       Sa: { commutes: 0, slot: 'long' },     // lang & ruhig …
       So: { commutes: 0, slot: 'long_alt' }, // … Sa ODER So, je nach Kumpels
@@ -79,6 +79,15 @@ const CFG = {
     // Blockstruktur: nach buildWeeks Aufbauwochen eine Entlastungswoche.
     blockLen: 4,
     deloadEvery: 4,
+
+    // Intensitaets-Anteile vom AKTUELLEN FTP. Watt wird live gerechnet
+    // (Anteil x CFG.athlete.ftp), zieht also nach jedem Rampentest mit.
+    // Grund (zeitgeknappt): Dauer ist gedeckelt, also holt Wolf den Reiz ueber
+    // Intensitaet in den kurzen Commute-Fenstern. SS = Sweet Spot.
+    intensity: {
+      ss:  [0.88, 0.94],   // Sweet Spot
+      thr: [0.95, 1.05],   // Schwelle
+    },
 
     // Bausteine, auf die das Template zeigt.
     units: {

@@ -49,8 +49,14 @@ etwas unklar ist: Daten laden und messen.
   Fließtext-Absätze unter Charts wurden explizit als bevormundend
   zurückgewiesen. Beispiel für den richtigen Ton:
   `CTL 42 d = Fitness · ATL 7 d = Ermüdung · TSB = CTL − ATL · TSB ↑ = frisch`
-- Claude ist **nicht** Wolfs Coach oder Arzt. Trainingsbeobachtungen flaggen,
-  keine Vorschriften machen.
+- **Coach-Rolle (auf Wolfs Wunsch, 12.08.2026).** Claude gibt Einschätzung und
+  konkrete Empfehlungen zum Training, nicht nur Beobachtungen. Trainingsziel,
+  Datenlage und Constraints (Wolf kann max 2x/Woche lang fahren, Rest über
+  Commutes) ernst nehmen und darin steuern. Argumente auf echten Daten prüfen,
+  nicht dogmatisch: Wolf korrigiert falsche Physiologie (z. B. Mitochondrien vs
+  MAP), und das gehört so. Claude ist **kein Arzt**: medizinische Grenzen
+  benennen, bei Schmerz, Infekt oder anhaltendem HRV-Absturz gilt der Körper vor
+  dem Plan.
 
 ---
 
@@ -369,6 +375,22 @@ Push auf `main` löst den Deploy aus.
   die HF folgt nicht.
 - Wochenrhythmus: Mo bis Fr zwei Commutes, Mi Rolle (hart), Sa oder So lange
   Ausfahrt. Blockstruktur vier Wochen, jede vierte ist Entlastung.
+- **Zeitgeknappt, deshalb Intensitaet statt Dauer (12.08.2026).** Wolf kann max
+  2x/Woche lang fahren, der Rest sind kurze Commutes. Datenlage: 78 % der
+  Fahrten unter 30 min, nur ~1.2 lange (>=90 min) pro Woche, CTL seit sechs
+  Wochen flach (57 bis 63) trotz grüner Erholung (HRV balanced, RHP stabil). Der
+  Volumen-/Mitochondrien-Weg ist richtig, wird aber über zerstückelte Commutes
+  kaum ausgeliefert. Fix: Di und Do wird je 1 Commute-Weg ein Sweet-Spot-Block
+  (`template.commuteQuality: 'ss'`), Mi bleibt die Schwellen-Progression, die
+  langen Fahrten bleiben der Dauerreiz, die übrigen Commutes ehrlich locker.
+  Intensitaet baut Mitochondrien auch (AMPK-Weg), nur potenter pro Minute, genau
+  der Hebel wenn die Minuten fehlen. Nicht alles grau fahren, harte Tage hart,
+  leichte leicht.
+- **Watt-Ziele live aus FTP.** `CFG.plan.intensity` hält nur die Anteile
+  (ss 0.88 bis 0.94, thr 0.95 bis 1.05). `plan.js:wRange()` rechnet daraus die
+  Watt-Spanne x `CFG.athlete.ftp` (aufgelöst, aktuell 271), also SS ~238 bis 255,
+  Schwelle ~257 bis 285. Nach jedem Rampentest ziehen die Ziele automatisch mit,
+  kein Handeintrag.
 
 ---
 
