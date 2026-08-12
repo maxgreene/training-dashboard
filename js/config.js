@@ -147,16 +147,18 @@ const CFG = {
 
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
-    easyTarget: [75, 80],        // Zielfenster (Erwartungsbereich) Easy-Anteil in %
-    easyWindowDays: 14,          // Fenster fuer den Easy-Anteil
-    // Easy-Verlauf (Punkte je Fahrt + Trendlinie, letzte easyWindowDays Tage)
+    easyWindowDays: 14,          // Fenster fuer den Ride-Plot
+    // Ride vs Z2/Z3-Decke: je Fahrt Ø ± 1sd von Leistung und HF, relativ zur
+    // aeroben Decke (1.0). Letzte easyWindowDays Tage.
     easyPlot: {
       height: 200,
       dotMinR: 3, dotMaxR: 9,    // Punktgroesse nach Dauer
       dotMinMin: 10, dotMaxMin: 300,
       colP: '#60a5fa',           // Leistung (blau)
       colHr: '#7ec8a0',          // HF (gruen)
-      bandAlpha: 0.13,           // Deckkraft des Ziel-Bandes
+      bandAlpha: 0.10,           // Deckkraft des aeroben Bereichs (< 1.0)
+      relMax: 2.0,               // y-Achse: Vielfaches der Decke
+      dx: 0.15,                  // x-Versatz, damit Leistung/HF nicht ueberlappen
     },
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
     // 4DP-Benchmarks als Vielfaches der FTP (bei FTP 250: 1200/800/400/250 W)
