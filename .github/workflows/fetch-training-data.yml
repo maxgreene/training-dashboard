@@ -46,10 +46,19 @@ jobs:
           echo "wahoo_access=$ACCESS" >> $GITHUB_OUTPUT
           echo "WAHOO_NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
 
+      # Der rotierte Token MUSS gespeichert werden, sonst ist der schon
+      # verbrauchte alte Token tot und die Kette bricht (invalid_grant, still,
+      # Workflow bleibt gruen). continue-on-error bleibt, damit ein Blip nicht
+      # die Pipeline stoppt, ABER ein Fehlschlag wird als Warnung sichtbar.
       - name: Update Wahoo Refresh Token
         if: env.WAHOO_NEW_REFRESH != ''
         continue-on-error: true
-        run: gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"
+        run: |
+          if gh secret set WAHOO_REFRESH_TOKEN --body "$WAHOO_NEW_REFRESH"; then
+            echo "Wahoo Refresh-Token rotiert und gespeichert."
+          else
+            echo "::warning::Wahoo Refresh-Token konnte NICHT gespeichert werden (PAT-Scope secrets:write? API-Blip?). Die Token-Kette droht beim naechsten Lauf zu brechen."
+          fi
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
