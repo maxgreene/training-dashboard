@@ -209,7 +209,8 @@ function testTimeline(tp, goal, goalDate) {
 /* Heute-Feld: live aus Health (HRV/RHP/Schlaf), Form (CTL/ATL/TSB) und dem
  * geplanten Tag eine Ampel plus konkrete Empfehlung (Coach-Rolle). Marker
  * gegen die 42-Tage-Basis (Median). Bei Konflikt Erholung vor Plan. */
-function todayCard(plan) {
+function todayCard(plan, tplan) {
+  const COL = { 'grün': '#34d399', gelb: '#d4a03c', rot: '#c0392b' };
   const h = DATA.health[0] || {};
   const m = loadModel();
   const f = m.length ? m[m.length - 1] : null;
@@ -221,57 +222,110 @@ function todayCard(plan) {
   if (rhrB != null && rhr != null && rhr > rhrB + 3) flags.push('Ruhepuls erhöht');
   if (sleep != null && sleep < 6.5) flags.push('kurzer Schlaf');
   if (/LOW|POOR|UNBALANCED/i.test(st)) flags.push('HRV-Status ' + st);
-
   const level = (flags.length >= 2 || /LOW|POOR/i.test(st)) ? 'rot'
               : flags.length === 1 ? 'gelb' : 'grün';
-  const col = { 'grün': '#34d399', gelb: '#d4a03c', rot: '#c0392b' }[level];
 
-  // Heutige Einheit aus dem Plan-Tag ableiten.
-  let sess = 'frei', hard = false, quality = false, long = false, rest = false, isTest = false;
-  if (plan) {
-    if (plan.source === 'event') { sess = plan.title; isTest = plan.type === 'test'; }
-    else {
-      sess = plan.parts.map(p => p.title).join(' + ');
-      hard = plan.parts.some(p => /^Rolle:/.test(p.title));
-      quality = plan.parts.some(p => /Sweet-Spot/.test(p.title));
-      long = plan.parts.some(p => p.type === 'aus');
-      rest = plan.parts.every(p => p.type === 'rest');
+  // Einheit eines Plan-Tags in Merkmale zerlegen (heute wie morgen).
+  const info = p => {
+    let sess = 'frei', hard = false, quality = false, long = false, rest = false, isTest = false;
+    if (p) {
+      if (p.source === 'event') { sess = p.title; isTest = p.type === 'test'; }
+      else {
+        sess = p.parts.map(x => x.title).join(' + ');
+        hard = p.parts.some(x => /^Rolle:/.test(x.title));
+        quality = p.parts.some(x => /Sweet-Spot/.test(x.title));
+        long = p.parts.some(x => x.type === 'aus');
+        rest = p.parts.every(x => x.type === 'rest');
+      }
     }
+    return { sess, hard, quality, long, rest, isTest };
+  };
+  const ti = info(plan);
+
+  // ── HEUTE: Analyse wenn schon gefahren, sonst Empfehlung ──
+  const pT = CFG.zones.power.bounds[2] * CFG.athlete.ftp;
+  const hrT = CFG.zones.hr.bounds[2] * CFG.athlete.hrmax;
+  const todays = DATA.acts.filter(a => a.date === iso(today()));
+  let todayBody, todayWasHard;
+  if (todays.length) {
+    let totMin = 0, totTss = 0, pw = 0, pwn = 0, hw = 0, hwn = 0;
+    todays.forEach(a => {
+      const mn = (a.moving_sec || 0) / 60; totMin += mn; totTss += tssOf(a);
+      const p = histMeanSd(a.hist_p, CFG.hist.pStep, 0, true);
+      const hr = histMeanSd(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, false);
+      if (p) { pw += p.mean * mn; pwn += mn; }
+      if (hr) { hw += hr.mean * mn; hwn += mn; }
+    });
+    const pRel = pwn ? (pw / pwn) / pT : null, hRel = hwn ? (hw / hwn) / hrT : null;
+    todayWasHard = totTss >= 80 || totMin >= 90;
+    let verdict;
+    if (ti.isTest) verdict = 'Testtag gefahren.';
+    else if (ti.hard || ti.quality) verdict = (pRel != null && pRel >= 1.25)
+      ? 'Qualitätsreiz gesetzt.' : 'Geplant war Qualität, gefahren eher locker.';
+    else if (ti.long) verdict = totMin >= 90 ? 'Dauerreiz gesetzt.' : 'Kürzer als der geplante Dauerreiz.';
+    else verdict = (pRel != null && pRel > 1.15) ? 'Härter als der lockere Plan.' : 'Locker wie geplant.';
+    const relTxt = (pRel != null ? `Ø ${pRel.toFixed(2)}× Decke` : '') + (hRel != null ? ` · HF ${hRel.toFixed(2)}×` : '');
+    todayBody = `<div class="ez-meta" style="margin-top:8px">Gefahren: ${todays.length}× · ${Math.round(totMin)} min · +${Math.round(totTss)} TSS${relTxt ? ' · ' + relTxt : ''}</div>
+      <div class="ez-meta">Plan war: ${ti.sess}</div>
+      <div class="ez-meta" style="margin-top:6px;font-weight:600">${verdict}</div>`;
+  } else {
+    todayWasHard = ti.hard || ti.quality || ti.long;
+    let rec;
+    if (ti.isTest) rec = 'Testtag. Nur grün fahren, sonst 1 bis 2 Tage schieben, ausgeruht = valider Wert.';
+    else if (ti.rest) rec = 'Ruhetag im Plan. Gut so, Erholung ist Teil des Trainings.';
+    else if (level === 'rot') rec = (ti.hard || ti.quality || ti.long)
+      ? 'Erholung sagt Nein. Qualität raus, locker rollen oder Ruhetag, den Reiz einen Tag schieben.'
+      : 'Locker halten, kein Grau. Körper vor Plan.';
+    else if (level === 'gelb') rec = (ti.hard || ti.quality)
+      ? 'Gemischte Marker. Reiz ok, aber ans untere Ende der Zielwatt.'
+      : ti.long ? 'Lange Ausfahrt ok, unter der Decke bleiben.' : 'Locker, unter der Z2/Z3-Decke.';
+    else rec = (ti.hard || ti.quality) ? 'Grün. Plan durchziehen, Zielwatt treffen.'
+      : ti.long ? 'Grün. Lange Ausfahrt wie geplant, ruhig.' : 'Locker wie geplant, harte Tage tragen den Reiz.';
+    todayBody = `<div class="ez-meta" style="margin-top:8px">Plan heute: ${ti.sess}</div>
+      <div class="ez-meta" style="margin-top:6px;font-weight:600">${rec}</div>`;
   }
 
-  let rec;
-  if (isTest) rec = 'Testtag. Nur fahren, wenn die Marker grün sind, sonst 1 bis 2 Tage schieben. Ausgeruht = valider Wert.';
-  else if (rest) rec = 'Ruhetag im Plan. Gut so, Erholung ist Teil des Trainings.';
-  else if (level === 'rot') rec = (hard || quality || long)
-    ? 'Erholung sagt Nein. Qualität heute raus, locker rollen oder Ruhetag. Den harten Reiz einen Tag schieben, er läuft dir nicht weg.'
-    : 'Locker halten, kein Grau. Körper vor Plan.';
-  else if (level === 'gelb') rec = (hard || quality)
-    ? 'Gemischte Marker. Reiz ok, aber ans untere Ende der Zielwatt, nicht drüber. Bei Schwäche abbrechen.'
-    : long ? 'Lange Ausfahrt ok, konsequent unter der Decke bleiben.'
-    : 'Locker fahren, unter der Z2/Z3-Decke.';
-  else rec = (hard || quality) ? 'Grün. Plan durchziehen, Zielwatt treffen.'
-    : long ? 'Grün. Lange Ausfahrt wie geplant, ruhig unter der Decke.'
-    : 'Locker wie geplant. Die harten Tage tragen den Reiz, heute nicht.';
-
-  let tsbNote = '';
-  if (f) {
-    if (f.tsb < -20) tsbNote = ` TSB ${f.tsb.toFixed(0)}: tief ermüdet, eher konservativ.`;
-    else if (f.tsb > 8) tsbNote = ` TSB ${f.tsb.toFixed(0)}: frisch, du kannst zugreifen.`;
+  // ── MORGEN: Ampel projiziert aus heute (Last) + aktuellen Markern + Plan ──
+  const tw = addDays(today(), 1);
+  const tm = info(tplan);
+  const bump = l => l === 'grün' ? 'gelb' : 'rot';
+  let tlevel;
+  if (tm.rest) tlevel = 'grün';
+  else {
+    tlevel = level;
+    if ((tm.hard || tm.quality || tm.isTest) && todayWasHard) tlevel = bump(tlevel);
   }
+  let trec;
+  if (tm.rest) trec = 'Ruhetag, gut so.';
+  else if (tm.isTest) trec = tlevel === 'grün' ? 'Testtag, bereit.' : 'Testtag, aber nach heute plus Markern eher schieben.';
+  else if (tlevel === 'rot') trec = (tm.hard || tm.quality)
+    ? 'Nach heute wären das zwei harte Tage in Folge. Eher schieben oder locker.' : 'Vorsichtig, locker halten.';
+  else if (tlevel === 'gelb') trec = (tm.hard || tm.quality)
+    ? 'Reiz möglich, aber ans untere Ende und auf die Marker schauen.' : 'Locker, unter der Decke.';
+  else trec = (tm.hard || tm.quality) ? 'Bereit für den Reiz.'
+    : tm.long ? 'Lange Ausfahrt, ruhig unter der Decke.' : 'Locker.';
 
   const hLine = (hrv != null)
     ? `HRV ${hrv}${hrvB != null ? ` (Ø ${hrvB})` : ''} · RHP ${rhr}${rhrB != null ? ` (Ø ${rhrB})` : ''} · Schlaf ${sleep != null ? sleep + ' h' : '—'} · ${st || '—'}`
     : 'keine Health-Daten heute';
   const fLine = f ? `CTL ${f.ctl.toFixed(0)} · ATL ${f.atl.toFixed(0)} · TSB ${f.tsb.toFixed(0)}` : '—';
+  const hd = (title, lv, extra) => `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <span class="t">${title}</span><span class="s"><span style="color:${COL[lv]}">●</span> ${lv}${extra || ''}</span></div>`;
 
-  return `<div class="card">
-    <div class="card-hd"><span class="t">HEUTE · ${fmtDay(today())}</span>
-      <span class="s"><span style="color:${col}">●</span> ${level}${flags.length ? ' · ' + flags.join(', ') : ''}</span></div>
-    <div class="lbl">Health</div><div class="ez-meta">${hLine}</div>
-    <div class="lbl" style="margin-top:8px">Form</div><div class="ez-meta">${fLine}</div>
-    <div class="lbl" style="margin-top:8px">Plan heute</div><div class="ez-meta">${sess}</div>
-    <div class="ez-meta" style="margin-top:10px;font-weight:600">${rec}${tsbNote}</div>
-  </div>`;
+  return `<div class="card"><div class="grid2">
+    <div>
+      ${hd('HEUTE · ' + fmtDay(today()), level, flags.length ? ' · ' + flags.join(', ') : '')}
+      <div class="ez-meta" style="margin-top:4px">${hLine}</div>
+      <div class="ez-meta">${fLine}</div>
+      ${todayBody}
+    </div>
+    <div>
+      ${hd('MORGEN · ' + fmtDay(tw), tlevel)}
+      <div class="ez-meta" style="margin-top:4px">Plan: ${tm.sess}</div>
+      <div class="ez-meta" style="margin-top:6px;font-weight:600">${trec}</div>
+      <div class="ez-hint" style="margin-top:6px">Projektion aus heute, echte Marker morgen früh</div>
+    </div>
+  </div></div>`;
 }
 
 function ftpWidget() {
@@ -477,8 +531,12 @@ function renderPlan() {
   const box = $('#page-plan');
   if (!box) return;
   const weeks = buildWeeks();
-  let todayPlan = null;
-  for (const w of weeks) for (const dd of w.days) if (dd.isToday) todayPlan = dd.plan;
-  box.innerHTML = todayCard(todayPlan) + ftpWidget() + weeks.map(weekCard).join('');
+  let todayPlan = null, tomorrowPlan = null;
+  const tw = +addDays(today(), 1);
+  for (const w of weeks) for (const dd of w.days) {
+    if (dd.isToday) todayPlan = dd.plan;
+    if (+dd.dt === tw) tomorrowPlan = dd.plan;
+  }
+  box.innerHTML = todayCard(todayPlan, tomorrowPlan) + ftpWidget() + weeks.map(weekCard).join('');
   drawRideTargets();
 }

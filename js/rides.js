@@ -328,12 +328,17 @@ function renderEF() {
   const span = Math.log(C.dotMaxDur / C.dotMinDur);
   const rOf = min => C.dotMinR + (C.dotMaxR - C.dotMinR) *
     Math.max(0, Math.min(1, Math.log(Math.max(min, C.dotMinDur) / C.dotMinDur) / span));
+  const BLUE = '96,165,250', ORANGE = '249,115,22';
+  const catOf = (name, min) =>
+    /bonn|saar/i.test(name) ? 'grau'
+    : /ftp|rampe|test/i.test(name) ? 'test'
+    : min >= 90 ? 'orange' : 'blau';
   const colOf = (name, min) => {
-    const a = C.alpha;
-    if (/bonn|saar/i.test(name)) return `rgba(150,150,150,${a})`;
-    if (/ftp|rampe|test/i.test(name)) return `rgba(180,60,220,${a})`;
-    if (min >= 90) return `rgba(249,115,22,${a})`;
-    return `rgba(96,165,250,${a})`;
+    const a = C.alpha, c = catOf(name, min);
+    if (c === 'grau') return `rgba(150,150,150,${a})`;
+    if (c === 'test') return `rgba(180,60,220,${a})`;
+    if (c === 'orange') return `rgba(${ORANGE},${a})`;
+    return `rgba(${BLUE},${a})`;
   };
   // y-Grenzen: feste Werte aus der Config, sonst automatisch aus den Daten.
   const efs = acts.map(a => a.ef);
@@ -342,14 +347,30 @@ function renderEF() {
 
   const pts = acts.map(a => {
     const min = (a.moving_sec || 0) / 60;
-    return { x: T.dayOf(a.date), y: a.ef, r: rOf(min),
+    return { x: T.dayOf(a.date), y: a.ef, r: rOf(min), cat: catOf(a.name || '', min),
              bg: colOf(a.name || '', min), name: a.name || 'Fahrt', dur: Math.round(min) };
   });
-  // EWMA-Band statt Gerade: die Linie folgt der Form (Bloecke, Entlastung),
-  // das Band (+-1sigma) zeigt die normale Streuung. Chronologisch sortiert,
-  // sonst laeuft die Glaettung rueckwaerts.
-  const ewma = ewmaBand(pts.slice().sort((a, b) => a.x - b.x), C.trendAlpha, C.trendTau);
-  const bandFill = `rgba(249,115,22,${C.bandAlpha})`;
+  // Zwei EWMA-Baender statt einem: eins fuer die blauen (kurz/mittel), eins fuer
+  // die orangenen (lange) Fahrten. Jede Kategorie hat ihre eigene EF-Lage und
+  // Streuung, ein gemeinsamer Trend wuerde sie vermischen. Grau/Test bleiben nur
+  // Punkte. Chronologisch sortiert, sonst laeuft die Glaettung rueckwaerts.
+  const trendOf = cat => {
+    const sub = pts.filter(p => p.cat === cat).sort((a, b) => a.x - b.x);
+    return sub.length >= 3 ? ewmaBand(sub, C.trendAlpha, C.trendTau) : null;
+  };
+  const trendSets = [];
+  const addTrend = (ew, rgb) => {
+    if (!ew) return;
+    trendSets.push(
+      { label: 'obere', type: 'line', data: ew.upper, borderWidth: 0, pointRadius: 0,
+        fill: '+1', backgroundColor: `rgba(${rgb},${C.bandAlpha})`, order: 5 },
+      { label: 'untere', type: 'line', data: ew.lower, borderWidth: 0, pointRadius: 0,
+        fill: false, order: 5 },
+      { label: 'Trend', type: 'line', data: ew.line, borderColor: `rgba(${rgb},.75)`,
+        borderWidth: 2, pointRadius: 0, fill: false, order: 3 },
+    );
+  };
+  if (C.showTrend) { addTrend(trendOf('blau'), BLUE); addTrend(trendOf('orange'), ORANGE); }
 
   box.innerHTML = '<canvas id="ef-canvas"></canvas>';
   if (_efChart) _efChart.destroy();
@@ -360,16 +381,8 @@ function renderEF() {
       // (heute = x-Maximum) an der Plotkante ab. padRight gibt ihr Platz.
       { label: 'EF', data: pts, backgroundColor: pts.map(p => p.bg),
         borderWidth: 0, clip: false },
-      ...(C.showTrend ? [
-        // Reihenfolge: obere (fuellt bis zur naechsten = untere), untere, Linie.
-        { label: 'obere', type: 'line', data: ewma.upper, borderWidth: 0, pointRadius: 0,
-          fill: '+1', backgroundColor: bandFill, order: 5 },
-        { label: 'untere', type: 'line', data: ewma.lower, borderWidth: 0, pointRadius: 0,
-          fill: false, order: 5 },
-        { label: 'Trend', type: 'line', data: ewma.line,
-          borderColor: 'rgba(249,115,22,.75)', borderWidth: 2, pointRadius: 0,
-          fill: false, order: 3 },
-      ] : []) ] },
+      // je Kategorie: obere (fuellt bis zur naechsten = untere), untere, Linie.
+      ...trendSets ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       layout: { padding: { right: C.padRight, top: 4 } },

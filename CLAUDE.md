@@ -272,6 +272,11 @@ Fahrten am selben Tag geben senkrechte Ecken. `ewmaBand(pts, alpha, tau)` nutzt
 mit `tau` (Tage, `CFG.ui.efTrend.trendTau` = 12) `alpha = 1 - exp(-dt/tau)` je
 Abstand zur Vorfahrt. Gleiches Prinzip wie CTL/ATL. Die tägliche HRV/RHR-Nutzung
 ruft `ewmaBand` ohne `tau` auf (festes Alpha, gleichmäßige Tage).
+**Zwei Trend-Bänder, nicht eins** (`renderEF`, `catOf`): je ein EWMA-Band für
+die blauen (kurz/mittel) und die orangenen (lange, >=90 min) Fahrten. Beide
+Kategorien haben eigene EF-Lage und Streuung, ein gemeinsamer Trend vermischt
+sie. Grau (Bonn/Saar) und Test bleiben nur Punkte. Ein Band braucht >=3 Fahrten,
+sonst faellt es weg.
 
 **`log(0)` existiert nicht.** Die MMP-y-Achse beginnt deshalb bei 50 W, nicht 0.
 
@@ -412,13 +417,20 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
   Watt-Spanne x `CFG.athlete.ftp` (aufgelöst, aktuell 271), also SS ~238 bis 255,
   Schwelle ~257 bis 285. Nach jedem Rampentest ziehen die Ziele automatisch mit,
   kein Handeintrag.
-- **Heute-Feld (oben auf der Plan-Seite, `plan.js:todayCard`).** Live-Ampel plus
-  konkrete Empfehlung (Coach-Rolle) aus drei Quellen: Health (HRV/RHP/Schlaf
-  gegen 42-Tage-Median via `form.js:baseline`), Form (CTL/ATL/TSB aus
-  `loadModel`) und dem geplanten Tag (`plannedFor`). Flags: HRV < Basis−5, RHP >
-  Basis+3, Schlaf < 6.5 h, HRV-Status LOW/POOR/UNBALANCED. 0 Flags = grün, 1 =
-  gelb, >=2 oder Status LOW/POOR = rot. Bei rot und geplanter Qualität lautet die
-  Empfehlung schieben, Erholung vor Plan. Testtag nur grün fahren.
+- **Heute-Feld (oben auf der Plan-Seite, `plan.js:todayCard`), zweispaltig.**
+  Ampeln aus Health (HRV/RHP/Schlaf gegen 42-Tage-Median via `form.js:baseline`),
+  Form (CTL/ATL/TSB aus `loadModel`) und Plan (`plannedFor`). Flags: HRV <
+  Basis−5, RHP > Basis+3, Schlaf < 6.5 h, HRV-Status LOW/POOR/UNBALANCED. 0
+  Flags = grün, 1 = gelb, >=2 oder Status LOW/POOR = rot.
+  - **Links HEUTE:** adaptiv. Sind schon Fahrten von heute da (`DATA.acts` mit
+    heutigem Datum), zeigt es die **Analyse** (Anzahl, Min, +TSS, Ø-Leistung/HF
+    relativ zur Z2/Z3-Decke via `histMeanSd`, plus Verdict gegen den Plan). Wenn
+    noch nichts gefahren (z. B. morgens), die **Empfehlung** wie bisher.
+  - **Rechts MORGEN:** projizierte Ampel für den Folgetag aus heutiger Last
+    (`todayWasHard` = TSS>=80 oder >=90 min, sonst der geplante heutige Reiz)
+    plus aktuellen Markern plus `tplan` (`plannedFor` morgen). Ist morgen Qualität
+    und heute war hart, wird die Ampel eine Stufe hochgestuft. Echte Marker gibt
+    es morgen früh, daher als Projektion gekennzeichnet.
 - **Ride-vs-Decke-Widget (rechts im FTP-Widget, ersetzt das alte Easy-%).**
   `plan.js:drawRideTargets` + `shared.js:ridePoints`: je Fahrt der letzten
   `easyWindowDays` (14) Tage Ø-Punkt und ±1sd-Whisker von Leistung (blau) und HF
