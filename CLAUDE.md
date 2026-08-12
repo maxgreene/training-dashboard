@@ -311,10 +311,27 @@ Wahoo rotiert den `refresh_token` bei jedem Lauf **und** befristet ihn. Läuft e
 ab, kommt `invalid_grant`, der Fetch überspringt Wahoo, und der Workflow bleibt
 trotzdem grün.
 
-Neu autorisieren: `developers.wahooligan.com`, App "Wolf Training-Dashboard",
-Details, grüner AUTHORIZE-Knopf. Browser landet auf
-`https://maxgreene.github.io/training-dashboard/callback?code=XXX` (404 ist
-egal, nur der Code zählt, gilt wenige Minuten). Dann lokal in PowerShell:
+**Stiller Killer:** Der rotierte Token muss jeden Lauf ins Secret zurück
+(`gh secret set`). Dieser Schritt ist `continue-on-error`; scheitert er (PAT
+ohne `secrets:write`, API-Blip), ist der schon verbrauchte alte Token tot und
+die Kette bricht, ohne dass etwas rot wird. Der Schritt gibt bei Fehlschlag jetzt
+eine `::warning::` aus, also im Fetch-Log nach "konnte NICHT gespeichert werden"
+suchen, wenn Wahoo wieder skippt. Bei Dauerproblem den GH_PAT-Scope prüfen.
+
+**Neu autorisieren (bevorzugt, per Workflow):** Der `AUTHORIZE`-Klick bleibt
+Handarbeit (OAuth-Consent, braucht Wolfs Wahoo-Login), der Rest läuft im
+Workflow `wahoo-reauth.yml`:
+1. `developers.wahooligan.com`, App "Wolf Training-Dashboard", Details, grüner
+   AUTHORIZE-Knopf. Browser landet auf
+   `https://maxgreene.github.io/training-dashboard/callback?code=XXX` (404 egal,
+   nur der Code zählt, gilt wenige Minuten).
+2. In GitHub Actions den Workflow **Wahoo Reauth** mit dem Code als Input
+   starten (oder Claude den Code geben, der stößt ihn an). Er tauscht Code gegen
+   `refresh_token`, schreibt das Secret `WAHOO_REFRESH_TOKEN` und triggert den
+   Fetch. Kein PowerShell mehr nötig.
+
+**Fallback (lokal, PowerShell):** falls der Workflow mal nicht geht, Code selbst
+tauschen und den `refresh_token` ins Secret `WAHOO_REFRESH_TOKEN`:
 
 ```powershell
 $body = @{
@@ -327,8 +344,6 @@ $body = @{
 $r = Invoke-RestMethod -Uri "https://api.wahooligan.com/oauth/token" -Method Post -Body $body
 $r | ConvertTo-Json
 ```
-
-Den `refresh_token` ins GitHub-Secret `WAHOO_REFRESH_TOKEN`.
 
 Schutz: `fetch` setzt `wahoo_skipped: true`, die Status-Ampel wird gelb und
 nennt die Ursache.
@@ -350,6 +365,11 @@ automatisch, niemand zählt etwas hoch. Ohne das liefert iOS Safari tagelang
 alte Module aus.
 
 Push auf `main` löst den Deploy aus.
+
+**Wahoo Reauth** (`wahoo-reauth.yml`): manueller `workflow_dispatch`, nimmt den
+Wahoo-`code` als Input, tauscht ihn gegen einen frischen `refresh_token`, setzt
+das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
+(`wahoo_skipped`). Details oben unter Token-Ketten.
 
 ---
 

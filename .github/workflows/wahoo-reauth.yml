@@ -1,0 +1,56 @@
+name: Wahoo Reauth
+
+# Einmaliger Reauth, wenn der Wahoo-Refresh-Token tot ist (invalid_grant, in
+# activities.json sichtbar als wahoo_skipped=true, Status-Ampel gelb).
+#
+# Ablauf (nur der AUTHORIZE-Klick ist Handarbeit, der Rest laeuft hier):
+#   1. developers.wahooligan.com -> App "Wolf Training-Dashboard" -> Details ->
+#      gruener AUTHORIZE-Knopf.
+#   2. Browser landet auf .../training-dashboard/callback?code=XXX (404 egal,
+#      nur der code zaehlt, gilt nur wenige Minuten).
+#   3. Diesen Workflow "Run workflow" mit dem code als Input starten.
+# Der Code wird serverseitig mit den vorhandenen Secrets (WAHOO_CLIENT_ID/SECRET)
+# gegen einen frischen refresh_token getauscht, der ins Secret WAHOO_REFRESH_TOKEN
+# geschrieben wird. Danach wird der Fetch angestossen. Kein PowerShell noetig.
+
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: 'Wahoo authorization code aus der Callback-URL (?code=...)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  reauth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code gegen refresh_token tauschen und ins Secret schreiben
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          CID: ${{ secrets.WAHOO_CLIENT_ID }}
+          CSECRET: ${{ secrets.WAHOO_CLIENT_SECRET }}
+          CODE: ${{ github.event.inputs.code }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Code -> Token. Werte ueber env, nicht in die Shell interpoliert
+          # (kein Injection-Risiko). Antwort NICHT ausgeben (enthaelt Tokens).
+          RESPONSE=$(curl -s -X POST https://api.wahooligan.com/oauth/token \
+            -d client_id="$CID" \
+            -d client_secret="$CSECRET" \
+            -d code="$CODE" \
+            -d grant_type=authorization_code \
+            -d redirect_uri=https://maxgreene.github.io/training-dashboard/callback)
+          REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('refresh_token',''))" 2>/dev/null || echo "")
+          if [ -z "$REFRESH" ]; then
+            echo "::error::Kein refresh_token erhalten. Code abgelaufen oder falsch? Fehler:"
+            echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print({k: d.get(k) for k in ('error','error_description')})" 2>/dev/null || true
+            exit 1
+          fi
+          gh secret set WAHOO_REFRESH_TOKEN --repo "$REPO" --body "$REFRESH"
+          echo "Neuer Wahoo Refresh-Token gespeichert."
+          echo "Stosse Fetch an, damit die fehlenden Fahrten reinkommen ..."
+          gh workflow run fetch-training-data.yml --repo "$REPO" \
+            || echo "::warning::Fetch-Trigger fehlgeschlagen, bitte 'Fetch Training Data' manuell starten."
