@@ -68,9 +68,9 @@ const CFG = {
     // nie am Wochenende, deshalb kann hier kein Pflicht-Commute entstehen).
     template: {
       Mo: { commutes: 2, slot: null },
-      Di: { commutes: 2, slot: null },
+      Di: { commutes: 2, slot: null, commuteQuality: 'ss' }, // 1 Weg als SS-Block
       Mi: { commutes: 2, slot: 'hard' },     // Rolle, die harte Einheit
-      Do: { commutes: 2, slot: null },
+      Do: { commutes: 2, slot: null, commuteQuality: 'ss' }, // 1 Weg als SS-Block
       Fr: { commutes: 2, slot: null },
       Sa: { commutes: 0, slot: 'long' },     // lang & ruhig …
       So: { commutes: 0, slot: 'long_alt' }, // … Sa ODER So, je nach Kumpels
@@ -79,6 +79,15 @@ const CFG = {
     // Blockstruktur: nach buildWeeks Aufbauwochen eine Entlastungswoche.
     blockLen: 4,
     deloadEvery: 4,
+
+    // Intensitaets-Anteile vom AKTUELLEN FTP. Watt wird live gerechnet
+    // (Anteil x CFG.athlete.ftp), zieht also nach jedem Rampentest mit.
+    // Grund (zeitgeknappt): Dauer ist gedeckelt, also holt Wolf den Reiz ueber
+    // Intensitaet in den kurzen Commute-Fenstern. SS = Sweet Spot.
+    intensity: {
+      ss:  [0.88, 0.94],   // Sweet Spot
+      thr: [0.95, 1.05],   // Schwelle
+    },
 
     // Bausteine, auf die das Template zeigt.
     units: {
@@ -138,16 +147,18 @@ const CFG = {
 
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
-    easyTarget: [75, 80],        // Zielfenster (Erwartungsbereich) Easy-Anteil in %
-    easyWindowDays: 14,          // Fenster fuer den Easy-Anteil
-    // Easy-Verlauf (Punkte je Fahrt + Trendlinie, letzte easyWindowDays Tage)
+    easyWindowDays: 14,          // Fenster fuer den Ride-Plot
+    // Ride vs Z2/Z3-Decke: je Fahrt Ø ± 1sd von Leistung und HF, relativ zur
+    // aeroben Decke (1.0). Letzte easyWindowDays Tage.
     easyPlot: {
       height: 200,
       dotMinR: 3, dotMaxR: 9,    // Punktgroesse nach Dauer
       dotMinMin: 10, dotMaxMin: 300,
       colP: '#60a5fa',           // Leistung (blau)
       colHr: '#7ec8a0',          // HF (gruen)
-      bandAlpha: 0.13,           // Deckkraft des Ziel-Bandes
+      bandAlpha: 0.10,           // Deckkraft des aeroben Bereichs (< 1.0)
+      relMax: 2.0,               // y-Achse: Vielfaches der Decke
+      dx: 0.15,                  // x-Versatz, damit Leistung/HF nicht ueberlappen
     },
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
     // 4DP-Benchmarks als Vielfaches der FTP (bei FTP 250: 1200/800/400/250 W)

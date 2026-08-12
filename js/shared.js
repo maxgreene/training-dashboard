@@ -167,19 +167,44 @@ function easyShare(days, offsetDays) {
   };
 }
 
-/* Easy-Anteil JE FAHRT im Fenster: fuer den Punkteverlauf. Pro Fahrt der Anteil
- * Z1+Z2 an der Zonenzeit, getrennt nach Leistung und HF. dur in Minuten fuer die
- * Punktgroesse. Fahrten ohne Power UND ohne HF fallen raus. */
-function easyPoints(days) {
+/* Mittel und Standardabweichung aus einem Histogramm (Eimer-Mitten gewichtet
+ * nach Zeit im Eimer). skipFirst laesst den Coasting-Eimer (0 W) weg, damit die
+ * Streuung die Tret-Leistung misst und nicht die Ampel-Nullen. */
+function histMeanSd(h, step, min, skipFirst) {
+  if (!h) return null;
+  const s0 = skipFirst ? 1 : 0;
+  let n = 0, sum = 0;
+  for (let i = s0; i < h.length; i++) {
+    const c = h[i]; if (!c) continue;
+    n += c; sum += c * (min + step * i + step / 2);
+  }
+  if (!n) return null;
+  const mean = sum / n;
+  let v = 0;
+  for (let i = s0; i < h.length; i++) {
+    const c = h[i]; if (!c) continue;
+    v += c * (min + step * i + step / 2 - mean) ** 2;
+  }
+  return { mean, sd: Math.sqrt(v / n) };
+}
+
+/* Je Fahrt im Fenster: Mittel und ±1sd von Leistung und HF, RELATIV zur
+ * Z2/Z3-Decke (Leistung 0.66 x FTP, HF 0.75 x HRmax). 1.0 = genau auf der
+ * Decke, darunter = aerob. Zieht mit dem aufgeloesten FTP/HRmax mit. */
+function ridePoints(days) {
   const lo = addDays(today(), -days);
-  const share = z => { if (!z) return null; const t = z.reduce((s, v) => s + v, 0); return t ? 100 * (z[0] + z[1]) / t : null; };
+  const pT = CFG.zones.power.bounds[2] * CFG.athlete.ftp;
+  const hrT = CFG.zones.hr.bounds[2] * CFG.athlete.hrmax;
   const out = [];
   DATA.acts.forEach(a => {
     const dt = d(a.date);
     if (dt <= lo || dt > today()) return;
-    const p = share(powerZoneTimes(a)), hr = share(hrZoneTimes(a));
-    if (p == null && hr == null) return;
-    out.push({ date: a.date, dur: (a.moving_sec || 0) / 60, p, hr });
+    const p = histMeanSd(a.hist_p, CFG.hist.pStep, 0, true);
+    const hr = histMeanSd(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, false);
+    if (!p && !hr) return;
+    out.push({ date: a.date, dur: (a.moving_sec || 0) / 60,
+      pRel: p ? p.mean / pT : null, pSd: p ? p.sd / pT : null,
+      hrRel: hr ? hr.mean / hrT : null, hrSd: hr ? hr.sd / hrT : null });
   });
   return out;
 }

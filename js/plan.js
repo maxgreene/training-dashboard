@@ -9,6 +9,12 @@
  * Reihenfolge durchgehend: neu oben, alt unten — auf Wochen- wie Tagesebene.
  */
 
+// Watt-Spanne aus einem Intensitaets-Anteil (x aktuellem FTP), live gerechnet.
+function wRange(fr) {
+  const f = CFG.athlete.ftp;
+  return Math.round(fr[0] * f) + '–' + Math.round(fr[1] * f) + ' W';
+}
+
 // ── Was ist an einem Tag geplant? ───────────────────────────────────────────
 function plannedFor(dt, weekIdx) {
   const isoD = iso(dt);
@@ -25,7 +31,15 @@ function plannedFor(dt, weekIdx) {
   const parts = [];
 
   if (t.commutes) {
-    parts.push({ type: 'comm', ...CFG.plan.units.commute });
+    // Quality-Commute: 1 Weg als Sweet-Spot-Block (nur in Aufbauwochen, nur
+    // wenn die Strecke frei ist). Der zeitgeknappte Reiz: Intensitaet statt
+    // Dauer. In Entlastungswochen bleibt alles locker.
+    if (t.commuteQuality === 'ss' && !deload) {
+      parts.push({ type: 'comm', title: 'Commute: Sweet-Spot-Block',
+        desc: `2×10 oder 3×8 min @ ${wRange(CFG.plan.intensity.ss)} · zweiter Weg locker · nur bei freier Strecke` });
+    } else {
+      parts.push({ type: 'comm', ...CFG.plan.units.commute });
+    }
   }
 
   if (t.slot === 'hard') {
@@ -35,7 +49,8 @@ function plannedFor(dt, weekIdx) {
       // Aufbauwochen durchzaehlen (Entlastungswochen zaehlen nicht mit)
       const buildIdx = weekIdx - Math.floor(weekIdx / CFG.plan.deloadEvery);
       const p = CFG.plan.hardProgression[buildIdx % CFG.plan.hardProgression.length];
-      parts.push({ type: 'roll', title: 'Rolle: ' + p.title, desc: p.desc });
+      parts.push({ type: 'roll', title: 'Rolle: ' + p.title,
+                   desc: p.desc + ' · ' + wRange(CFG.plan.intensity.thr) });
     }
   } else if (t.slot === 'long' || t.slot === 'long_alt') {
     const u = deload
@@ -191,16 +206,83 @@ function testTimeline(tp, goal, goalDate) {
   return s;
 }
 
+/* Heute-Feld: live aus Health (HRV/RHP/Schlaf), Form (CTL/ATL/TSB) und dem
+ * geplanten Tag eine Ampel plus konkrete Empfehlung (Coach-Rolle). Marker
+ * gegen die 42-Tage-Basis (Median). Bei Konflikt Erholung vor Plan. */
+function todayCard(plan) {
+  const h = DATA.health[0] || {};
+  const m = loadModel();
+  const f = m.length ? m[m.length - 1] : null;
+  const hrvB = baseline('hrv', 42), rhrB = baseline('resting_hr', 42);
+  const hrv = h.hrv, rhr = h.resting_hr, sleep = h.sleep_h, st = h.hrv_status || '';
+
+  const flags = [];
+  if (hrvB != null && hrv != null && hrv < hrvB - 5) flags.push('HRV unter Basis');
+  if (rhrB != null && rhr != null && rhr > rhrB + 3) flags.push('Ruhepuls erhöht');
+  if (sleep != null && sleep < 6.5) flags.push('kurzer Schlaf');
+  if (/LOW|POOR|UNBALANCED/i.test(st)) flags.push('HRV-Status ' + st);
+
+  const level = (flags.length >= 2 || /LOW|POOR/i.test(st)) ? 'rot'
+              : flags.length === 1 ? 'gelb' : 'grün';
+  const col = { 'grün': '#34d399', gelb: '#d4a03c', rot: '#c0392b' }[level];
+
+  // Heutige Einheit aus dem Plan-Tag ableiten.
+  let sess = 'frei', hard = false, quality = false, long = false, rest = false, isTest = false;
+  if (plan) {
+    if (plan.source === 'event') { sess = plan.title; isTest = plan.type === 'test'; }
+    else {
+      sess = plan.parts.map(p => p.title).join(' + ');
+      hard = plan.parts.some(p => /^Rolle:/.test(p.title));
+      quality = plan.parts.some(p => /Sweet-Spot/.test(p.title));
+      long = plan.parts.some(p => p.type === 'aus');
+      rest = plan.parts.every(p => p.type === 'rest');
+    }
+  }
+
+  let rec;
+  if (isTest) rec = 'Testtag. Nur fahren, wenn die Marker grün sind, sonst 1 bis 2 Tage schieben. Ausgeruht = valider Wert.';
+  else if (rest) rec = 'Ruhetag im Plan. Gut so, Erholung ist Teil des Trainings.';
+  else if (level === 'rot') rec = (hard || quality || long)
+    ? 'Erholung sagt Nein. Qualität heute raus, locker rollen oder Ruhetag. Den harten Reiz einen Tag schieben, er läuft dir nicht weg.'
+    : 'Locker halten, kein Grau. Körper vor Plan.';
+  else if (level === 'gelb') rec = (hard || quality)
+    ? 'Gemischte Marker. Reiz ok, aber ans untere Ende der Zielwatt, nicht drüber. Bei Schwäche abbrechen.'
+    : long ? 'Lange Ausfahrt ok, konsequent unter der Decke bleiben.'
+    : 'Locker fahren, unter der Z2/Z3-Decke.';
+  else rec = (hard || quality) ? 'Grün. Plan durchziehen, Zielwatt treffen.'
+    : long ? 'Grün. Lange Ausfahrt wie geplant, ruhig unter der Decke.'
+    : 'Locker wie geplant. Die harten Tage tragen den Reiz, heute nicht.';
+
+  let tsbNote = '';
+  if (f) {
+    if (f.tsb < -20) tsbNote = ` TSB ${f.tsb.toFixed(0)}: tief ermüdet, eher konservativ.`;
+    else if (f.tsb > 8) tsbNote = ` TSB ${f.tsb.toFixed(0)}: frisch, du kannst zugreifen.`;
+  }
+
+  const hLine = (hrv != null)
+    ? `HRV ${hrv}${hrvB != null ? ` (Ø ${hrvB})` : ''} · RHP ${rhr}${rhrB != null ? ` (Ø ${rhrB})` : ''} · Schlaf ${sleep != null ? sleep + ' h' : '—'} · ${st || '—'}`
+    : 'keine Health-Daten heute';
+  const fLine = f ? `CTL ${f.ctl.toFixed(0)} · ATL ${f.atl.toFixed(0)} · TSB ${f.tsb.toFixed(0)}` : '—';
+
+  return `<div class="card">
+    <div class="card-hd"><span class="t">HEUTE · ${fmtDay(today())}</span>
+      <span class="s"><span style="color:${col}">●</span> ${level}${flags.length ? ' · ' + flags.join(', ') : ''}</span></div>
+    <div class="lbl">Health</div><div class="ez-meta">${hLine}</div>
+    <div class="lbl" style="margin-top:8px">Form</div><div class="ez-meta">${fLine}</div>
+    <div class="lbl" style="margin-top:8px">Plan heute</div><div class="ez-meta">${sess}</div>
+    <div class="ez-meta" style="margin-top:10px;font-weight:600">${rec}${tsbNote}</div>
+  </div>`;
+}
+
 function ftpWidget() {
   const goal = CFG.athlete.ftpGoal;
   const goalDate = CFG.athlete.ftpGoalDate;
   const win = CFG.ui.easyWindowDays;
   const cur = easyShare(win, 0);
-  const [tLo, tHi] = CFG.ui.easyTarget;
   const tp = testPoints();
   const best20 = best('1200', 42);
 
-  // ── Rechts: Easy-Verlauf (Punkte je Fahrt, siehe drawEasyTrend) ──
+  // ── Rechts: Ride vs Z2/Z3-Decke (Ø ± 1sd je Fahrt, siehe drawRideTargets) ──
   const EP = CFG.ui.easyPlot;
 
   // ── Links: Test-Fortschritt ──
@@ -230,11 +312,11 @@ function ftpWidget() {
         <div class="ez-hint">△ Rampe · ○ 20-Min · leerer △ = geplant · Methoden ~10-20 W verschieden</div>
       </div>
       <div>
-        <div class="lbl">Easy-Verlauf · letzte ${win} Tage</div>
+        <div class="lbl">Ride vs Z2/Z3-Decke · letzte ${win} Tage</div>
         <div id="easy-box"></div>
-        <div class="ez-meta">Band = Ziel ${tLo}–${tHi} % ·
+        <div class="ez-meta">Linie = Decke (1.0) ·
           <span style="color:${EP.colP}">●</span> Leistung ·
-          <span style="color:${EP.colHr}">●</span> HF · Größe = Dauer ·
+          <span style="color:${EP.colHr}">●</span> HF · Punkt Ø, Balken ±1 sd · Größe = Dauer ·
           ${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten</div>
         <div class="ez-hint" style="margin-top:8px">${best20html}</div>
       </div>
@@ -310,12 +392,15 @@ function weekCard(w) {
  * als Erwartungsbereich, zeit-gewichtete Trendlinie je Serie. Zeigt anschaulich,
  * ob und wohin sich die Verteilung ueber die letzten Tage bewegt. */
 let _easy = null;
-function drawEasyTrend() {
+/* Je Fahrt der letzten Tage: Ø-Punkt und ±1sd-Whisker von Leistung (blau) und
+ * HF (gruen), RELATIV zur Z2/Z3-Decke. Ziel-Linie bei 1.0, der aerobe Bereich
+ * darunter blau hinterlegt. Die zwei Serien um dx versetzt, damit die Whisker
+ * am selben Tag nicht ueberlappen. */
+function drawRideTargets() {
   const box = $('#easy-box');
   if (!box || !window.Chart) return;
   const EP = CFG.ui.easyPlot, days = CFG.ui.easyWindowDays;
-  const [tLo, tHi] = CFG.ui.easyTarget;
-  const pts = easyPoints(days);
+  const pts = ridePoints(days);
   box.style.height = EP.height + 'px';
   box.innerHTML = '<canvas id="easy-canvas"></canvas>';
   const lo = addDays(today(), -days);
@@ -323,19 +408,17 @@ function drawEasyTrend() {
   const span = Math.log(Math.max(2, EP.dotMaxMin / EP.dotMinMin));
   const rOf = m => EP.dotMinR + (EP.dotMaxR - EP.dotMinR) *
     Math.max(0, Math.min(1, Math.log(Math.max(m, EP.dotMinMin) / EP.dotMinMin) / span));
-  const bub = key => pts.filter(p => p[key] != null)
-    .map(p => ({ x: X(p.date), y: p[key], r: rOf(p.dur) }));
-  const trend = key => ewmaBand(
-    pts.filter(p => p[key] != null).map(p => ({ x: X(p.date), y: p[key] })).sort((a, b) => a.x - b.x),
-    0.3, CFG.ui.efTrend.trendTau).line;
+  const set = (key, sdKey, dx) => pts.filter(p => p[key] != null)
+    .map(p => ({ x: X(p.date) + dx, y: p[key], sd: p[sdKey] || 0, r: rOf(p.dur) }));
 
   if (_easy) _easy.destroy();
   _easy = new Chart($('#easy-canvas'), {
+    type: 'scatter',
     data: { datasets: [
-      { type: 'bubble', label: 'Leistung', data: bub('p'),  backgroundColor: EP.colP + 'b3', borderWidth: 0, clip: false },
-      { type: 'bubble', label: 'HF',       data: bub('hr'), backgroundColor: EP.colHr + 'b3', borderWidth: 0, clip: false },
-      { type: 'line', data: trend('p'),  borderColor: EP.colP,  borderWidth: 1.6, pointRadius: 0, fill: false },
-      { type: 'line', data: trend('hr'), borderColor: EP.colHr, borderWidth: 1.6, pointRadius: 0, fill: false },
+      { label: 'Leistung', data: set('pRel', 'pSd', -EP.dx),
+        backgroundColor: EP.colP, pointRadius: c => c.raw.r, clip: false },
+      { label: 'HF', data: set('hrRel', 'hrSd', EP.dx),
+        backgroundColor: EP.colHr, pointRadius: c => c.raw.r, clip: false },
     ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -344,26 +427,46 @@ function drawEasyTrend() {
              ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: Math.ceil(days / 4),
                       callback: v => fmtDay(addDays(lo, v)) },
              grid: { color: 'rgba(255,255,255,.05)' } },
-        y: { min: 0, max: 100,
-             title: { display: true, text: 'Easy %', color: CSSVAR('--t5'), font: { size: 10 } },
-             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: 25 },
+        y: { min: 0, max: EP.relMax,
+             title: { display: true, text: '× Z2/Z3-Decke', color: CSSVAR('--t5'), font: { size: 10 } },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: 0.5 },
              grid: { color: 'rgba(255,255,255,.05)' } },
       },
       plugins: {
         legend: { display: false },
-        tooltip: { filter: c => c.dataset.type === 'bubble',
-          callbacks: { label: c => `${c.dataset.label}: ${Math.round(c.raw.y)} %` } },
+        tooltip: { callbacks: { label: c =>
+          `${c.dataset.label}: ${Math.round(c.raw.y * 100)} % ± ${Math.round(c.raw.sd * 100)}` } },
       },
     },
-    // Ziel-Band (Erwartungsbereich) als waagerechte Flaeche.
     plugins: [{
-      id: 'easyband',
+      id: 'ridetarget',
+      // aerober Bereich (< Decke) hinterlegen + Ziel-Linie bei 1.0
       beforeDatasetsDraw(ch) {
         const { ctx, chartArea: ca, scales } = ch;
-        const y1 = scales.y.getPixelForValue(tHi), y2 = scales.y.getPixelForValue(tLo);
+        const yT = scales.y.getPixelForValue(1), yB = scales.y.getPixelForValue(0);
         ctx.save();
-        ctx.fillStyle = `rgba(52,211,153,${EP.bandAlpha})`;
-        ctx.fillRect(ca.left, y1, ca.right - ca.left, y2 - y1);
+        ctx.fillStyle = `rgba(96,165,250,${EP.bandAlpha})`;
+        ctx.fillRect(ca.left, yT, ca.right - ca.left, yB - yT);
+        ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ca.left, yT); ctx.lineTo(ca.right, yT); ctx.stroke();
+        ctx.restore();
+      },
+      // ±1sd-Whisker mit Endkappen, je Punkt
+      afterDatasetsDraw(ch) {
+        const { ctx, scales, chartArea: ca } = ch;
+        ctx.save();
+        [0, 1].forEach(di => {
+          const ds = ch.data.datasets[di], meta = ch.getDatasetMeta(di);
+          ctx.strokeStyle = ds.backgroundColor; ctx.lineWidth = 1.4;
+          ds.data.forEach((pt, i) => {
+            const x = meta.data[i].x;
+            const yT = Math.max(ca.top, scales.y.getPixelForValue(pt.y + pt.sd));
+            const yB = Math.min(ca.bottom, scales.y.getPixelForValue(Math.max(0, pt.y - pt.sd)));
+            ctx.beginPath(); ctx.moveTo(x, yT); ctx.lineTo(x, yB);
+            ctx.moveTo(x - 3, yT); ctx.lineTo(x + 3, yT);
+            ctx.moveTo(x - 3, yB); ctx.lineTo(x + 3, yB); ctx.stroke();
+          });
+        });
         ctx.restore();
       },
     }],
@@ -374,6 +477,8 @@ function renderPlan() {
   const box = $('#page-plan');
   if (!box) return;
   const weeks = buildWeeks();
-  box.innerHTML = ftpWidget() + weeks.map(weekCard).join('');
-  drawEasyTrend();
+  let todayPlan = null;
+  for (const w of weeks) for (const dd of w.days) if (dd.isToday) todayPlan = dd.plan;
+  box.innerHTML = todayCard(todayPlan) + ftpWidget() + weeks.map(weekCard).join('');
+  drawRideTargets();
 }
