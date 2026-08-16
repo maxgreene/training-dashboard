@@ -204,12 +204,20 @@ Wolfs Wunsch), lohnt aber erst beim Aufklappen. Fällt Leaflet aus, rendert das
 Detail den SVG-Pfad als Fallback. `analyze:route_line` dünnt `streams.latlng`
 aus (grob für die Liste, fein fürs Detail).
 
-**GPS-Verlust bei Altfahrten:** Der alte `fit_streams` verwarf die Spur, sobald
-nicht jeder Record eine Position hatte (`len(latlng) == len(time)`), das trifft
-lange Fahrten (Tunnel, Pausen, GPS-Aussetzer) oft. Der Fix behält die Route bei
-spätem/lückenhaftem Fix (`len(latlng) >= 4`), aber nur für KÜNFTIGE Fetches. Wer
-alten Fahrten die Route zurückgeben will, muss ihr FIT neu laden (Reprocess liest
-nur den gespeicherten Stream). Indoor/Rolle bleibt ohne GPS.
+**GPS-Verlust bei Altfahrten und die Recovery:** Der alte `fit_streams` verwarf
+die Spur, sobald nicht jeder Record eine Position hatte (`len(latlng) ==
+len(time)`), das trifft lange Fahrten (Tunnel, Pausen, GPS-Aussetzer) oft. Der
+Fix behält die Route bei spätem/lückenhaftem Fix (`len(latlng) >= 4`), aber nur
+für KÜNFTIGE Fetches; ein Reprocess liest nur den gespeicherten Stream.
+`fetch_activities:recover_gps` holt daher für bekannte Wahoo-Fahrten ohne
+gespeichertes `latlng` das FIT neu und schreibt den Stream mit GPS (löscht das
+analysis-File für die Reanalyse). Fenster `GPS_RECHECK_DAYS` (200, ganze
+Historie), aber **selbstbegrenzt**: der Vorabcheck `not route and not no_gps`
+überspringt geheilte Fahrten (kein Stream-Read), also nach dem Heilen praktisch
+kostenlos. Tri-State: True geholt, False = FIT ohne GPS (`no_gps`-Flag, nicht
+erneut), None = Download-Blip (transient, nicht markieren). Grenzen: nur
+Wahoo-Fahrten >= `WAHOO_START_DATE` (der Loop überspringt ältere), alte
+Strava-Importe (numerische IDs) und Indoor bleiben ohne GPS.
 
 Wenn sich die Datenberechnung ändert: **`ANALYSIS_VERSION` in beiden Skripten
 hochzählen** (ungefragt, das ist erwartet) und Wolf sagen, dass er einmal
