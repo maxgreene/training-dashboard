@@ -27,7 +27,9 @@ ANALYSIS_VERSION = 17
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'      # ab hier ist Wahoo die Quelle
 RENAME_RECHECK_DAYS = 2              # bekannte Fahrten so lange auf Umbenennung pruefen
-GPS_RECHECK_DAYS    = 3              # so lange fehlendes GPS via FIT-Neuladen heilen
+GPS_RECHECK_DAYS    = 200            # fehlendes GPS via FIT-Neuladen heilen (ganze
+                                    # Historie; selbstbegrenzt ueber route/no_gps,
+                                    # also nach dem Heilen praktisch kostenlos)
 ANALYSIS_DIR        = 'data/analysis'
 FTP, HRMAX       = 250, 172
 
@@ -116,15 +118,21 @@ def _stream_has_latlng(aid):
 def recover_gps(aid, fit_url):
     """FIT einer bekannten Fahrt neu laden und den Stream MIT GPS ueberschreiben.
     Nur fuer Altfahrten, deren Spur der alte fit_streams verworfen hatte. Loescht
-    das analysis-File, damit analyze die Route neu rechnet. True bei Erfolg."""
+    das analysis-File, damit analyze die Route neu rechnet.
+    True  = GPS geholt. False = FIT hat wirklich kein GPS (nicht erneut versuchen).
+    None  = Download/Parse fehlgeschlagen (transient, spaeter erneut, NICHT als
+    no_gps markieren, sonst geht eine heilbare Fahrt bei einem Netzwerk-Blip
+    dauerhaft verloren)."""
     if not fit_url:
         return False
     try:
         streams = parse_fit_streams(fit_url)
     except Exception as e:
         print(f"    GPS-Neuladen fehlgeschlagen: {e}")
-        return False
-    if not streams or not streams.get('latlng'):
+        return None
+    if not streams:
+        return None
+    if not streams.get('latlng'):
         return False
     with open(os.path.join(STREAMS_DIR, aid + '.json'), 'w') as f:
         json.dump({'streams': streams}, f)
@@ -168,20 +176,22 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None, gps_recheck
                         print(f"  {aid}: Name '{act.get('name')}' -> '{nm}'")
                         act['name'] = nm
                         renamed += 1
-                # GPS-Recovery: fehlt die Spur im Stream (alter fit_streams hat
-                # sie verworfen), FIT neu laden. Nur im engen Fenster. Fahrten
-                # ohne GPS im FIT einmal als no_gps markieren, damit nicht jeder
-                # Lauf dasselbe FIT erneut zieht.
+                # GPS-Recovery: fehlt die Spur (alter fit_streams hat sie
+                # verworfen), FIT neu laden. Guenstiger Vorabcheck ueber
+                # route/no_gps aus dem Bestand, damit geheilte Fahrten kein
+                # Stream-File mehr lesen und das weite Fenster billig bleibt.
                 a = by_id.get(aid) if by_id else None
-                if (gps_recheck_from and starts >= gps_recheck_from
-                        and not (a and a.get('no_gps'))
+                if (a is not None and not a.get('route') and not a.get('no_gps')
+                        and gps_recheck_from and starts >= gps_recheck_from
                         and _stream_has_latlng(aid) is False):
                     fl = (w.get('workout_summary') or {}).get('file') or {}
-                    if recover_gps(aid, fl.get('url')):
+                    res = recover_gps(aid, fl.get('url'))
+                    if res is True:
                         print(f"  {aid}: GPS nachgeladen")
                         recovered += 1
-                    elif a is not None:
-                        a['no_gps'] = True
+                    elif res is False:
+                        a['no_gps'] = True   # FIT ohne GPS -> nicht erneut
+                    # res is None -> transient, nicht markieren, spaeter erneut
                 continue                      # bekannt -> nur Name/GPS evtl. aktualisiert
             s = w.get('workout_summary') or {}
             date, hm = _parse_local(w.get('starts') or s.get('started_at', ''), starts)
