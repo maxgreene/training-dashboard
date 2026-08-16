@@ -27,6 +27,8 @@ ANALYSIS_VERSION = 17
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'      # ab hier ist Wahoo die Quelle
 RENAME_RECHECK_DAYS = 2              # bekannte Fahrten so lange auf Umbenennung pruefen
+GPS_RECHECK_DAYS    = 3              # so lange fehlendes GPS via FIT-Neuladen heilen
+ANALYSIS_DIR        = 'data/analysis'
 FTP, HRMAX       = 250, 172
 
 WAHOO_BASE = 'https://api.wahooligan.com'
@@ -99,7 +101,40 @@ def _wahoo_name(w):
     return s.get('name') or w.get('name') or 'Wahoo Ride'
 
 
-def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
+def _stream_has_latlng(aid):
+    """True/False, ob der gespeicherte Stream GPS hat. None, wenn kein Stream."""
+    spath = os.path.join(STREAMS_DIR, aid + '.json')
+    if not os.path.exists(spath):
+        return None
+    try:
+        with open(spath) as f:
+            return bool(json.load(f).get('streams', {}).get('latlng'))
+    except Exception:
+        return None
+
+
+def recover_gps(aid, fit_url):
+    """FIT einer bekannten Fahrt neu laden und den Stream MIT GPS ueberschreiben.
+    Nur fuer Altfahrten, deren Spur der alte fit_streams verworfen hatte. Loescht
+    das analysis-File, damit analyze die Route neu rechnet. True bei Erfolg."""
+    if not fit_url:
+        return False
+    try:
+        streams = parse_fit_streams(fit_url)
+    except Exception as e:
+        print(f"    GPS-Neuladen fehlgeschlagen: {e}")
+        return False
+    if not streams or not streams.get('latlng'):
+        return False
+    with open(os.path.join(STREAMS_DIR, aid + '.json'), 'w') as f:
+        json.dump({'streams': streams}, f)
+    apath = os.path.join(ANALYSIS_DIR, aid + '.json')
+    if os.path.exists(apath):
+        os.remove(apath)
+    return True
+
+
+def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None, gps_recheck_from=None):
     """Wahoo-Fahrten seit Stichtag holen.
 
     Neue Fahrten kommen dazu. Zusaetzlich wird bei bereits bekannten, kuerzlich
@@ -109,6 +144,7 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
     """
     new = []
     renamed = 0
+    recovered = 0
     page = 1
     while True:
         data = wahoo_api(f'/v1/workouts?page={page}&per_page=100', token)
@@ -132,7 +168,21 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
                         print(f"  {aid}: Name '{act.get('name')}' -> '{nm}'")
                         act['name'] = nm
                         renamed += 1
-                continue                      # bekannt -> nur Name evtl. aktualisiert
+                # GPS-Recovery: fehlt die Spur im Stream (alter fit_streams hat
+                # sie verworfen), FIT neu laden. Nur im engen Fenster. Fahrten
+                # ohne GPS im FIT einmal als no_gps markieren, damit nicht jeder
+                # Lauf dasselbe FIT erneut zieht.
+                a = by_id.get(aid) if by_id else None
+                if (gps_recheck_from and starts >= gps_recheck_from
+                        and not (a and a.get('no_gps'))
+                        and _stream_has_latlng(aid) is False):
+                    fl = (w.get('workout_summary') or {}).get('file') or {}
+                    if recover_gps(aid, fl.get('url')):
+                        print(f"  {aid}: GPS nachgeladen")
+                        recovered += 1
+                    elif a is not None:
+                        a['no_gps'] = True
+                continue                      # bekannt -> nur Name/GPS evtl. aktualisiert
             s = w.get('workout_summary') or {}
             date, hm = _parse_local(w.get('starts') or s.get('started_at', ''), starts)
             new.append({
@@ -154,7 +204,7 @@ def fetch_new_wahoo(token, known_ids, by_id=None, recheck_from=None):
         if len(items) < 100:
             break
         page += 1
-    return new, renamed
+    return new, renamed, recovered
 
 
 def process_new(act):
@@ -208,6 +258,8 @@ def main():
     by_id = {str(a['id']): a for a in activities}
     recheck_from = (datetime.now(timezone.utc)
                     - timedelta(days=RENAME_RECHECK_DAYS)).strftime('%Y-%m-%d')
+    gps_recheck_from = (datetime.now(timezone.utc)
+                        - timedelta(days=GPS_RECHECK_DAYS)).strftime('%Y-%m-%d')
     print(f'Bestand: {len(activities)} Fahrten (v{existing_version})')
 
     # 2.+3. Neue Wahoo-Fahrten holen + Namen kuerzlicher Fahrten aktualisieren
@@ -218,8 +270,9 @@ def main():
         WAHOO_SKIPPED = True
     else:
         try:
-            new, renamed = fetch_new_wahoo(token, known_ids, by_id, recheck_from)
-            print(f'  Wahoo: {len(new)} neue Fahrt(en), {renamed} umbenannt')
+            new, renamed, recovered = fetch_new_wahoo(
+                token, known_ids, by_id, recheck_from, gps_recheck_from)
+            print(f'  Wahoo: {len(new)} neue Fahrt(en), {renamed} umbenannt, {recovered} GPS nachgeladen')
             for act in new:
                 activities.append(process_new(act))
                 added += 1
