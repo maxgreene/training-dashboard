@@ -412,8 +412,10 @@ async function toggleRide(id, row) {
   det.innerHTML = '<div class="muted">lade Serie …</div>';
   try {
     const s = await loadSeries(id);
-    const routeHtml = s.route ? `<div class="lbl">Strecke</div>
-      <div class="chartbox" style="text-align:center;padding:6px 0">${routeSvg(s.route, 320, 200, { sw: 2, dots: true, style: 'max-width:100%;height:auto' })}</div>` : '';
+    const useMap = s.route && window.L;
+    const routeHtml = s.route ? `<div class="lbl">Strecke</div>` + (useMap
+      ? `<div id="map-${id}" class="ridemap" style="height:260px;border-radius:8px;overflow:hidden;margin-bottom:12px"></div>`
+      : `<div class="chartbox" style="text-align:center;padding:6px 0">${routeSvg(s.route, 320, 200, { sw: 2, dots: true, style: 'max-width:100%;height:auto' })}</div>`) : '';
     det.innerHTML = `${routeHtml}${zoneTable(act)}
       <div class="lbl" style="margin-top:14px">Verlauf · Leistung und Herzfrequenz</div>
       <div class="chartbox" id="c-tr-${id}"></div>
@@ -421,6 +423,7 @@ async function toggleRide(id, row) {
         <div><div class="lbl">HF gegen Leistung · stabile Phasen</div><div class="chartbox" id="c-sc-${id}"></div></div>
         <div><div class="lbl">Bestleistungen (MMP)</div><div class="chartbox" id="c-mp-${id}"></div></div>
       </div>`;
+    if (useMap) drawMap(id, s.route);
     drawTrace($('#c-tr-' + id), s);
     drawScatter($('#c-sc-' + id), s);
     drawMMP($('#c-mp-' + id), act);
@@ -519,6 +522,24 @@ function routeSvg(route, w, h, o) {
     + `<circle cx="${px(route.length - 1)}" cy="${py(route.length - 1)}" r="${sw * 1.8}" fill="#c0392b"/>` : '';
   return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="${o.style || ''}" aria-hidden="true">`
        + `<path d="${dp}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
+}
+
+/* Echte Karte in der Detailsicht: Leaflet mit dunklen CARTO-Tiles, die Route als
+ * Polyline, Start gruen / Ende rot. Braucht externe Tiles (anders als das
+ * agnostische Listen-Thumbnail), lohnt sich aber erst beim Aufklappen. */
+function drawMap(id, route) {
+  const box = $('#map-' + id);
+  if (!box || !window.L || !route || route.length < 2) return;
+  const map = L.map(box, { scrollWheelZoom: false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    maxZoom: 19, subdomains: 'abcd',
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+  }).addTo(map);
+  const line = L.polyline(route, { color: '#60a5fa', weight: 3, opacity: 0.9 }).addTo(map);
+  map.fitBounds(line.getBounds(), { padding: [16, 16] });
+  L.circleMarker(route[0], { radius: 5, color: '#34d399', fillColor: '#34d399', fillOpacity: 1, weight: 1 }).addTo(map);
+  L.circleMarker(route[route.length - 1], { radius: 5, color: '#c0392b', fillColor: '#c0392b', fillOpacity: 1, weight: 1 }).addTo(map);
+  setTimeout(() => map.invalidateSize(), 60);   // Container war beim Bauen evtl. 0 hoch
 }
 
 function renderRides() {
