@@ -204,7 +204,11 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
   .rdet{padding:10px}
   .tst-row{flex-wrap:wrap}
 }
+.ridemap{background:#1a1a1a}
+.ridemap .leaflet-control-attribution{background:rgba(0,0,0,.5);color:#888}
+.ridemap .leaflet-control-attribution a{color:#aaa}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
 <body>
 
@@ -230,6 +234,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <!-- ?v=BUILD wird beim Deploy durch die Commit-SHA ersetzt (deploy.yml).
      Damit ist jeder Deploy eine neue URL und der Browser-Cache (besonders
      Safari/iOS, das JS tagelang haelt) kann nicht veralten. Niemand muss

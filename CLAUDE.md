@@ -195,12 +195,21 @@ Garmin-Fahrten zusätzlich `source: 'garmin'`, `indoor: true`. Global:
 sekunden]]` für die echte Zeitachse. `route` = feinere Streckenlinie (~200
 `[lat,lng]`-Punkte, 5 Nachkommastellen) für die Detailkarte, `null` ohne GPS.
 
-**Streckenlinie ist agnostisch:** nur die GPS-Punktfolge als SVG-Pfad
-(`rides.js:routeSvg`), KEINE Kartenkacheln, also keine externen Requests und
-offline-fest. `analyze:route_line` dünnt `streams.latlng` aus. GPS liegt in den
-Rohstreams (`fit_streams.py`), die aber nie deployt werden, deshalb der Weg über
-die zwei Artefakte. `fit_streams` behält die Route auch bei spätem GPS-Fix
-(latlng kürzer als time), Indoor/Rolle bleibt ohne.
+**Zwei Darstellungen:** Das **Listen-Thumbnail** ist agnostisch, nur die
+GPS-Punktfolge als SVG-Pfad (`rides.js:routeSvg`), KEINE Kartenkacheln, offline-
+fest, klein und schnell für viele Zeilen. Die **Detailsicht** zeigt eine echte
+Karte (`rides.js:drawMap`, Leaflet 1.9 per CDN, dunkle CARTO-Tiles), Route als
+Polyline, Start grün / Ende rot. Die Karte braucht externe Tiles (bewusst, auf
+Wolfs Wunsch), lohnt aber erst beim Aufklappen. Fällt Leaflet aus, rendert das
+Detail den SVG-Pfad als Fallback. `analyze:route_line` dünnt `streams.latlng`
+aus (grob für die Liste, fein fürs Detail).
+
+**GPS-Verlust bei Altfahrten:** Der alte `fit_streams` verwarf die Spur, sobald
+nicht jeder Record eine Position hatte (`len(latlng) == len(time)`), das trifft
+lange Fahrten (Tunnel, Pausen, GPS-Aussetzer) oft. Der Fix behält die Route bei
+spätem/lückenhaftem Fix (`len(latlng) >= 4`), aber nur für KÜNFTIGE Fetches. Wer
+alten Fahrten die Route zurückgeben will, muss ihr FIT neu laden (Reprocess liest
+nur den gespeicherten Stream). Indoor/Rolle bleibt ohne GPS.
 
 Wenn sich die Datenberechnung ändert: **`ANALYSIS_VERSION` in beiden Skripten
 hochzählen** (ungefragt, das ist erwartet) und Wolf sagen, dass er einmal
