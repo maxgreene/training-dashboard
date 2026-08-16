@@ -27,12 +27,15 @@ DATA_FILE    = 'data/activities.json'
 STREAMS_DIR  = 'data/streams'
 ANALYSIS_DIR = 'data/analysis'
 
-ANALYSIS_VERSION = 16
+ANALYSIS_VERSION = 17
 
 FTP   = 250      # muss mit js/config.js uebereinstimmen
 HRMAX = 172
 
 SERIES_STEP = 5          # Sekunden je Punkt in analysis/{id}.json
+
+ROUTE_PTS_LIST   = 24    # grobe Streckenlinie fuers Listen-Thumbnail (activities.json)
+ROUTE_PTS_DETAIL = 200   # feinere Streckenlinie fuer die Detailkarte (analysis/{id}.json)
 
 HIST_P_STEP  = 10        # Watt je Histogramm-Eimer
 HIST_P_MAX   = 1000      # darueber: Ueberlauf in den letzten Eimer
@@ -246,6 +249,20 @@ def tss_of(np_val, duration_sec):
 
 
 # ── Analyse einer Fahrt ──────────────────────────────────────────────────────
+def route_line(latlng, n):
+    """latlng auf ~n Punkte ausduennen, Grad auf 5 Nachkommastellen (~1 m). Fuer
+    die agnostische Streckenlinie (nur die Form, keine Kartenkacheln). None ohne
+    brauchbares GPS (z. B. Indoor/Rolle)."""
+    pts = [p for p in (latlng or [])
+           if p and len(p) == 2 and p[0] is not None and p[1] is not None]
+    if len(pts) < 4:
+        return None
+    if len(pts) > n:
+        step = (len(pts) - 1) / (n - 1)
+        pts = [pts[round(k * step)] for k in range(n)]
+    return [[round(lat, 5), round(lng, 5)] for lat, lng in pts]
+
+
 def analyze(aid, streams):
     ts = streams.get('time') or []
     if not ts:
@@ -304,6 +321,13 @@ def analyze(aid, streams):
     if pw and hr:
         m['ef'], m['decoupling_pct'] = decoupling(_clean_watts(pw), hr, segs)
 
+    # Streckenlinie: grob in activities.json (Listen-Thumbnail), fein in die
+    # Serie (Detailkarte). Ohne GPS (Indoor) bleibt es weg.
+    ll = streams.get('latlng')
+    route_list = route_line(ll, ROUTE_PTS_LIST)
+    if route_list:
+        m['route'] = route_list
+
     # Serie laeuft auf AUFZEICHNUNGSZEIT (Pausen existieren darin nicht).
     # Index i entspricht Sekunde i*SERIES_STEP der aufgezeichneten Fahrt.
     n_out = max(1, moving_sec // SERIES_STEP)
@@ -319,6 +343,7 @@ def analyze(aid, streams):
         'w':   resample(pw,  SERIES_STEP, n_out) if pw else None,
         'hr':  resample(hr,  SERIES_STEP, n_out) if hr else None,
         'cad': resample(cad, SERIES_STEP, n_out) if cad else None,
+        'route': route_line(ll, ROUTE_PTS_DETAIL),
     }
     return m, series
 
@@ -328,7 +353,7 @@ def analyze(aid, streams):
 OWNED = ['np', 'power_curve', 'hist_p', 'hist_hr', 'avg_power', 'avg_power_moving',
          'max_power', 'avg_hr', 'max_hr', 'avg_cadence', 'max_cadence', 'tss',
          'ef', 'decoupling_pct', 'has_power', 'has_hr', 'frozen_hr_sec',
-         'moving_sec', 'elapsed_sec', 'pause_sec']
+         'moving_sec', 'elapsed_sec', 'pause_sec', 'route']
 # Felder aus alten Versionen, die es nicht mehr gibt.
 OBSOLETE = ['power_zones', 'hr_zones', 'ef_gesamt', 'streams', 'chart',
             'ef_series', 'scatter', 'climbs', 'gps_ok', 'has_latlng']

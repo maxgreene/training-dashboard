@@ -98,7 +98,9 @@ def streams_from_fit_bytes(raw):
         'velocity_smooth': velocity, 'grade_smooth': grade,
         'moving': [bool(s and s > 0.5) for s in velocity],
     }
-    if latlng and len(latlng) == len(time):
+    # Route auch behalten, wenn GPS erst spaet einrastet (latlng kuerzer als
+    # time). Die Linie braucht nur die Punktfolge, keine Zeit-Deckung.
+    if len(latlng) >= 4:
         streams['latlng'] = latlng
     print(f'    FIT: {len(time)} Punkte, Power={any(w>0 for w in watts)}, HR={any(h>0 for h in heartrate)}')
     return streams

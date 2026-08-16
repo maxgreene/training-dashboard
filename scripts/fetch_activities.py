@@ -23,7 +23,7 @@ from fit_streams import streams_from_fit_url
 
 DATA_FILE        = 'data/activities.json'
 STREAMS_DIR      = 'data/streams'
-ANALYSIS_VERSION = 16
+ANALYSIS_VERSION = 17
 PLAN_START_DATE  = '2026-05-04'
 WAHOO_START_DATE = '2026-07-01'      # ab hier ist Wahoo die Quelle
 RENAME_RECHECK_DAYS = 2              # bekannte Fahrten so lange auf Umbenennung pruefen

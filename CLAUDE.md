@@ -70,7 +70,8 @@ js/shared.js                      Datum, Zonen-Engine, timeAxis, DATA, CSSVAR,
 js/plan.js                        Plan-Generator, Heute-Feld, FTP-Widget,
                                   Ride-vs-Decke-Widget, Test-Timeline
 js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
-                                  EF-Chart, Fahrtenliste, 3 Detailplots
+                                  EF-Chart, Fahrtenliste (mit Strecken-Thumbnail),
+                                  3 Detailplots + Detail-Streckenkarte (routeSvg)
 js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
 scripts/fetch_garmin_activities.py Garmin Indoor/Rolle nach activities.json + streams/
@@ -176,7 +177,7 @@ Beobachtung, keine Vorschrift.
 
 ---
 
-## Datenmodell (ANALYSIS_VERSION = 16)
+## Datenmodell (ANALYSIS_VERSION = 17)
 
 Quelle der Wahrheit ist immer `data/streams/{id}.json`. Daraus genau zwei
 Artefakte, ohne Überschneidung:
@@ -184,13 +185,22 @@ Artefakte, ohne Überschneidung:
 **`data/activities.json`** pro Fahrt: `np`, `power_curve`, `hist_p` (10 W-Eimer),
 `hist_hr` (2 bpm ab 40), `avg_power`, `avg_power_moving`, `max_power`, `avg_hr`,
 `max_hr`, `avg/max_cadence`, `tss`, `ef`, `decoupling_pct`, `moving_sec`,
-`elapsed_sec`, `pause_sec`, `frozen_hr_sec`, `has_power`, `has_hr`. Garmin-Fahrten
-zusätzlich `source: 'garmin'`, `indoor: true`. Global: `wahoo_skipped`.
-`tss` ist nur noch Fallback, die Anzeige rechnet live (siehe `tssOf`).
+`elapsed_sec`, `pause_sec`, `frozen_hr_sec`, `has_power`, `has_hr`, `route`
+(grobe Streckenlinie ~24 Punkte fürs Listen-Thumbnail, fehlt ohne GPS).
+Garmin-Fahrten zusätzlich `source: 'garmin'`, `indoor: true`. Global:
+`wahoo_skipped`. `tss` ist nur noch Fallback, die Anzeige rechnet live (`tssOf`).
 
 **`data/analysis/{id}.json`** eine Serie:
-`{id, v, step:5, n, w, hr, cad, gaps}`. `gaps` = `[[serien_index, sekunden]]`
-für die echte Zeitachse.
+`{id, v, step:5, n, w, hr, cad, gaps, route}`. `gaps` = `[[serien_index,
+sekunden]]` für die echte Zeitachse. `route` = feinere Streckenlinie (~200
+`[lat,lng]`-Punkte, 5 Nachkommastellen) für die Detailkarte, `null` ohne GPS.
+
+**Streckenlinie ist agnostisch:** nur die GPS-Punktfolge als SVG-Pfad
+(`rides.js:routeSvg`), KEINE Kartenkacheln, also keine externen Requests und
+offline-fest. `analyze:route_line` dünnt `streams.latlng` aus. GPS liegt in den
+Rohstreams (`fit_streams.py`), die aber nie deployt werden, deshalb der Weg über
+die zwei Artefakte. `fit_streams` behält die Route auch bei spätem GPS-Fix
+(latlng kürzer als time), Indoor/Rolle bleibt ohne.
 
 Wenn sich die Datenberechnung ändert: **`ANALYSIS_VERSION` in beiden Skripten
 hochzählen** (ungefragt, das ist erwartet) und Wolf sagen, dass er einmal

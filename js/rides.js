@@ -412,7 +412,9 @@ async function toggleRide(id, row) {
   det.innerHTML = '<div class="muted">lade Serie …</div>';
   try {
     const s = await loadSeries(id);
-    det.innerHTML = `${zoneTable(act)}
+    const routeHtml = s.route ? `<div class="lbl">Strecke</div>
+      <div class="chartbox" style="text-align:center;padding:6px 0">${routeSvg(s.route, 320, 200, { sw: 2, dots: true, style: 'max-width:100%;height:auto' })}</div>` : '';
+    det.innerHTML = `${routeHtml}${zoneTable(act)}
       <div class="lbl" style="margin-top:14px">Verlauf · Leistung und Herzfrequenz</div>
       <div class="chartbox" id="c-tr-${id}"></div>
       <div class="grid2">
@@ -493,6 +495,32 @@ function drawProfileTrend() {
   });
 }
 
+/* Agnostische Streckenlinie: die GPS-Punkte (aus analyze) auf w×h normiert als
+ * SVG-Pfad, ohne Kartenkacheln (keine externen Requests). Aequirektangulaere
+ * Projektion mit cos(Breite), Seitenverhaeltnis bleibt erhalten. o.dots setzt
+ * Start (gruen) und Ende (rot). Leerer String ohne Route (Indoor). */
+function routeSvg(route, w, h, o) {
+  o = o || {};
+  if (!route || route.length < 2) return '';
+  const latM = route.reduce((s, p) => s + p[0], 0) / route.length;
+  const k = Math.cos(latM * Math.PI / 180);
+  const X = route.map(p => p[1] * k), Y = route.map(p => -p[0]);
+  const x0 = Math.min(...X), x1 = Math.max(...X), y0 = Math.min(...Y), y1 = Math.max(...Y);
+  const pad = o.pad != null ? o.pad : 3;
+  const sc = Math.min((w - 2 * pad) / (x1 - x0 || 1e-9), (h - 2 * pad) / (y1 - y0 || 1e-9));
+  const ox = (w - (x1 - x0) * sc) / 2, oy = (h - (y1 - y0) * sc) / 2;
+  const px = i => (ox + (X[i] - x0) * sc).toFixed(1);
+  const py = i => (oy + (Y[i] - y0) * sc).toFixed(1);
+  let dp = '';
+  for (let i = 0; i < route.length; i++) dp += (i ? 'L' : 'M') + px(i) + ' ' + py(i);
+  const col = o.col || '#60a5fa', sw = o.sw || 1.4;
+  const dots = o.dots
+    ? `<circle cx="${px(0)}" cy="${py(0)}" r="${sw * 1.8}" fill="#34d399"/>`
+    + `<circle cx="${px(route.length - 1)}" cy="${py(route.length - 1)}" r="${sw * 1.8}" fill="#c0392b"/>` : '';
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="${o.style || ''}" aria-hidden="true">`
+       + `<path d="${dp}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
+}
+
 function renderRides() {
   const box = $('#page-rides');
   if (!box) return;
@@ -530,7 +558,12 @@ function renderRides() {
   A.forEach(a => {
     const i = IF(a);
     const row = el('div', 'rrow');
+    const rsvg = a.route ? routeSvg(a.route, 44, 28, { sw: 1.3 })
+      : (a.indoor || a.source === 'garmin'
+          ? '<span style="font-size:9px;color:var(--t5)">Rolle</span>' : '');
+    const thumb = `<span class="rthumb" style="display:inline-flex;width:46px;height:30px;margin-right:8px;flex:0 0 auto;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden">${rsvg}</span>`;
     row.innerHTML = `<div class="rmain">
+        ${thumb}
         <span class="rdate">${fmtDay(d(a.date))} ${a.start_time || ''}</span>
         <span class="rname">${a.name || 'Fahrt'}</span>
         <span class="rmet">
