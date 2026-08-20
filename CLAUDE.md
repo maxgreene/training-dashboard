@@ -343,12 +343,16 @@ Wahoo rotiert den `refresh_token` bei jedem Lauf **und** befristet ihn. Läuft e
 ab, kommt `invalid_grant`, der Fetch überspringt Wahoo, und der Workflow bleibt
 trotzdem grün.
 
-**Stiller Killer:** Der rotierte Token muss jeden Lauf ins Secret zurück
-(`gh secret set`). Dieser Schritt ist `continue-on-error`; scheitert er (PAT
-ohne `secrets:write`, API-Blip), ist der schon verbrauchte alte Token tot und
-die Kette bricht, ohne dass etwas rot wird. Der Schritt gibt bei Fehlschlag jetzt
-eine `::warning::` aus, also im Fetch-Log nach "konnte NICHT gespeichert werden"
-suchen, wenn Wahoo wieder skippt. Bei Dauerproblem den GH_PAT-Scope prüfen.
+**Stiller Killer (bestätigt am 17.08.):** Der rotierte Token muss jeden Lauf ins
+Secret zurück (`gh secret set`). Genau das ist am 17.08. 17:30 an einem
+**GitHub-503 auf die Secrets-API** (`failed to fetch public key: HTTP 503`)
+gescheitert: der neue Token ging verloren, der alte war beim Refresh schon
+verbraucht, nächster Lauf `invalid_grant`, Wahoo tot für ~2,5 Tage. Also kein
+Wahoo-Ablauf, kein PAT-Scope, sondern ein einzelner API-Blip. Fix: `gh secret
+set` läuft jetzt in einer **Retry-Schleife (5x mit Backoff)**, ein transienter
+503 killt die Kette nicht mehr. Erst wenn alle 5 scheitern, kommt die
+`::warning::` "nach 5 Versuchen NICHT gespeichert" ins Log. Bei Dauerproblem den
+GH_PAT-Scope (`secrets:write`) prüfen.
 
 **Neu autorisieren (bevorzugt, per Workflow):** Der `AUTHORIZE`-Klick bleibt
 Handarbeit (OAuth-Consent, braucht Wolfs Wahoo-Login), der Rest läuft im
