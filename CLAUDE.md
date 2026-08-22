@@ -418,8 +418,9 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 - Rampentests in `CFG.tests`: 21.05. FTP 237 / MAP 313, 23.06. FTP 229 / MAP 305
   (früh abgebrochen, müde Beine), 22.07. FTP 271 / MAP 361 (Nullpunkt
   FTP-300-Block). Neue kommen automatisch dazu (siehe Test-Erkennung oben).
-- **Geplante Retests** (`CFG.plan.events`, type:'test'): 16.09., 07.10., 28.10.,
-  ~3-Wochen-Takt bis zum Ziel 15.11. Der "Weg zu 300"-Plot (`plan.js:testTimeline`)
+- **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09., 23.09., 14.10.,
+  04.11., gleichmäßiger ~3-Wochen-Takt bis zum Ziel 15.11. (bewusst nicht hinten
+  geballt, der nächste soll früh kommen). Der "Weg zu 300"-Plot (`plan.js:testTimeline`)
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
   "heute"-Linie, und je gemessenem Test den FTP-Wert am Marker und das Datum an
   der Achse.
