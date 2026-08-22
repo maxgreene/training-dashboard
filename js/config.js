@@ -116,6 +116,12 @@ const CFG = {
       { date: '2026-09-16', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · gleiche Bedingungen wie der Nullpunkt · Rampe bis zum Abbruch',
         protected: true },
+      { date: '2026-10-07', type: 'test', title: 'Rampen-Retest',
+        desc: 'Rolle · Zwischenstand FTP-300-Block · gleiche Bedingungen',
+        protected: true },
+      { date: '2026-10-28', type: 'test', title: 'Rampen-Retest',
+        desc: 'Rolle · Zwischenstand vor dem Ziel · gleiche Bedingungen',
+        protected: true },
     ],
   },
 

@@ -173,6 +173,15 @@ function testTimeline(tp, goal, goalDate) {
   s += `<line x1="${X(goalDate).toFixed(1)}" y1="${pad.t}" x2="${X(goalDate).toFixed(1)}" y2="${H - pad.b}"
         stroke="#34d399" stroke-width="1" stroke-dasharray="2 2" opacity=".4"/>`;
 
+  // Heute als senkrechte Linie (nur wenn im Fenster)
+  const tx = X(iso(today()));
+  if (tx >= pad.l && tx <= W - pad.r) {
+    s += `<line x1="${tx.toFixed(1)}" y1="${pad.t}" x2="${tx.toFixed(1)}" y2="${H - pad.b}"
+          stroke="var(--t2)" stroke-width="1" opacity=".65"/>
+          <text x="${tx.toFixed(1)}" y="${(pad.t - 4).toFixed(1)}" text-anchor="middle"
+          font-size="7.5" font-family="var(--mono)" fill="var(--t2)">heute</text>`;
+  }
+
   // Geplante Tests (CFG.plan.events, type:'test', heute oder spaeter): leere
   // Marker auf der x-Achse mit senkrechter Datumslinie. Kein Y-Wert, weil noch
   // nicht gemessen — sie sagen nur "hier kommt ein Nullpunkt". Sobald an dem
@@ -184,13 +193,16 @@ function testTimeline(tp, goal, goalDate) {
       && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
     .forEach(e => {
       const x = X(e.date), yb = H - pad.b;
+      const lx = Math.max(pad.l + 10, Math.min(W - pad.r - 16, x));
       s += `<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${yb.toFixed(1)}"
             stroke="${KCOL.ramp}" stroke-width="1" stroke-dasharray="2 3" opacity=".45"/>
             <path d="M${x.toFixed(1)} ${(yb-6).toFixed(1)} L${(x+3.6).toFixed(1)} ${yb.toFixed(1)} L${(x-3.6).toFixed(1)} ${yb.toFixed(1)} Z"
-            fill="none" stroke="${KCOL.ramp}" stroke-width="1.2"/>`;
+            fill="none" stroke="${KCOL.ramp}" stroke-width="1.2"/>
+            <text x="${lx.toFixed(1)}" y="${H - 6}" text-anchor="middle"
+            font-size="7" font-family="var(--mono)" fill="${KCOL.ramp}" opacity=".7">${fmtDay(d(e.date))}</text>`;
     });
 
-  // Punkte: Rampe = Dreieck, sonst Kreis
+  // Punkte: Rampe = Dreieck, sonst Kreis, mit FTP-Wert darueber
   tp.forEach(t => {
     const x = X(t.date), y = Y(t.ftp), col = KCOL[t.kind] || '#60a5fa';
     if (t.kind === 'ramp') {
@@ -198,10 +210,18 @@ function testTimeline(tp, goal, goalDate) {
     } else {
       s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${col}"/>`;
     }
+    const lx = Math.max(pad.l + 8, Math.min(W - pad.r - 8, x));
+    s += `<text x="${lx.toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle"
+          font-size="8" font-weight="700" font-family="var(--mono)" fill="${col}">${t.ftp}</text>`;
   });
-  // x-Achse: erster Test + Zieldatum
-  s += `<text x="${pad.l}" y="${H - 6}" font-size="8" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(tp[0].date))}</text>
-        <text x="${W - pad.r}" y="${H - 6}" text-anchor="end" font-size="8" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(goalDate))}</text>`;
+  // x-Achse: Datum je gemessenem Test unter seinem Marker, plus Zieldatum rechts.
+  tp.forEach(t => {
+    const x = Math.max(pad.l + 10, Math.min(W - pad.r - 16, X(t.date)));
+    s += `<text x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle"
+          font-size="7" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(t.date))}</text>`;
+  });
+  s += `<text x="${W - pad.r}" y="${H - 6}" text-anchor="end" font-size="7.5" font-weight="700"
+        font-family="var(--mono)" fill="#34d399">${fmtDay(d(goalDate))}</text>`;
   s += '</svg>';
   return s;
 }
