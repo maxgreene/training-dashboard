@@ -419,8 +419,9 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
   (früh abgebrochen, müde Beine), 22.07. FTP 271 / MAP 361 (Nullpunkt
   FTP-300-Block). Neue kommen automatisch dazu (siehe Test-Erkennung oben).
 - **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09., 23.09., 14.10.,
-  04.11., gleichmäßiger ~3-Wochen-Takt bis zum Ziel 15.11. (bewusst nicht hinten
-  geballt, der nächste soll früh kommen). Der "Weg zu 300"-Plot (`plan.js:testTimeline`)
+  gleichmäßiger ~3-Wochen-Takt, der nächste früh. Letzter am 14.10., danach kein
+  Test mehr: so nah am Ziel 15.11. lässt sich eh nicht mehr steuern. Der
+  "Weg zu 300"-Plot (`plan.js:testTimeline`)
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
   "heute"-Linie, und je gemessenem Test den FTP-Wert am Marker und das Datum an
   der Achse.
