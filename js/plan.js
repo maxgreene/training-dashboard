@@ -390,7 +390,7 @@ function ftpWidget() {
         <div id="easy-box"></div>
         <div class="ez-meta">Linie = Decke (1.0) ·
           <span style="color:${EP.colP}">●</span> Leistung ·
-          <span style="color:${EP.colHr}">●</span> HF · Punkt Ø, Balken ±1 sd · Größe = Dauer ·
+          <span style="color:${EP.colHr}">●</span> HF · Punkt Ø, Violin = Verteilung ·
           ${cur.hours.toFixed(1)} h · ${cur.rides} Fahrten</div>
         <div class="ez-hint" style="margin-top:8px">${best20html}</div>
       </div>
@@ -482,17 +482,17 @@ function drawRideTargets() {
   const span = Math.log(Math.max(2, EP.dotMaxMin / EP.dotMinMin));
   const rOf = m => EP.dotMinR + (EP.dotMaxR - EP.dotMinR) *
     Math.max(0, Math.min(1, Math.log(Math.max(m, EP.dotMinMin) / EP.dotMinMin) / span));
-  const set = (key, sdKey, dx) => pts.filter(p => p[key] != null)
-    .map(p => ({ x: X(p.date) + dx, y: p[key], sd: p[sdKey] || 0, r: rOf(p.dur) }));
+  const set = (key, vKey, dx) => pts.filter(p => p[key] != null)
+    .map(p => ({ x: X(p.date) + dx, y: p[key], v: p[vKey] }));
 
   if (_easy) _easy.destroy();
   _easy = new Chart($('#easy-canvas'), {
     type: 'scatter',
     data: { datasets: [
-      { label: 'Leistung', data: set('pRel', 'pSd', -EP.dx),
-        backgroundColor: EP.colP, pointRadius: c => c.raw.r, clip: false },
-      { label: 'HF', data: set('hrRel', 'hrSd', EP.dx),
-        backgroundColor: EP.colHr, pointRadius: c => c.raw.r, clip: false },
+      { label: 'Leistung', data: set('pRel', 'pV', -EP.dx),
+        backgroundColor: EP.colP, pointRadius: 2, clip: false },
+      { label: 'HF', data: set('hrRel', 'hrV', EP.dx),
+        backgroundColor: EP.colHr, pointRadius: 2, clip: false },
     ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -508,13 +508,15 @@ function drawRideTargets() {
       },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c =>
-          `${c.dataset.label}: ${Math.round(c.raw.y * 100)} % ± ${Math.round(c.raw.sd * 100)}` } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: Ø ${Math.round(c.raw.y * 100)} % der Decke` } },
       },
     },
     plugins: [{
       id: 'ridetarget',
-      // aerober Bereich (< Decke) hinterlegen + Ziel-Linie bei 1.0
+      // Ziel-Band (aerober Bereich < Decke) + Ziel-Linie bei 1.0, dann die
+      // Violins je Fahrt aus der Verteilung. Alles UNTER die Ø-Punkte, die
+      // Chart.js danach zeichnet. Breite je Violin auf die eigene Spitzendichte
+      // normiert, damit die Formen vergleichbar sind, geklippt auf den Plot.
       beforeDatasetsDraw(ch) {
         const { ctx, chartArea: ca, scales } = ch;
         const yT = scales.y.getPixelForValue(1), yB = scales.y.getPixelForValue(0);
@@ -523,22 +525,27 @@ function drawRideTargets() {
         ctx.fillRect(ca.left, yT, ca.right - ca.left, yB - yT);
         ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(ca.left, yT); ctx.lineTo(ca.right, yT); ctx.stroke();
-        ctx.restore();
-      },
-      // ±1sd-Whisker mit Endkappen, je Punkt
-      afterDatasetsDraw(ch) {
-        const { ctx, scales, chartArea: ca } = ch;
-        ctx.save();
-        [0, 1].forEach(di => {
-          const ds = ch.data.datasets[di], meta = ch.getDatasetMeta(di);
-          ctx.strokeStyle = ds.backgroundColor; ctx.lineWidth = 1.4;
-          ds.data.forEach((pt, i) => {
-            const x = meta.data[i].x;
-            const yT = Math.max(ca.top, scales.y.getPixelForValue(pt.y + pt.sd));
-            const yB = Math.min(ca.bottom, scales.y.getPixelForValue(Math.max(0, pt.y - pt.sd)));
-            ctx.beginPath(); ctx.moveTo(x, yT); ctx.lineTo(x, yB);
-            ctx.moveTo(x - 3, yT); ctx.lineTo(x + 3, yT);
-            ctx.moveTo(x - 3, yB); ctx.lineTo(x + 3, yB); ctx.stroke();
+        ctx.setLineDash([]);
+
+        const dayPx = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+        const halfW = Math.min(dayPx * EP.violinW, 14);
+        ctx.beginPath(); ctx.rect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top); ctx.clip();
+        ch.data.datasets.forEach(dsr => {
+          const col = dsr.backgroundColor;
+          dsr.data.forEach(pt => {
+            const v = pt.v; if (!v || v.length < 2) return;
+            const cx = scales.x.getPixelForValue(pt.x);
+            const maxC = v.reduce((m, q) => Math.max(m, q[1]), 0) || 1;
+            ctx.beginPath();
+            v.forEach((q, i) => { const y = scales.y.getPixelForValue(q[0]), w = q[1] / maxC * halfW;
+              i ? ctx.lineTo(cx + w, y) : ctx.moveTo(cx + w, y); });
+            for (let i = v.length - 1; i >= 0; i--) {
+              const y = scales.y.getPixelForValue(v[i][0]), w = v[i][1] / maxC * halfW;
+              ctx.lineTo(cx - w, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = col + '55'; ctx.fill();
+            ctx.strokeStyle = col; ctx.lineWidth = 0.8; ctx.stroke();
           });
         });
         ctx.restore();

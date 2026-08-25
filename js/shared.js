@@ -191,6 +191,19 @@ function histMeanSd(h, step, min, skipFirst) {
 /* Je Fahrt im Fenster: Mittel und ±1sd von Leistung und HF, RELATIV zur
  * Z2/Z3-Decke (Leistung 0.66 x FTP, HF 0.75 x HRmax). 1.0 = genau auf der
  * Decke, darunter = aerob. Zieht mit dem aufgeloesten FTP/HRmax mit. */
+/* Verteilung aus einem Histogramm, RELATIV zur Decke: [wert/decke, dauer]-Paare
+ * je gefuelltem Eimer, aufsteigend. Fuer den Violin-Plot. skipFirst laesst den
+ * Coasting-Eimer (0 W) weg. */
+function histRel(h, step, min, ceiling, skipFirst) {
+  if (!h || !ceiling) return null;
+  const s0 = skipFirst ? 1 : 0, out = [];
+  for (let i = s0; i < h.length; i++) {
+    if (!h[i]) continue;
+    out.push([(min + step * i + step / 2) / ceiling, h[i]]);
+  }
+  return out.length >= 2 ? out : null;
+}
+
 function ridePoints(days) {
   const lo = addDays(today(), -days);
   const pT = CFG.zones.power.bounds[2] * CFG.athlete.ftp;
@@ -204,7 +217,9 @@ function ridePoints(days) {
     if (!p && !hr) return;
     out.push({ date: a.date, dur: (a.moving_sec || 0) / 60,
       pRel: p ? p.mean / pT : null, pSd: p ? p.sd / pT : null,
-      hrRel: hr ? hr.mean / hrT : null, hrSd: hr ? hr.sd / hrT : null });
+      hrRel: hr ? hr.mean / hrT : null, hrSd: hr ? hr.sd / hrT : null,
+      pV: histRel(a.hist_p, CFG.hist.pStep, 0, pT, true),
+      hrV: histRel(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, hrT, false) });
   });
   return out;
 }

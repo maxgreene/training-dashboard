@@ -164,6 +164,7 @@ const CFG = {
       colHr: '#7ec8a0',          // HF (gruen)
       bandAlpha: 0.10,           // Deckkraft des aeroben Bereichs (< 1.0)
       relMax: 2.0,               // y-Achse: Vielfaches der Decke
+      violinW: 0.13,             // halbe Violin-Breite als Anteil eines Tages
       dx: 0.15,                  // x-Versatz, damit Leistung/HF nicht ueberlappen
     },
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
