@@ -193,13 +193,23 @@ function histMeanSd(h, step, min, skipFirst) {
  * Decke, darunter = aerob. Zieht mit dem aufgeloesten FTP/HRmax mit. */
 /* Verteilung aus einem Histogramm, RELATIV zur Decke: [wert/decke, dauer]-Paare
  * je gefuelltem Eimer, aufsteigend. Fuer den Violin-Plot. skipFirst laesst den
- * Coasting-Eimer (0 W) weg. */
-function histRel(h, step, min, ceiling, skipFirst) {
+ * Coasting-Eimer (0 W) weg. `trim` (Zeitanteil je Seite, z. B. 0.05) schneidet
+ * die duennen Enden weg, damit der Sprint-Schwanz beim Watt den Violin nicht
+ * bis an die Decke zieht: es bleibt der Interperzentil-Koerper der Verteilung. */
+function histRel(h, step, min, ceiling, skipFirst, trim) {
   if (!h || !ceiling) return null;
-  const s0 = skipFirst ? 1 : 0, out = [];
+  const s0 = skipFirst ? 1 : 0;
+  let out = [];
   for (let i = s0; i < h.length; i++) {
     if (!h[i]) continue;
     out.push([(min + step * i + step / 2) / ceiling, h[i]]);
+  }
+  if (trim && out.length >= 3) {
+    const tot = out.reduce((s, q) => s + q[1], 0), cut = tot * trim;
+    let lo = 0, hi = out.length - 1, cLo = 0, cHi = 0;
+    while (lo < hi && cLo + out[lo][1] <= cut) cLo += out[lo++][1];
+    while (hi > lo && cHi + out[hi][1] <= cut) cHi += out[hi--][1];
+    out = out.slice(lo, hi + 1);
   }
   return out.length >= 2 ? out : null;
 }
@@ -218,8 +228,8 @@ function ridePoints(days) {
     out.push({ date: a.date, dur: (a.moving_sec || 0) / 60,
       pRel: p ? p.mean / pT : null, pSd: p ? p.sd / pT : null,
       hrRel: hr ? hr.mean / hrT : null, hrSd: hr ? hr.sd / hrT : null,
-      pV: histRel(a.hist_p, CFG.hist.pStep, 0, pT, true),
-      hrV: histRel(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, hrT, false) });
+      pV: histRel(a.hist_p, CFG.hist.pStep, 0, pT, true, CFG.ui.easyPlot.violinTrim),
+      hrV: histRel(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, hrT, false, CFG.ui.easyPlot.violinTrim) });
   });
   return out;
 }
