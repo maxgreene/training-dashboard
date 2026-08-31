@@ -28,16 +28,16 @@ import re
 import subprocess
 import sys
 import unicodedata
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import nutri_crypto as nc  # noqa: E402
 
-REPO = "maxgreene/training-dashboard"
+# Die CLI spricht ueber git mit dem Repo, nicht ueber raw (siehe
+# sync_from_remote). Die raw-Basis braucht nur der Browser, sie steht in
+# CFG.food.rawBase in js/config.js.
 BRANCH = "main"
-RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 
 ROOT = Path(__file__).resolve().parent.parent
 DIR = ROOT / "data" / "nutrition"
@@ -71,18 +71,27 @@ def load_foods() -> dict:
     return {f["id"]: f for f in json.loads(FOODS.read_text(encoding="utf-8"))["foods"]}
 
 
-def fetch_remote(path: str):
-    """Datei frisch von raw holen. cache-control ist dort max-age=300,
-    deshalb der Zeitstempel-Parameter."""
-    url = f"{RAW}/{path}?t={int(datetime.now().timestamp())}"
-    req = urllib.request.Request(url, headers={"User-Agent": "nutri457"})
-    try:
-        with urllib.request.urlopen(req, timeout=20) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None
-        raise
+def sync_from_remote() -> None:
+    """Arbeitskopie auf den Stand von origin bringen.
+
+    Der Tresor wird ueber GIT abgeglichen, nicht ueber raw.githubusercontent.
+    raw ist nach einem Push Sekunden bis Minuten hinterher, und der
+    Zeitstempel-Parameter hilft nicht: das ist Verbreitungs-Latenz, kein
+    Cache-Treffer. Gemessen am 31.08.: `add` pushte, `undo` 20 s spaeter las
+    von raw noch den leeren Tresor und meldete "Nichts zu widerrufen". Beim
+    naechsten Schreiben haette dieser alte Stand den neuen ueberschrieben,
+    still. Die CLI hat git, also nimmt sie git. Der Browser hat kein git,
+    fuer den bleibt raw richtig.
+
+    Schlaegt der Abgleich fehl (kein Netz, divergierte Historie), wird mit der
+    lokalen Kopie weitergearbeitet. Ein dann nicht mehr passender Push
+    scheitert laut (non-fast-forward) statt still zu ueberschreiben.
+    """
+    if git("fetch", "--quiet", "origin", BRANCH, check=False).returncode:
+        print("Hinweis: git fetch ging nicht, arbeite mit der lokalen Kopie.")
+        return
+    if git("merge", "--ff-only", "--quiet", f"origin/{BRANCH}", check=False).returncode:
+        print("Hinweis: kein Fast-Forward, arbeite mit der lokalen Kopie.")
 
 
 def empty_vault() -> dict:
@@ -94,12 +103,11 @@ def empty_vault() -> dict:
 
 
 def read_vault(dek: bytes, offline: bool = False) -> dict:
-    blob = None if offline else fetch_remote("data/nutrition/log.enc.json")
-    if blob is None and LOG.exists():
-        blob = json.loads(LOG.read_text())
-    if blob is None:
-        return empty_vault()
-    return nc.decrypt_vault(blob, dek)
+    if not offline:
+        sync_from_remote()
+    if LOG.exists():
+        return nc.decrypt_vault(json.loads(LOG.read_text()), dek)
+    return empty_vault()
 
 
 def write_vault(vault: dict, dek: bytes) -> None:
