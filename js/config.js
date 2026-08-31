@@ -207,8 +207,26 @@ const CFG = {
       k:    { lbl: 'Kohlenhydrate', unit: 'g',    col: '#fbbf24', dec: 1 },
       f:    { lbl: 'Fett',          unit: 'g',    col: '#f472b6', dec: 1 },
       b:    { lbl: 'Ballaststoffe', unit: 'g',    col: '#a78bfa', dec: 1 },
-      ml:   { lbl: 'Fluessigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
+      ml:   { lbl: 'Flüssigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
     },
+
+    // Lueckenfueller fuer die Karte REST DES TAGES. Werte je 100 g, direkt
+    // aus dem BLS 4.0 (Code in Klammern), damit die Vorschlaege auf denselben
+    // Zahlen stehen wie die Eintraege. 'fills' = wofuer der Posten gedacht ist.
+    // Kurz halten: drei Vorschlaege je Luecke reichen, das ist eine Kachel,
+    // kein Kochbuch.
+    fillers: [
+      { name: 'Kartoffeln gekocht', fills: 'k', kcal: 76,  p: 2.0,   k: 15.83, f: 0.1,  b: 2.05 },  // k110132
+      { name: 'Reis trocken',       fills: 'k', kcal: 351, p: 7.93,  k: 77.1,  f: 0.62, b: 2.5  },  // c352000
+      { name: 'Nudeln trocken',     fills: 'k', kcal: 346, p: 12.4,  k: 68.83, f: 1.6,  b: 3.41 },  // e401000
+      { name: 'Banane',             fills: 'k', kcal: 79,  p: 1.32,  k: 15.89, f: 0.4,  b: 2.0  },  // f503100
+      { name: 'Magerquark',         fills: 'p', kcal: 66,  p: 11.85, k: 3.68,  f: 0.18, b: 0    },  // m713100
+      { name: 'Hähnchenbrust',     fills: 'p', kcal: 128, p: 23.3,  k: 0,     f: 3.9,  b: 0    },  // v413132
+      { name: 'Haferflocken',       fills: 'b', kcal: 348, p: 13.22, k: 53.3,  f: 6.65, b: 10.98 }, // c133000
+    ],
+
+    // Ab dieser Luecke lohnt ein Vorschlag. Darunter ist die Sache gegessen.
+    restMin: { p: 10, k: 20, b: 8, ml: 300 },
 
     // Atwater-Faktoren fuer die Makro-Verteilung nach Energie (kcal je g).
     atwater: { p: 4, k: 4, f: 9 },

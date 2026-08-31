@@ -191,6 +191,76 @@ function goalBar(m, val, goal) {
     </div>`;
 }
 
+/* REST DES TAGES.
+ *
+ * Rechnet die offene Luecke zu den Zielen aus und uebersetzt sie in Mengen.
+ * Rein aus Zielen und Tagessumme: die Seite kann niemanden fragen, sie liest.
+ *
+ * Die Uhrzeit steht bewusst dabei. Um 17 Uhr ist ein offenes kcal-Budget das
+ * Abendessen, um 23 Uhr ein Defizit. Die Karte zeigt die Zeit und ueberlaesst
+ * den Schluss dem Leser.
+ *
+ * Jeder Vorschlag schliesst SEINE Luecke allein, und das passt oft nicht ins
+ * kcal-Budget: 99 g Kohlenhydrate sind 625 g Kartoffeln, also 476 kcal, bei
+ * 459 offenen. Solche Posten werden markiert, statt sie zu verschweigen.
+ */
+const fmt = (v, dec) => v.toFixed(dec).replace('.', ',');
+
+function restCard(s, g) {
+  const order = ['kcal', 'p', 'k', 'f', 'b', 'ml'];
+  if (!order.some(m => g[m])) return '';
+
+  const rest = m => g[m] ? g[m] - (s[m] || 0) : null;
+  const restKcal = rest('kcal');
+  const einheit = m => (m === 'kcal' ? 'kcal' : MACRO[m].unit);
+  const zeig = m => `<b>${fmt(rest(m), MACRO[m].dec)} ${einheit(m)}</b>` +
+                    (m === 'kcal' ? '' : ` ${MACRO[m].lbl}`);
+
+  const offen = order.filter(m => rest(m) > 0).map(zeig).join(' · ');
+  const drueber = order.filter(m => rest(m) !== null && rest(m) < 0)
+    .map(m => `${MACRO[m].lbl} ${fmt(-rest(m), MACRO[m].dec)} ${einheit(m)} über`)
+    .join(' · ');
+
+  const zeilen = ['k', 'p', 'b'].filter(m => rest(m) > (FCFG.restMin[m] || 0))
+    .map(m => {
+      const opt = FCFG.fillers.filter(x => x.fills === m)
+        .map(x => {
+          const gramm = rest(m) / x[m] * 100;
+          return { txt: `${Math.round(gramm / 5) * 5} g ${x.name}`,
+                   kcal: Math.round(gramm * x.kcal / 100) };
+        })
+        .sort((a, b) => a.kcal - b.kcal)
+        .slice(0, 3)
+        .map(o => {
+          const eng = restKcal !== null && o.kcal > restKcal;
+          return `${o.txt} <span style="color:var(--${eng ? 'warn' : 't5'})">` +
+                 `${o.kcal} kcal</span>`;
+        });
+      return `<div class="ez-hint" style="margin-top:7px">` +
+             `<b>${fmt(rest(m), MACRO[m].dec)} ${einheit(m)} ${MACRO[m].lbl}</b> = ` +
+             opt.join(' &nbsp;·&nbsp; ') + `</div>`;
+    });
+
+  if (rest('ml') > (FCFG.restMin.ml || 0)) {
+    zeilen.push(`<div class="ez-hint" style="margin-top:7px">` +
+      `<b>${fmt(rest('ml'), 0)} ml ${MACRO.ml.lbl}</b> = ` +
+      `${Math.ceil(rest('ml') / 250)} Glas à 250 ml</div>`);
+  }
+
+  return `
+    <div class="card">
+      <div class="card-hd"><span class="t">REST DES TAGES</span>
+        <span class="s">Stand ${new Date().toLocaleTimeString('de-DE',
+          { hour: '2-digit', minute: '2-digit' })}</span></div>
+      <div class="ez-hint">${offen ? 'offen: ' + offen : 'alle Ziele erreicht'}
+        ${drueber ? `<br><span style="color:var(--warn)">${drueber}</span>` : ''}</div>
+      ${zeilen.join('')}
+      ${zeilen.length ? `<div class="muted" style="margin-top:9px">` +
+        `jede Zeile schließt ihre Lücke allein · gelb = passt nicht mehr ins` +
+        ` kcal-Budget</div>` : ''}
+    </div>`;
+}
+
 function drawDay() {
   const days = byDay(FOOD.vault.entries);
   const key = dayKey(new Date().toISOString());
@@ -224,6 +294,7 @@ function drawDay() {
           return `${MACRO[m].lbl} ${tot ? (kc / tot * 100).toFixed(0) : 0} %`;
         }).join(' · ')}</div>
     </div>
+    ${restCard(s, g)}
     <div class="wcard">
       <div class="wcard-hd"><span class="wlbl">Einträge</span><span class="wvol">${ents.length}</span></div>
       <div class="days">${rows}</div>
