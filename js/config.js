@@ -175,6 +175,45 @@ const CFG = {
     cpDurations: [120, 300, 600, 1200], // Bestwerte fuer den CP/W'-Fit (2-20 min)
   },
 
+  // ── Ernaehrung ────────────────────────────────────────────────────────────
+  // NUR Darstellung und Mechanik. Die ZIELE (kcal, Protein, Ballaststoffe,
+  // Fluessigkeit) stehen NICHT hier: dieses Repo ist oeffentlich. Sie liegen
+  // im verschluesselten Tresor (vault.goals in data/nutrition/log.enc.json),
+  // gesetzt per `nutri.py goals --kcal 1800`. food.js liest sie erst nach dem
+  // Entsperren. Ein nicht gesetztes Ziel (null) zeichnet keine Linie und
+  // keinen Balken-Rest, genau wie ein EF-Band ohne genug Fahrten wegfaellt.
+  food: {
+    // Chiffretext direkt von raw.githubusercontent, nicht aus dem
+    // Pages-Artefakt: Pages braucht nach einem Push Minuten, raw ist sofort
+    // aktuell. Deshalb haengt an jedem Abruf ein Zeitstempel (max-age=300).
+    rawBase: 'https://raw.githubusercontent.com/maxgreene/training-dashboard/main/data/nutrition/',
+
+    // Tagesgrenze in Stunden. 0 = Mitternacht. Auf 4 setzen, wenn ein Snack
+    // um 01:00 noch zum Vortag zaehlen soll.
+    // SYNC-PFLICHT: muss mit DAY_CUTOFF_H in scripts/nutri.py uebereinstimmen.
+    // Dokumentierte Ausnahme zur Ein-Ort-Regel: Python und JS koennen einander
+    // nicht lesen, gleiche Lage wie FTP/HRmax zwischen config.js und
+    // analyze_activities.py. Beim Aendern BEIDE Stellen anfassen.
+    dayCutoffH: 0,
+
+    rangeDays: { week: 7, month: 30 },   // Fenster der beiden Verlaufsansichten
+    chartH: { kcal: 220, macro: 200 },   // px. Hoehe gehoert ins JS, nicht ins CSS.
+
+    // Naehrwerte: Anzeigename, Einheit, Farbe, Nachkommastellen.
+    // kcal/ml ganzzahlig, Makros auf 0.1 g.
+    macros: {
+      kcal: { lbl: 'Energie',       unit: 'kcal', col: '#60a5fa', dec: 0 },
+      p:    { lbl: 'Protein',       unit: 'g',    col: '#34d399', dec: 1 },
+      k:    { lbl: 'Kohlenhydrate', unit: 'g',    col: '#fbbf24', dec: 1 },
+      f:    { lbl: 'Fett',          unit: 'g',    col: '#f472b6', dec: 1 },
+      b:    { lbl: 'Ballaststoffe', unit: 'g',    col: '#a78bfa', dec: 1 },
+      ml:   { lbl: 'Fluessigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
+    },
+
+    // Atwater-Faktoren fuer die Makro-Verteilung nach Energie (kcal je g).
+    atwater: { p: 4, k: 4, f: 9 },
+  },
+
   // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
     easyWindowDays: 14,          // Fenster fuer den Ride-Plot
