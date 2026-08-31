@@ -98,8 +98,10 @@ def sync_from_remote() -> None:
 def empty_vault() -> dict:
     return {
         "version": 1,
+        # kg/kgDate: Zielgewicht und sein Termin. Eigener Termin, weil das
+        # Gewichtsziel am Petersberg haengt, nicht am FTP-Ziel im November.
         "goals": {"kcal": None, "p": None, "k": None, "f": None,
-                  "b": None, "ml": None},
+                  "b": None, "ml": None, "kg": None, "kgDate": None},
         "entries": [],
         # [{"date": "2026-08-31", "kg": 80.4}], je Tag hoechstens einer
         "weights": [],
@@ -391,6 +393,8 @@ def cmd_goals(a):
         v = getattr(a, arg)
         if v is not None:
             g[key] = v
+    if a.kgdate is not None:
+        g["kgDate"] = when(a.kgdate).date().isoformat()
     write_vault(vault, dek)
     print(json.dumps(g, indent=1))
     if not a.no_push:
@@ -467,6 +471,7 @@ def main():
     p = sub.add_parser("goals")
     for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid", "kg"):
         p.add_argument(f"--{n}", type=float)
+    p.add_argument("--kgdate", help="Termin des Gewichtsziels, z.B. 2026-09-19")
     p.set_defaults(fn=cmd_goals)
 
     p = sub.add_parser("weight")

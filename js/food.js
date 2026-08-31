@@ -289,7 +289,9 @@ function weightCard(vault) {
   const W = FCFG.weight;
   const reihe = (vault.weights || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
   const ziel = (vault.goals || {}).kg || null;
-  const zielTag = dnum(CFG.athlete.ftpGoalDate);
+  // Das Gewichtsziel hat seinen eigenen Termin (Petersberg), nicht den des
+  // FTP-Ziels im November. Ohne Angabe faellt es auf den FTP-Termin zurueck.
+  const zielTag = dnum((vault.goals || {}).kgDate || CFG.athlete.ftpGoalDate);
   const heute = dnum(dayKey(new Date().toISOString()));
 
   if (!reihe.length) {
