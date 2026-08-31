@@ -210,6 +210,19 @@ const CFG = {
       ml:   { lbl: 'Flüssigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
     },
 
+    // Gewichtsverlauf. Zielhorizont ist derselbe Tag wie beim FTP-Ziel
+    // (athlete.ftpGoalDate), das ist derselbe Aufbau. Das Zielgewicht steht
+    // NICHT hier, sondern im Tresor (goals.kg): persoenliche Zahl.
+    weight: {
+      height: 210,
+      tau: 10,          // Tage, Zeitkonstante des Trends. Groesser = traeger.
+                        // Tagesschwankung ist Wasser, der Trend ist das Signal.
+      padKg: 0.8,       // Luft ueber und unter den Messpunkten
+      backDays: 42,     // so weit zurueck beginnt die Achse mindestens
+      col: '#f59e0b',
+      trendCol: '#fbbf24',
+    },
+
     // Lueckenfueller fuer die Karte REST DES TAGES. Werte je 100 g, direkt
     // aus dem BLS 4.0 (Code in Klammern), damit die Vorschlaege auf denselben
     // Zahlen stehen wie die Eintraege. 'fills' = wofuer der Posten gedacht ist.

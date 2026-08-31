@@ -261,6 +261,116 @@ function restCard(s, g) {
     </div>`;
 }
 
+/* Gewichtsverlauf bis zum Zieltag.
+ *
+ * Die Reihe liegt im Tresor (vault.weights), ein Wert je Tag. Eingetragen
+ * wird ueber die CLI: die Seite kann nicht ins Repo zurueckschreiben, sie ist
+ * statisch und hat keinen Token.
+ *
+ * Gezeichnet werden Messpunkte und ein zeit-gewichteter EWMA. Ein festes
+ * Alpha je Messung wuerde zacken, sobald mal eine Woche fehlt: derselbe
+ * Grund wie beim EF-Trend in rides.js. alpha = 1 - exp(-dt/tau).
+ */
+const DAY_MS = 86400000;
+const dnum = iso => Math.round(new Date(iso + 'T12:00:00').getTime() / DAY_MS);
+const dlbl = n => new Date(n * DAY_MS).toLocaleDateString('de-DE',
+                    { day: '2-digit', month: '2-digit' });
+
+function weightTrend(pts, tau) {
+  let v = null, t0 = null;
+  return pts.map(pt => {
+    v = v === null ? pt.y : v + (1 - Math.exp(-(pt.x - t0) / tau)) * (pt.y - v);
+    t0 = pt.x;
+    return { x: pt.x, y: v };
+  });
+}
+
+function weightCard(vault) {
+  const W = FCFG.weight;
+  const reihe = (vault.weights || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  const ziel = (vault.goals || {}).kg || null;
+  const zielTag = dnum(CFG.athlete.ftpGoalDate);
+  const heute = dnum(dayKey(new Date().toISOString()));
+
+  if (!reihe.length) {
+    return `
+      <div class="card">
+        <div class="card-hd"><span class="t">GEWICHT</span></div>
+        <div class="ez-none">noch nichts eingetragen · Eintrag über die CLI:
+          <code>nutri.py weight 80.4</code></div>
+      </div>`;
+  }
+
+  const pts = reihe.map(w => ({ x: dnum(w.date), y: w.kg }));
+  const letzt = pts[pts.length - 1];
+  const erst = pts[0];
+  const trend = weightTrend(pts, W.tau);
+  const tLetzt = trend[trend.length - 1].y;
+
+  const alle = pts.map(p => p.y).concat(ziel ? [ziel] : []);
+  const yMin = Math.min(...alle) - W.padKg;
+  const yMax = Math.max(...alle) + W.padKg;
+  const xMin = Math.min(erst.x, heute - W.backDays);
+
+  // Was noch zu tun ist: Rest auf Tage bis zum Ziel, in kg je Woche.
+  const tage = zielTag - heute;
+  const proWoche = ziel && tage > 0 ? (tLetzt - ziel) / tage * 7 : null;
+
+  const kopf = [
+    `<b>${fmt(letzt.y, 1)} kg</b>`,
+    `Trend ${fmt(tLetzt, 1)}`,
+    pts.length > 1 ? `seit ${dlbl(erst.x)} ${fmt(letzt.y - erst.y, 1)} kg` : null,
+    ziel ? `Ziel ${fmt(ziel, 1)} bis ${dlbl(zielTag)}` : null,
+    proWoche !== null ? `nötig ${fmt(-proWoche, 2)} kg/Woche` : null,
+  ].filter(Boolean).join(' · ');
+
+  setTimeout(() => {
+    const el = $('#food-c-kg');
+    if (!el) return;
+    FOOD.charts.kg = new Chart(el, {
+      data: {
+        datasets: [
+          { type: 'line', label: 'Trend', data: trend, borderColor: W.trendCol,
+            borderWidth: 2, pointRadius: 0, tension: 0.25, fill: false },
+          { type: 'scatter', label: 'gemessen', data: pts,
+            backgroundColor: W.col, pointRadius: 3 },
+          ...(ziel ? [{ type: 'line', label: 'Ziel', borderColor: CSSVAR('--ok'),
+            data: [{ x: xMin, y: ziel }, { x: zielTag, y: ziel }],
+            borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false }] : []),
+          { type: 'line', label: 'heute', borderColor: CSSVAR('--t5'),
+            data: [{ x: heute, y: yMin }, { x: heute, y: yMax }],
+            borderWidth: 1, pointRadius: 0, fill: false },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { type: 'linear', offset: false, min: xMin, max: zielTag,
+               ticks: { color: CSSVAR('--t4'), font: { size: 9 }, maxRotation: 0,
+                        callback: v => dlbl(v) },
+               grid: { color: 'rgba(255,255,255,.05)' } },
+          y: { min: yMin, max: yMax,
+               ticks: { color: CSSVAR('--t4'), font: { size: 9 },
+                        callback: v => v.toFixed(1) },
+               grid: { color: 'rgba(255,255,255,.05)' } },
+        },
+      },
+    });
+  }, 0);
+
+  return `
+    <div class="card">
+      <div class="card-hd"><span class="t">GEWICHT</span>
+        <span class="s">${pts.length} Messung${pts.length === 1 ? '' : 'en'}</span></div>
+      <div class="ez-hint" style="margin-bottom:8px">${kopf}</div>
+      <div style="height:${W.height}px"><canvas id="food-c-kg"></canvas></div>
+      <div class="muted" style="margin-top:7px">Trend ${W.tau} d ·
+        Tagesschwankung ist Wasser ·
+        Eintrag <code>nutri.py weight 80.4</code></div>
+    </div>`;
+}
+
 function drawDay() {
   const days = byDay(FOOD.vault.entries);
   const key = dayKey(new Date().toISOString());
@@ -295,6 +405,7 @@ function drawDay() {
         }).join(' · ')}</div>
     </div>
     ${restCard(s, g)}
+    ${weightCard(FOOD.vault)}
     <div class="wcard">
       <div class="wcard-hd"><span class="wlbl">Einträge</span><span class="wvol">${ents.length}</span></div>
       <div class="days">${rows}</div>

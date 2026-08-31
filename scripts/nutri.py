@@ -18,6 +18,7 @@ Beispiele
   nutri.py add "100 g Proteinbrot" "2 Ei" "500 ml Wasser"
   nutri.py today
   nutri.py undo
+  nutri.py weight 80.4
   nutri.py goals --kcal 1800 --protein 145 --carbs 170 --fat 60 --fibre 30 --fluid 3000
   nutri.py add-wrap wrap.json      # Passkey vom Handy nachtragen
 """
@@ -100,6 +101,8 @@ def empty_vault() -> dict:
         "goals": {"kcal": None, "p": None, "k": None, "f": None,
                   "b": None, "ml": None},
         "entries": [],
+        # [{"date": "2026-08-31", "kg": 80.4}], je Tag hoechstens einer
+        "weights": [],
     }
 
 
@@ -383,6 +386,7 @@ def cmd_goals(a):
     vault = read_vault(dek)
     g = vault.setdefault("goals", {})
     for arg, key in (("kcal", "kcal"), ("protein", "p"), ("carbs", "k"),
+                     ("kg", "kg"),
                      ("fat", "f"), ("fibre", "b"), ("fluid", "ml")):
         v = getattr(a, arg)
         if v is not None:
@@ -391,6 +395,43 @@ def cmd_goals(a):
     print(json.dumps(g, indent=1))
     if not a.no_push:
         commit_push("food: Ziele angepasst")
+
+
+def cmd_weight(a):
+    """Koerpergewicht eintragen oder anzeigen.
+
+    Liegt im Tresor, nicht in config.js: das Repo ist oeffentlich. Damit kann
+    die Rides-Seite es allerdings NICHT fuer W/kg benutzen, die liest keinen
+    Tresor. CFG.athlete.weight bleibt dafuer der Handwert.
+
+    Ein Tag, ein Wert. Zweimal am selben Tag ersetzt, statt zu sammeln:
+    Tagesschwankungen von 1 bis 2 kg sind Wasser, kein Signal.
+    """
+    dek = nc.load_dek()
+    vault = read_vault(dek)
+    reihe = vault.setdefault("weights", [])
+
+    if a.kg is None:
+        if not reihe:
+            print("Noch kein Gewicht eingetragen.")
+            return
+        for w in sorted(reihe, key=lambda w: w["date"])[-14:]:
+            print(f"  {w['date']}  {w['kg']:.1f} kg")
+        return
+
+    tag = when(a.date).date().isoformat() if a.date else day_of(datetime.now(TZ))
+    reihe[:] = [w for w in reihe if w["date"] != tag]
+    reihe.append({"date": tag, "kg": round(a.kg, 1)})
+    reihe.sort(key=lambda w: w["date"])
+    write_vault(vault, dek)
+
+    print(f"{tag}: {a.kg:.1f} kg")
+    if len(reihe) > 1:
+        erst, letzt = reihe[0], reihe[-1]
+        d = letzt["kg"] - erst["kg"]
+        print(f"  seit {erst['date']}: {d:+.1f} kg ({len(reihe)} Messungen)")
+    if not a.no_push:
+        commit_push(f"food: Gewicht {tag} {a.kg:.1f} kg")
 
 
 def cmd_search(a):
@@ -424,9 +465,14 @@ def main():
     p = sub.add_parser("today"); p.add_argument("--day"); p.set_defaults(fn=cmd_today)
 
     p = sub.add_parser("goals")
-    for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid"):
+    for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid", "kg"):
         p.add_argument(f"--{n}", type=float)
     p.set_defaults(fn=cmd_goals)
+
+    p = sub.add_parser("weight")
+    p.add_argument("kg", nargs="?", type=float, help="ohne Wert: die letzten 14 zeigen")
+    p.add_argument("--date", help="Tag, z.B. 2026-08-28. Vorgabe heute.")
+    p.set_defaults(fn=cmd_weight)
 
     p = sub.add_parser("search"); p.add_argument("term"); p.set_defaults(fn=cmd_search)
 
