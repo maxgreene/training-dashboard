@@ -121,13 +121,36 @@ def git(*args, check=True):
                           capture_output=True, text=True)
 
 
-def commit_push(msg: str) -> None:
-    git("add", str(LOG.relative_to(ROOT)))
+def commit_push(msg: str, *paths: Path) -> None:
+    """Committen und pushen, mit einem Rebase-Versuch.
+
+    In dieses Repo pusht stuendlich (real alle 15 Minuten) der
+    Trainingsdaten-Workflow. Zwischen `git fetch` in sync_from_remote und dem
+    Push liegen Sekunden, in denen genau das passieren kann: der Push wird als
+    non-fast-forward abgelehnt. Passiert am 31.08. beim ersten `add-wrap`, und
+    zwar als roher CalledProcessError-Traceback.
+
+    Einmal rebasen und erneut pushen reicht. Konflikte kann es dabei nicht
+    geben: der Workflow fasst nur data/activities.json und data/health.json an,
+    diese CLI nur data/nutrition. Bleibt es trotzdem haengen, laut abbrechen.
+    """
+    for p in (paths or (LOG,)):
+        git("add", str(p.relative_to(ROOT)))
     if not git("diff", "--cached", "--quiet", check=False).returncode:
         print("nichts geaendert")
         return
     git("commit", "-m", msg)
-    git("push", "origin", BRANCH)
+    if git("push", "origin", BRANCH, check=False).returncode:
+        print("Push abgelehnt (Repo war weiter), rebase und nochmal.")
+        if git("pull", "--rebase", "--quiet", "origin", BRANCH, check=False).returncode:
+            git("rebase", "--abort", check=False)
+            raise SystemExit(
+                "Rebase fehlgeschlagen. Der Commit liegt lokal, nichts ist "
+                "verloren. Von Hand aufloesen, dann `git push origin main`.")
+        if git("push", "origin", BRANCH, check=False).returncode:
+            raise SystemExit(
+                "Push auch nach dem Rebase abgelehnt. Der Commit liegt lokal, "
+                "nichts ist verloren.")
     print(f"gepusht: {msg}")
 
 
@@ -258,6 +281,10 @@ def cmd_import_key(a):
 
 
 def cmd_add_wrap(a):
+    # Erst abgleichen: sonst schreibt ein Geraet den Wrap eines anderen weg,
+    # wenn beide in derselben Stunde eingetragen werden. Gleiche Begruendung
+    # wie in read_vault, hier fuer keys.json.
+    sync_from_remote()
     wrap = json.loads(Path(a.file).read_text())
     keys = json.loads(KEYS.read_text())
     labels = [w.get("label") for w in keys["wraps"]]
@@ -265,10 +292,7 @@ def cmd_add_wrap(a):
         raise SystemExit(f"Wrap {wrap.get('label')!r} gibt es schon.")
     keys["wraps"].append(wrap)
     KEYS.write_text(json.dumps(keys, indent=1) + "\n")
-    git("add", str(KEYS.relative_to(ROOT)))
-    git("commit", "-m", f"food: Passkey {wrap.get('label')} hinzugefuegt")
-    git("push", "origin", BRANCH)
-    print(f"{wrap.get('label')} eingetragen und gepusht")
+    commit_push(f"food: Passkey {wrap.get('label')} hinzugefuegt", KEYS)
 
 
 def cmd_add(a):
