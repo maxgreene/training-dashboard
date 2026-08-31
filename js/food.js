@@ -293,10 +293,16 @@ function weightCard(vault) {
   const heute = dnum(dayKey(new Date().toISOString()));
 
   if (!reihe.length) {
+    // Auch ohne Messung schon zeigen, worauf es hinausläuft.
     return `
       <div class="card">
-        <div class="card-hd"><span class="t">GEWICHT</span></div>
-        <div class="ez-none">noch nichts eingetragen · Eintrag über die CLI:
+        <div class="card-hd"><span class="t">GEWICHT</span>
+          <span class="s">noch keine Messung</span></div>
+        <div class="ez-hint">${ziel
+          ? `Ziel <b>${fmt(ziel, 1)} kg</b> bis ${dlbl(zielTag)}` +
+            ` · noch ${zielTag - heute} Tage`
+          : 'kein Zielgewicht gesetzt'}</div>
+        <div class="muted" style="margin-top:7px">Eintrag
           <code>nutri.py weight 80.4</code></div>
       </div>`;
   }
