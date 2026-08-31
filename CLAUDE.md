@@ -73,6 +73,14 @@ js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
                                   EF-Chart, Fahrtenliste (mit Strecken-Thumbnail),
                                   3 Detailplots + Detail-Streckenkarte (routeSvg)
 js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
+js/vault.js                       Tresor aufschliessen: WebAuthn-PRF, PBKDF2,
+                                  AES-GCM. Gegenstück zu nutri_crypto.py
+js/food.js                        Food-Seite: Tag/Woche/Monat, Ziel-Balken,
+                                  Passkey anlegen
+scripts/nutri.py                  Ernährungs-CLI: init, add, undo, today,
+                                  goals, search, add-wrap, import-key
+scripts/nutri_crypto.py           AES-256-GCM, DEK-Wrapping, Schlüsseldatei
+.githooks/pre-commit              blockt Klartext-Log und rohe Schlüssel
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
 scripts/fetch_garmin_activities.py Garmin Indoor/Rolle nach activities.json + streams/
 scripts/fit_streams.py            gemeinsame FIT-nach-Streams-Umwandlung (Wahoo + Garmin)
@@ -84,6 +92,9 @@ data/streams/{id}.json            ROH, 1 Hz. NIE anfassen.
 data/activities.json              Index mit allen Kennzahlen
 data/analysis/{id}.json           Eine Serie pro Fahrt
 data/health.json                  Garmin: HRV, RHR, Schlaf, Stress
+data/nutrition/foods.json         Lebensmitteltabelle (provisorisch)
+data/nutrition/keys.json          eingewickelte DEKs (Passphrase + je Gerät)
+data/nutrition/log.enc.json       der Tresor, AES-256-GCM
 ```
 
 Frontend ist Vanilla JS ohne Build-Schritt. Chart.js per CDN. Keine Frameworks,
@@ -252,6 +263,15 @@ waren 57 Minuten bei konstant 114 bpm eingefroren.
 **4iiii-Kalibrierung** x1.247 für IDs `18719827047` und `18717251723`. Der
 Powermeter las am 30.05. rund 20 % zu niedrig.
 
+**`DAY_CUTOFF_H` existiert zwangsläufig doppelt.** `CFG.food.dayCutoffH` in
+`js/config.js` und `DAY_CUTOFF_H` in `scripts/nutri.py`. Python und JS können
+einander nicht lesen, das ist dieselbe Lage wie FTP/HRmax zwischen `config.js`
+und `analyze_activities.py`: dokumentierte Ausnahme zur Ein-Ort-Regel, kein
+Fehler. Beim Ändern **beide** Stellen anfassen, sonst landet ein Eintrag im
+Browser auf einem anderen Tag als in der CLI. An beiden Stellen steht ein
+Sync-Kommentar. Die Zeitzone in `nutri.py` ist fest UTC+2 verdrahtet, vor Ende
+Oktober auf `zoneinfo.ZoneInfo("Europe/Berlin")` umstellen.
+
 ### Chart.js
 
 **Ein `bar`-Datensatz ändert stillschweigend die Achsen-Voreinstellungen.**
@@ -310,6 +330,11 @@ sonst faellt es weg.
 **Feste Achsen brauchen Clipping und einen Zähler.** Sonst malt etwas über die
 Achse hinaus oder Punkte verschwinden unbemerkt. Der Scatter zeigt
 `n=241 · 78% drin · 3 außerhalb`.
+
+**Chart.js löst auf dem Canvas keine CSS-Variablen auf.** `borderColor:
+'var(--ok)'` sieht richtig aus, wird aber still ignoriert und der Datensatz
+bekommt Chart.js-Grau. Immer `CSSVAR('--ok')` aus `shared.js` benutzen. Einmal
+in `food.js` reingefallen (die Ziellinie war unsichtbar grau).
 
 **Scatter-Zielzone.** Der HF-gegen-Leistung-Scatter (`drawScatter`) legt einen
 blau hinterlegten Kasten unter die beiden Z2/Z3-Decken (Leistung `bounds[2]`
@@ -402,12 +427,54 @@ alte Module aus.
 
 Push auf `main` löst den Deploy aus.
 
+Der Build kopiert eine **Namensliste, kein Verzeichnis**. Neue Datenordner
+müssen dort ausdrücklich rein, sonst fehlen sie live. `data/nutrition` steht
+seit dem Food-Tab drin. Fällt die Zeile weg, liefert die Seite 404 auf
+`foods.json` und der Deploy bleibt trotzdem grün.
+
 **Wahoo Reauth** (`wahoo-reauth.yml`): manueller `workflow_dispatch`, nimmt den
 Wahoo-`code` als Input, tauscht ihn gegen einen frischen `refresh_token`, setzt
 das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 (`wahoo_skipped`). Details oben unter Token-Ketten.
 
 ---
+
+## Ernährungs-Logbuch (Food-Tab)
+
+Vierter Tab. **Geschrieben wird nur über die CLI, gelesen nur im Browser.**
+GitHub Pages ist statisch, die Seite kann nicht ins Repo zurückschreiben (siehe
+Offene Punkte). Ausführliche Übergabe: `FOOD.md`.
+
+**Das Repo ist öffentlich, das Logbuch liegt deshalb verschlüsselt darin.**
+Ein DEK (32 Byte, AES-256-GCM) verschlüsselt `log.enc.json`. Der DEK selbst
+steht nie im Repo, sondern mehrfach eingewickelt in `keys.json`: einmal per
+Passphrase (PBKDF2-SHA256, 600 000 Runden) als Wiederherstellung, und **ein
+Wrap pro Gerät** per WebAuthn-PRF nach HKDF. Apples PRF funktioniert nur im
+Flow auf demselben Gerät zuverlässig, über den QR-Code auf ein zweites Gerät
+kommt teils ein leeres Ergebnis zurück. Also: iPhone-Passkey am iPhone anlegen,
+Laptop-Passkey am Laptop, per `nutri.py add-wrap` nachtragen.
+
+Der Passkey meldet niemanden an. Es gibt keinen Server, an dem man sich anmelden
+könnte. Er ist ein Schlüsselableiter, den Face ID bewacht. **Ohne
+Passphrase-Wrap ist ein verlorener Passkey ein verlorenes Logbuch.**
+
+**Ziele stehen NICHT in `config.js`.** kcal, Protein, Ballaststoffe und
+Flüssigkeit sind persönliche Zahlen und liegen im Tresor (`vault.goals`),
+gesetzt per `nutri.py goals --kcal 1800`. Das ist die Ausnahme zur Regel "alle
+Zahlen in der Config": die Config ist öffentlich, der Tresor nicht. `CFG.food`
+hält nur Darstellung und Mechanik (Farben, `dayCutoffH`, Fenster, Chart-Höhen,
+Atwater-Faktoren). Ein Ziel auf `null` zeichnet weder Linie noch Balken-Rest,
+gleiche Logik wie ein EF-Band ohne genug Fahrten.
+
+**Die Seite liest von `raw.githubusercontent`, nicht aus dem Pages-Artefakt.**
+Pages braucht nach einem Push Minuten, raw ist sofort aktuell, liefert
+`access-control-allow-origin: *` und `cache-control: max-age=300`, deshalb hängt
+an jedem Abruf ein `?t=<timestamp>`. Pages liefert nur die statische Hülle plus
+`foods.json`.
+
+`.githooks/pre-commit` blockt Klartext-Log und rohe Schlüssel. Aktiv erst nach
+`git config core.hooksPath .githooks`, das ist lokale Konfiguration und wandert
+nicht mit dem Klon mit.
 
 ## Trainingskontext
 
@@ -508,7 +575,16 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 2. `plan.template` reicht nur für den aktuellen Block, weitere später.
 3. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
-4. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
+4. `data/nutrition/foods.json` ist aus einem Screenshot abgetippt und nicht
+   belastbar (beim Ei ist die kcal-Spalte pro Portion, die Makros pro 100 g,
+   Atwater ergibt 137 kcal/100 g). Ersatz: Google-Tabelle als CSV, oder aus
+   BLS 4.0 erzeugen (7140 Lebensmittel, lizenzfrei, blsdb.de).
+   `scripts/build_foods.py` fehlt noch.
+5. Kein Schreibweg vom Handy. Bewusst so, GitHub Pages ist statisch. Wer in der
+   Bäckerei loggen will, bräuchte Cloudflare Pages plus Access.
+6. Energieziel steht fix im Tresor. Offen, ob es später aus dem Tages-TSS
+   skalieren soll, die Daten liegen im selben Repo.
+7. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
    den CP-Fit. Verfeinerung wäre, nur nahe-maximale Efforts zu zählen (HF nahe
    Max oder Wert passt zur Kurve), damit ein lockeres 20-min CP nicht verzerrt.
 
