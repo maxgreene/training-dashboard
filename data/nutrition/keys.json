@@ -12,6 +12,14 @@
    },
    "nonce": "OOQgwlbMatXOb/Uu",
    "ct": "0rw2xhPndQYO5cLi+nPzW+f7pWBAR6xOvE+AUnFxxjD7YP0bdUyj6GKKTk/TuVO4"
+  },
+  {
+   "nonce": "qVkPasoIwGXhkS3x",
+   "ct": "dvsSXakBtfNxUwKn0Lh6XFLyliqnT09BeM2oKY1AMEblXkf8ZwotE3sXpC0nC2fr",
+   "type": "prf",
+   "label": "Iphone15",
+   "credentialId": "rYKeZLZkD8Wh+2HhZ/IDQhHE1bQ=",
+   "hkdfSalt": "cx0YTNu2HiczEllExvxYNw=="
   }
  ]
 }
