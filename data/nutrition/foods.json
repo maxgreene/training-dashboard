@@ -1,0 +1,33 @@
+{
+ "version": 1,
+ "note": "PROVISORISCH. Abgetippt aus dem Screenshot der Google-Tabelle vom 31.08.2026. Vor dem Produktivbetrieb entweder per CSV-Export der Tabelle oder aus BLS 4.0 neu erzeugen (scripts/build_foods.py). Alle Werte pro 100 g bzw. 100 ml.",
+ "fields": {
+  "f": "Fett g/100g", "k": "Kohlenhydrate g/100g", "p": "Protein g/100g",
+  "b": "Ballaststoffe g/100g", "kcal": "kcal/100g", "ml": "Fluessigkeit ml/100g"
+ },
+ "foods": [
+  {"id": "gouda",            "name": "Gouda",                  "f": 30.8, "k": 0.0,  "p": 21.9, "b": 0.0,  "kcal": 364.0, "ml": 0, "portion": {"label": "Scheibe", "g": 50}},
+  {"id": "huettenkaese",     "name": "Huettenkaese",           "f": 5.5,  "k": 1.6,  "p": 12.5, "b": 0.0,  "kcal": 95.0,  "ml": 0, "portion": {"label": "Becher", "g": 200}, "unsicher": "Zeile im Screenshot angeschnitten"},
+  {"id": "basismuesli",      "name": "BasisMuesli",            "f": 6.3,  "k": 58.6, "p": 13.3, "b": 10.6, "kcal": 366.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "cashews",          "name": "Cashews",                "f": 47.5, "k": 22.2, "p": 21.7, "b": 3.7,  "kcal": 612.0, "ml": 0, "portion": {"label": "Handvoll", "g": 20}},
+  {"id": "ei",               "name": "Ei",                     "f": 9.3,  "k": 1.5,  "p": 11.9, "b": 0.0,  "kcal": 79.0,  "ml": 0, "portion": {"label": "Ei", "g": 58}},
+  {"id": "spiegelei",        "name": "Spiegelei",              "f": 17.1, "k": 1.5,  "p": 11.4, "b": 0.0,  "kcal": 204.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "proteinbrot",      "name": "Proteinbrot",            "f": 13.0, "k": 6.5,  "p": 21.2, "b": 5.5,  "kcal": 256.0, "ml": 0, "portion": {"label": "Scheibe", "g": 100}},
+  {"id": "porridge_selbst",  "name": "Porridge selbstgemacht", "f": 7.5,  "k": 54.2, "p": 13.9, "b": 13.7, "kcal": 368.6, "ml": 0, "portion": {"label": "Portion", "g": 50}},
+  {"id": "haferhimmel",      "name": "Haferhimmel Porridge",   "f": 6.7,  "k": 57.8, "p": 13.1, "b": 10.8, "kcal": 366.0, "ml": 0, "portion": {"label": "Beutel", "g": 45}},
+  {"id": "toastscheibe",     "name": "Toastscheibe",           "f": 3.5,  "k": 45.0, "p": 10.0, "b": 4.7,  "kcal": 257.0, "ml": 0, "portion": {"label": "Scheibe", "g": 30}},
+  {"id": "milchschokolade",  "name": "Milchschokolade",        "f": 30.0, "k": 60.0, "p": 6.0,  "b": 0.0,  "kcal": 536.0, "ml": 0, "portion": {"label": "Riegel", "g": 50}},
+  {"id": "energiebombe",     "name": "Energiebombe Riegel",    "f": 28.0, "k": 39.0, "p": 9.0,  "b": 6.0,  "kcal": 456.0, "ml": 0, "portion": {"label": "Riegel", "g": 50}},
+  {"id": "hafervoll",        "name": "Hafervoll Riegel",       "f": 30.0, "k": 50.0, "p": 7.7,  "b": 5.1,  "kcal": 506.0, "ml": 0, "portion": {"label": "Riegel", "g": 65}},
+  {"id": "kekse",            "name": "Kekse",                  "f": 32.0, "k": 54.0, "p": 5.0,  "b": 0.0,  "kcal": 504.0, "ml": 0, "portion": {"label": "Portion", "g": 30}},
+  {"id": "chips",            "name": "Chips",                  "f": 33.0, "k": 49.0, "p": 6.1,  "b": 0.0,  "kcal": 533.0, "ml": 0, "portion": {"label": "Tuete", "g": 100}},
+  {"id": "haribo",           "name": "Haribo",                 "f": 0.5,  "k": 77.0, "p": 6.9,  "b": 0.0,  "kcal": 343.0, "ml": 0, "portion": {"label": "Handvoll", "g": 20}},
+  {"id": "chickennuggets",   "name": "ChickenNuggets",         "f": 9.5,  "k": 12.0, "p": 14.0, "b": 0.0,  "kcal": 190.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "pizza",            "name": "Pizza",                  "f": 9.6,  "k": 24.6, "p": 9.7,  "b": 2.0,  "kcal": 228.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "reis",             "name": "Reis",                   "f": 0.4,  "k": 28.0, "p": 3.3,  "b": 0.0,  "kcal": 126.0, "ml": 0, "portion": {"label": "Portion", "g": 80}},
+  {"id": "linsencurry",      "name": "LinsenCurry",            "f": 17.0, "k": 33.0, "p": 13.0, "b": 10.3, "kcal": 360.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "mittagabendessen", "name": "Mittag/Abendessen",      "f": 8.0,  "k": 15.0, "p": 15.0, "b": 7.0,  "kcal": 300.0, "ml": 0, "portion": {"label": "Portion", "g": 100}},
+  {"id": "wasser",           "name": "Wasser",                 "f": 0.0,  "k": 0.0,  "p": 0.0,  "b": 0.0,  "kcal": 0.0,   "ml": 100, "portion": {"label": "Glas", "g": 250}},
+  {"id": "kaffee",           "name": "Kaffee",                 "f": 0.0,  "k": 0.0,  "p": 0.2,  "b": 0.0,  "kcal": 2.0,   "ml": 100, "portion": {"label": "Tasse", "g": 200}}
+ ]
+}

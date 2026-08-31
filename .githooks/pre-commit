@@ -1,0 +1,24 @@
+#!/bin/sh
+# -> nach .githooks/pre-commit kopieren, chmod +x, git config core.hooksPath .githooks
+# Verhindert, dass Klartext oder Schluessel im oeffentlichen Repo landen.
+# Ein einziger Fehlgriff ist dauerhaft: History-Rewrite holt nichts zurueck,
+# was schon abgerufen wurde.
+staged=$(git diff --cached --name-only)
+
+for bad in data/nutrition/log.json data/nutrition/key; do
+  echo "$staged" | grep -qx "$bad" && {
+    echo "pre-commit: $bad darf nicht committet werden."; exit 1; }
+done
+
+if echo "$staged" | grep -qx data/nutrition/log.enc.json; then
+  blob=$(git show :data/nutrition/log.enc.json)
+  echo "$blob" | grep -q '"ct"' || {
+    echo "pre-commit: log.enc.json enthaelt kein Chiffrat. Abbruch."; exit 1; }
+  echo "$blob" | grep -qi '"entries"\|kcal' && {
+    echo "pre-commit: log.enc.json sieht nach Klartext aus. Abbruch."; exit 1; }
+fi
+
+git diff --cached | grep -qE '^\+.*"dek"[[:space:]]*:' && {
+  echo "pre-commit: sieht nach einem rohen DEK im Diff aus. Abbruch."; exit 1; }
+
+exit 0
