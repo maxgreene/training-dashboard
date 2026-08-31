@@ -171,18 +171,41 @@ def resolve(text: str, foods: dict) -> dict:
     unit = (m.group("u") or "").lower()
     name = m.group("name").strip()
 
+    # Vier Stufen, absteigend eindeutig. Seit die Tabelle aus dem BLS kommt,
+    # sind es 7149 Lebensmittel: eine reine Teilstring-Suche liefert bei
+    # "Kaffee" 40 Treffer und damit nur noch Fehlermeldungen. Deshalb gewinnt
+    # der Kurzname (foods_extra.json) vor jedem BLS-Namen.
     key = norm(name)
-    hits = [f for f in foods.values() if norm(f["name"]) == key]
-    if not hits:
-        hits = [f for f in foods.values() if key and key in norm(f["name"])]
+    if not key:
+        raise SystemExit(f"Nicht verstanden: {text!r}")
+
+    for stufe in ("alias", "name", "id", "teil"):
+        if stufe == "alias":
+            hits = [f for f in foods.values()
+                    if any(norm(a) == key for a in f.get("alias", []))]
+        elif stufe == "name":
+            hits = [f for f in foods.values() if norm(f["name"]) == key]
+        elif stufe == "id":
+            hits = [f for f in foods.values() if f["id"].lower() == name.lower()]
+        else:
+            hits = [f for f in foods.values() if key in norm(f["name"])]
+        if hits:
+            break
+
     if not hits:
         raise SystemExit(
             f"Unbekanntes Lebensmittel: {name!r}\n"
-            f"  nutri.py search {name!r}  oder in data/nutrition/foods.json ergaenzen"
+            f"  nutri.py search {name!r}  fuer die BLS-Suche, oder einen"
+            f" Kurznamen in data/nutrition/foods_extra.json eintragen"
         )
     if len(hits) > 1:
-        names = ", ".join(h["name"] for h in hits[:8])
-        raise SystemExit(f"{name!r} ist mehrdeutig: {names}")
+        zeilen = "\n".join(f"    {h['id']:<10} {h['name']}" for h in hits[:8])
+        mehr = f"\n    ... und {len(hits) - 8} weitere" if len(hits) > 8 else ""
+        raise SystemExit(
+            f"{name!r} ist mehrdeutig ({len(hits)} Treffer):\n{zeilen}{mehr}\n"
+            f"  Genauer schreiben, die id benutzen, oder einen Kurznamen in"
+            f" foods_extra.json eintragen und build_foods.py laufen lassen."
+        )
     food = hits[0]
 
     # Menge in Gramm bzw. Milliliter aufloesen

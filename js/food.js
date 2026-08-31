@@ -14,7 +14,7 @@
 const FCFG = CFG.food;
 const MACRO = FCFG.macros;
 
-const FOOD = { keys: null, foods: null, vault: null, dek: null, view: 'day', charts: {} };
+const FOOD = { keys: null, vault: null, dek: null, view: 'day', charts: {} };
 
 function foodBust() { return '?t=' + Date.now(); }
 
@@ -81,11 +81,10 @@ async function foodUnlock(deriver) {
   const err = $('#food-err');
   err.textContent = '';
   try {
-    if (!FOOD.keys) {
-      [FOOD.keys, FOOD.foods] = await Promise.all([
-        foodFetch('keys.json'), foodFetch('foods.json')
-      ]);
-    }
+    // Nur keys.json. Die Lebensmitteltabelle (BLS 4.0, 1,2 MB) braucht die
+    // CLI beim Schreiben, nicht der Browser: in den Eintraegen stehen die
+    // Naehrwerte schon ausgerechnet.
+    if (!FOOD.keys) FOOD.keys = await foodFetch('keys.json');
     const dek = await deriver(FOOD.keys);
     const blob = await foodFetch('log.enc.json');
     FOOD.vault = await Vault.open(blob, dek);

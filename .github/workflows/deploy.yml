@@ -39,11 +39,11 @@ jobs:
           cp -r data/activities.json _site/data/ 2>/dev/null || true
           cp -r data/health.json _site/data/ 2>/dev/null || true
           cp -r data/analysis/. _site/data/analysis/ 2>/dev/null || true
-          # Ernaehrungs-Tab: foods.json muss ins Artefakt, sonst 404 in Prod.
-          # keys.json und log.enc.json holt die Seite direkt von raw.github
-          # (sofort aktuell), Mitkopieren schadet aber nicht.
-          mkdir -p _site/data/nutrition
-          cp -r data/nutrition/. _site/data/nutrition/ 2>/dev/null || true
+          # data/nutrition kommt BEWUSST nicht ins Artefakt: keys.json und
+          # log.enc.json holt die Seite von raw (sofort aktuell statt Minuten
+          # hinterher), und foods.json (BLS 4.0, 1,2 MB) braucht nur die CLI.
+          # Mitkopieren waere derselbe Fehler wie frueher data/streams: die
+          # Deploy-Timeouts wuchsen mit der Artefaktgroesse.
           # Frontend-Module
           cp -r js _site/ 2>/dev/null || true
           # Cache-Busting: ?v=BUILD in index.html durch die Commit-SHA ersetzen.
