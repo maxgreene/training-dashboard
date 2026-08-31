@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+"""nutri - Ernaehrungs-Logbuch fuer das Training-Dashboard.
+
+Wird von Claude Code aufgerufen, nicht von Hand. Der Ablauf ist immer gleich:
+
+  1. aktuellen Chiffretext von raw.githubusercontent holen  (NICHT lokal raten)
+  2. mit dem lokalen DEK entschluesseln
+  3. Eintraege anhaengen / aendern
+  4. neu verschluesseln, nach data/nutrition/log.enc.json schreiben
+  5. committen und pushen
+
+Schritt 1 ist wichtig: es kann sein, dass von einem anderen Rechner aus
+geloggt wurde. Eine lokale Arbeitskopie ist nie die Wahrheit.
+
+Beispiele
+---------
+  nutri.py init
+  nutri.py add "100 g Proteinbrot" "2 Ei" "500 ml Wasser"
+  nutri.py today
+  nutri.py undo
+  nutri.py goals --kcal 2600 --protein 125 --fibre 30 --fluid 2500
+  nutri.py add-wrap wrap.json      # Passkey vom Handy nachtragen
+"""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+import unicodedata
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import nutri_crypto as nc  # noqa: E402
+
+REPO = "maxgreene/training-dashboard"
+BRANCH = "main"
+RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
+
+ROOT = Path(__file__).resolve().parent.parent
+DIR = ROOT / "data" / "nutrition"
+LOG = DIR / "log.enc.json"
+KEYS = DIR / "keys.json"
+FOODS = DIR / "foods.json"
+
+# Tagesgrenze. 0 = Mitternacht. Auf 4 setzen, wenn ein Snack um 01:00 noch
+# zum Vortag zaehlen soll.
+# SYNC-PFLICHT: muss mit CFG.food.dayCutoffH in js/config.js uebereinstimmen.
+# Dokumentierte Ausnahme zur Ein-Ort-Regel (Python und JS lesen einander nicht),
+# analog FTP/HRmax zwischen config.js und analyze_activities.py. Siehe CLAUDE.md.
+DAY_CUTOFF_H = 0
+
+TZ = timezone(timedelta(hours=2))  # Europe/Berlin, Sommerzeit
+
+
+# ── Hilfen ────────────────────────────────────────────────────────────────
+
+def norm(s: str) -> str:
+    """Fuer den Namensabgleich: Kleinschreibung, Umlaute weg, nur a-z0-9."""
+    s = unicodedata.normalize("NFKD", s.lower())
+    s = s.replace("ß", "ss")
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]", "", s)
+
+
+def load_foods() -> dict:
+    if not FOODS.exists():
+        raise SystemExit(f"{FOODS} fehlt. Erst scripts/build_foods.py laufen lassen.")
+    return {f["id"]: f for f in json.loads(FOODS.read_text(encoding="utf-8"))["foods"]}
+
+
+def fetch_remote(path: str):
+    """Datei frisch von raw holen. cache-control ist dort max-age=300,
+    deshalb der Zeitstempel-Parameter."""
+    url = f"{RAW}/{path}?t={int(datetime.now().timestamp())}"
+    req = urllib.request.Request(url, headers={"User-Agent": "nutri457"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
+def empty_vault() -> dict:
+    return {
+        "version": 1,
+        "goals": {"kcal": None, "p": None, "b": None, "ml": None},
+        "entries": [],
+    }
+
+
+def read_vault(dek: bytes, offline: bool = False) -> dict:
+    blob = None if offline else fetch_remote("data/nutrition/log.enc.json")
+    if blob is None and LOG.exists():
+        blob = json.loads(LOG.read_text())
+    if blob is None:
+        return empty_vault()
+    return nc.decrypt_vault(blob, dek)
+
+
+def write_vault(vault: dict, dek: bytes) -> None:
+    DIR.mkdir(parents=True, exist_ok=True)
+    blob = nc.encrypt_vault(vault, dek)
+    LOG.write_text(json.dumps(blob, indent=1) + "\n")
+
+
+def git(*args, check=True):
+    return subprocess.run(["git", "-C", str(ROOT), *args], check=check,
+                          capture_output=True, text=True)
+
+
+def commit_push(msg: str) -> None:
+    git("add", str(LOG.relative_to(ROOT)))
+    if not git("diff", "--cached", "--quiet", check=False).returncode:
+        print("nichts geaendert")
+        return
+    git("commit", "-m", msg)
+    git("push", "origin", BRANCH)
+    print(f"gepusht: {msg}")
+
+
+def day_of(ts: datetime) -> str:
+    return (ts - timedelta(hours=DAY_CUTOFF_H)).astimezone(TZ).date().isoformat()
+
+
+# ── Mengen-Parser ─────────────────────────────────────────────────────────
+# Versteht: "100 g Proteinbrot" | "2 Ei" | "500 ml Wasser" | "Gouda"
+QTY = re.compile(r"^\s*(?P<n>[\d.,]+)?\s*(?P<u>g|gramm|ml|stk|stueck|x)?\s*(?P<name>.+?)\s*$", re.I)
+
+
+def resolve(text: str, foods: dict) -> dict:
+    m = QTY.match(text)
+    if not m:
+        raise SystemExit(f"Nicht verstanden: {text!r}")
+    n = float(m.group("n").replace(",", ".")) if m.group("n") else None
+    unit = (m.group("u") or "").lower()
+    name = m.group("name").strip()
+
+    key = norm(name)
+    hits = [f for f in foods.values() if norm(f["name"]) == key]
+    if not hits:
+        hits = [f for f in foods.values() if key and key in norm(f["name"])]
+    if not hits:
+        raise SystemExit(
+            f"Unbekanntes Lebensmittel: {name!r}\n"
+            f"  nutri.py search {name!r}  oder in data/nutrition/foods.json ergaenzen"
+        )
+    if len(hits) > 1:
+        names = ", ".join(h["name"] for h in hits[:8])
+        raise SystemExit(f"{name!r} ist mehrdeutig: {names}")
+    food = hits[0]
+
+    # Menge in Gramm bzw. Milliliter aufloesen
+    if unit in ("g", "gramm", "ml"):
+        grams = n
+    elif n is not None and (unit in ("stk", "stueck", "x") or food.get("portion")):
+        per = (food.get("portion") or {}).get("g")
+        if per is None:
+            raise SystemExit(f"{food['name']} hat keine Portionsgroesse. Menge in g angeben.")
+        grams = n * per
+    elif n is None:
+        per = (food.get("portion") or {}).get("g")
+        if per is None:
+            raise SystemExit(f"Menge fehlt bei {food['name']}.")
+        grams = per
+    else:
+        grams = n
+
+    q = grams / 100.0
+    return {
+        "food": food["id"],
+        "label": food["name"],
+        "g": round(grams, 1),
+        "f": round(food["f"] * q, 1),
+        "k": round(food["k"] * q, 1),
+        "p": round(food["p"] * q, 1),
+        "b": round(food["b"] * q, 1),
+        "kcal": round(food["kcal"] * q, 1),
+        "ml": round(food.get("ml", 0) * q, 1),
+    }
+
+
+def totals(entries: list) -> dict:
+    out = {k: 0.0 for k in ("f", "k", "p", "b", "kcal", "ml")}
+    for e in entries:
+        for k in out:
+            out[k] += e.get(k, 0)
+    return {k: round(v, 1) for k, v in out.items()}
+
+
+def show_day(vault: dict, day: str) -> None:
+    ents = [e for e in vault["entries"] if day_of(datetime.fromisoformat(e["ts"])) == day]
+    if not ents:
+        print(f"{day}: nichts geloggt")
+        return
+    print(f"\n{day}")
+    for e in ents:
+        t = datetime.fromisoformat(e["ts"]).astimezone(TZ).strftime("%H:%M")
+        print(f"  {t}  {e['label']:<26} {e['g']:>6.0f} g   {e['kcal']:>6.0f} kcal  P {e['p']:>5.1f}")
+    t = totals(ents)
+    g = vault.get("goals") or {}
+    print(f"  {'':>7}{'SUMME':<26} {'':>8}   {t['kcal']:>6.0f} kcal  P {t['p']:>5.1f}  B {t['b']:>5.1f}  Fl {t['ml']:>5.0f}")
+    for key, lbl in (("kcal", "kcal"), ("p", "Protein"), ("b", "Ballast"), ("ml", "Fluessig")):
+        if g.get(key):
+            rest = g[key] - t[key]
+            print(f"  Rest {lbl:<10} {rest:>8.1f} von {g[key]}")
+
+
+# ── Befehle ───────────────────────────────────────────────────────────────
+
+def cmd_init(a):
+    if KEYS.exists():
+        raise SystemExit(f"{KEYS} existiert schon. init wuerde den Tresor unbrauchbar machen.")
+    import getpass
+    pw = getpass.getpass("Wiederherstellungs-Passphrase (lang, aufschreiben): ")
+    if len(pw) < 16:
+        raise SystemExit("Zu kurz. Mindestens 16 Zeichen.")
+    if pw != getpass.getpass("Nochmal: "):
+        raise SystemExit("Stimmt nicht ueberein.")
+
+    dek = nc.new_dek()
+    DIR.mkdir(parents=True, exist_ok=True)
+    KEYS.write_text(json.dumps({
+        "v": 1,
+        "prfSalt": "nutri457-dek-v1",
+        "wraps": [nc.wrap_dek_passphrase(dek, pw)],
+    }, indent=1) + "\n")
+    write_vault(empty_vault(), dek)
+    p = nc.save_dek(dek)
+
+    print(f"\nSchluessel: {p} (Modus 600, ausserhalb des Repos)")
+    print(f"Tresor:     {LOG}")
+    print(f"Wraps:      {KEYS}")
+    print("\nNaechste Schritte:")
+    print("  1. keys.json und log.enc.json committen und pushen")
+    print("  2. Am Handy die Food-Seite oeffnen, mit der Passphrase entsperren,")
+    print("     'Passkey hinzufuegen' tippen, den angezeigten Block kopieren")
+    print("  3. nutri.py add-wrap <datei.json>")
+
+
+def cmd_import_key(a):
+    dek = nc.b64d(a.key.strip())
+    if len(dek) != nc.DEK_LEN:
+        raise SystemExit("Das ist kein 32-Byte-Schluessel.")
+    print(f"gespeichert: {nc.save_dek(dek)}")
+
+
+def cmd_add_wrap(a):
+    wrap = json.loads(Path(a.file).read_text())
+    keys = json.loads(KEYS.read_text())
+    labels = [w.get("label") for w in keys["wraps"]]
+    if wrap.get("label") in labels:
+        raise SystemExit(f"Wrap {wrap.get('label')!r} gibt es schon.")
+    keys["wraps"].append(wrap)
+    KEYS.write_text(json.dumps(keys, indent=1) + "\n")
+    git("add", str(KEYS.relative_to(ROOT)))
+    git("commit", "-m", f"food: Passkey {wrap.get('label')} hinzugefuegt")
+    git("push", "origin", BRANCH)
+    print(f"{wrap.get('label')} eingetragen und gepusht")
+
+
+def cmd_add(a):
+    dek = nc.load_dek()
+    foods = load_foods()
+    vault = read_vault(dek)
+    ts = datetime.now(TZ) if not a.at else datetime.fromisoformat(a.at).replace(tzinfo=TZ)
+    added = []
+    for item in a.items:
+        e = resolve(item, foods)
+        e["ts"] = ts.isoformat()
+        vault["entries"].append(e)
+        added.append(e)
+    vault["entries"].sort(key=lambda e: e["ts"])
+    write_vault(vault, dek)
+    for e in added:
+        print(f"+ {e['label']} {e['g']:.0f} g  {e['kcal']:.0f} kcal  P {e['p']:.1f}")
+    show_day(vault, day_of(ts))
+    if not a.no_push:
+        commit_push("food: " + ", ".join(f"{e['label']} {e['g']:.0f}g" for e in added))
+
+
+def cmd_undo(a):
+    dek = nc.load_dek()
+    vault = read_vault(dek)
+    if not vault["entries"]:
+        raise SystemExit("Nichts zu widerrufen.")
+    gone = vault["entries"].pop()
+    write_vault(vault, dek)
+    print(f"- {gone['label']} {gone['g']:.0f} g")
+    if not a.no_push:
+        commit_push(f"food: {gone['label']} entfernt")
+
+
+def cmd_today(a):
+    dek = nc.load_dek()
+    vault = read_vault(dek)
+    show_day(vault, a.day or day_of(datetime.now(TZ)))
+
+
+def cmd_goals(a):
+    dek = nc.load_dek()
+    vault = read_vault(dek)
+    g = vault.setdefault("goals", {})
+    for arg, key in (("kcal", "kcal"), ("protein", "p"), ("fibre", "b"), ("fluid", "ml")):
+        v = getattr(a, arg)
+        if v is not None:
+            g[key] = v
+    write_vault(vault, dek)
+    print(json.dumps(g, indent=1))
+    if not a.no_push:
+        commit_push("food: Ziele angepasst")
+
+
+def cmd_search(a):
+    foods = load_foods()
+    key = norm(a.term)
+    for f in foods.values():
+        if key in norm(f["name"]):
+            por = f.get("portion")
+            ps = f"  1 {por['label']} = {por['g']} g" if por else ""
+            print(f"{f['id']:<22} {f['name']:<28} {f['kcal']:>6.0f} kcal/100g  P {f['p']:>5.1f}{ps}")
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="nutri", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--no-push", action="store_true", help="nur lokal schreiben")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("init").set_defaults(fn=cmd_init)
+
+    p = sub.add_parser("import-key"); p.add_argument("key"); p.set_defaults(fn=cmd_import_key)
+    p = sub.add_parser("add-wrap"); p.add_argument("file"); p.set_defaults(fn=cmd_add_wrap)
+
+    p = sub.add_parser("add")
+    p.add_argument("items", nargs="+")
+    p.add_argument("--at", help="Zeitpunkt ISO, z.B. 2026-08-31T12:30")
+    p.set_defaults(fn=cmd_add)
+
+    sub.add_parser("undo").set_defaults(fn=cmd_undo)
+
+    p = sub.add_parser("today"); p.add_argument("--day"); p.set_defaults(fn=cmd_today)
+
+    p = sub.add_parser("goals")
+    for n in ("kcal", "protein", "fibre", "fluid"):
+        p.add_argument(f"--{n}", type=float)
+    p.set_defaults(fn=cmd_goals)
+
+    p = sub.add_parser("search"); p.add_argument("term"); p.set_defaults(fn=cmd_search)
+
+    a = ap.parse_args()
+    a.fn(a)
+
+
+if __name__ == "__main__":
+    main()
