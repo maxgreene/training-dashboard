@@ -2,53 +2,182 @@
  "note": "Handgepflegte Schicht ueber dem BLS. scripts/build_foods.py mischt das hier in foods.json. Diese Datei ueberlebt jeden Neubau, foods.json nicht.",
  "aliases": {
   "_kommentar": "BLS-Code -> Kurznamen zum Tippen. Der BLS-Name bleibt zusaetzlich gueltig. Kurznamen muessen eindeutig sein, build_foods.py prueft das.",
-  "M711300": ["Koerniger Frischkaese", "Huettenkaese"],
-  "G520100": ["Gurke", "Snackgurke"],
-  "G561100": ["Tomate", "Cherrytomate"],
-  "H170610": ["Cashew", "Cashews"],
-  "W147000": ["Gefluegelsalami", "Salamisticks"],
-  "N410200": ["Kaffee", "Milchkaffee"],
-  "N127000": ["Sprudel", "Mineralwasser"],
-  "N110000": ["Wasser"],
-  "F601600": ["Zitronensaft"],
-  "E111100": ["Ei"],
-  "Y710142": ["Spiegelei"],
-  "M402500": ["Gouda"],
-  "B881100": ["Proteinbrot", "Eiweissbrot"],
-  "B314000": ["Toast", "Toastscheibe"],
-  "C133000": ["Haferflocken"],
-  "S539900": ["Milchschokolade", "Schokolade"],
-  "K280100": ["Chips"],
-  "S361000": ["Haribo", "Fruchtgummi"],
-  "X912033": ["Pizza"],
-  "M111300": ["Vollmilch"],
-  "F503100": ["Banane"],
-  "F110100": ["Apfel"]
+  "M711300": [
+   "Koerniger Frischkaese",
+   "Huettenkaese"
+  ],
+  "G520100": [
+   "Gurke",
+   "Snackgurke"
+  ],
+  "G561100": [
+   "Tomate",
+   "Cherrytomate"
+  ],
+  "H170610": [
+   "Cashew",
+   "Cashews"
+  ],
+  "W147000": [
+   "Gefluegelsalami",
+   "Salamisticks"
+  ],
+  "N410200": [
+   "Kaffee",
+   "Milchkaffee"
+  ],
+  "N127000": [
+   "Sprudel",
+   "Mineralwasser"
+  ],
+  "N110000": [
+   "Wasser"
+  ],
+  "F601600": [
+   "Zitronensaft"
+  ],
+  "E111100": [
+   "Ei"
+  ],
+  "Y710142": [
+   "Spiegelei"
+  ],
+  "M402500": [
+   "Gouda"
+  ],
+  "B881100": [
+   "Proteinbrot",
+   "Eiweissbrot"
+  ],
+  "B314000": [
+   "Toast",
+   "Toastscheibe"
+  ],
+  "C133000": [
+   "Haferflocken"
+  ],
+  "S539900": [
+   "Milchschokolade",
+   "Schokolade"
+  ],
+  "K280100": [
+   "Chips"
+  ],
+  "S361000": [
+   "Haribo",
+   "Fruchtgummi"
+  ],
+  "X912033": [
+   "Pizza"
+  ],
+  "M111300": [
+   "Vollmilch"
+  ],
+  "F503100": [
+   "Banane"
+  ],
+  "F110100": [
+   "Apfel"
+  ],
+  "M141300": [
+   "Joghurt",
+   "Naturjoghurt"
+  ]
  },
  "portions": {
   "_kommentar": "Was eine Portion wiegt. Ohne das versteht der Parser '2 Ei' oder 'eine Handvoll Cashews' nicht.",
-  "M711300": { "label": "Becher", "g": 200 },
-  "G520100": { "label": "Snackgurke", "g": 100 },
-  "G561100": { "label": "Cherrytomate", "g": 12 },
-  "H170610": { "label": "Handvoll", "g": 30 },
-  "W147000": { "label": "Stick", "g": 25 },
-  "N410200": { "label": "Tasse", "g": 150 },
-  "N127000": { "label": "Glas", "g": 250 },
-  "N110000": { "label": "Glas", "g": 250 },
-  "F601600": { "label": "Spritzer", "g": 5 },
-  "E111100": { "label": "Ei", "g": 58 },
-  "Y710142": { "label": "Spiegelei", "g": 60 },
-  "M402500": { "label": "Scheibe", "g": 30 },
-  "B881100": { "label": "Scheibe", "g": 50 },
-  "B314000": { "label": "Scheibe", "g": 30 },
-  "C133000": { "label": "Portion", "g": 50 },
-  "S539900": { "label": "Riegel", "g": 25 },
-  "K280100": { "label": "Portion", "g": 30 },
-  "S361000": { "label": "Portion", "g": 20 },
-  "X912033": { "label": "Pizza", "g": 400 },
-  "M111300": { "label": "Glas", "g": 200 },
-  "F503100": { "label": "Banane", "g": 120 },
-  "F110100": { "label": "Apfel", "g": 150 }
+  "M711300": {
+   "label": "Becher",
+   "g": 200
+  },
+  "G520100": {
+   "label": "Snackgurke",
+   "g": 100
+  },
+  "G561100": {
+   "label": "Cherrytomate",
+   "g": 12
+  },
+  "H170610": {
+   "label": "Handvoll",
+   "g": 30
+  },
+  "W147000": {
+   "label": "Stick",
+   "g": 25
+  },
+  "N410200": {
+   "label": "Tasse",
+   "g": 150
+  },
+  "N127000": {
+   "label": "Glas",
+   "g": 250
+  },
+  "N110000": {
+   "label": "Glas",
+   "g": 250
+  },
+  "F601600": {
+   "label": "Spritzer",
+   "g": 5
+  },
+  "E111100": {
+   "label": "Ei",
+   "g": 58
+  },
+  "Y710142": {
+   "label": "Spiegelei",
+   "g": 60
+  },
+  "M402500": {
+   "label": "Scheibe",
+   "g": 30
+  },
+  "B881100": {
+   "label": "Scheibe",
+   "g": 50
+  },
+  "B314000": {
+   "label": "Scheibe",
+   "g": 30
+  },
+  "C133000": {
+   "label": "Portion",
+   "g": 50
+  },
+  "S539900": {
+   "label": "Riegel",
+   "g": 25
+  },
+  "K280100": {
+   "label": "Portion",
+   "g": 30
+  },
+  "S361000": {
+   "label": "Portion",
+   "g": 20
+  },
+  "X912033": {
+   "label": "Pizza",
+   "g": 400
+  },
+  "M111300": {
+   "label": "Glas",
+   "g": 200
+  },
+  "F503100": {
+   "label": "Banane",
+   "g": 120
+  },
+  "F110100": {
+   "label": "Apfel",
+   "g": 150
+  },
+  "M141300": {
+   "label": "Becher",
+   "g": 150
+  }
  },
  "overrides": {
   "_kommentar": "Einzelne BLS-Werte ersetzen. Bisher keiner noetig."
@@ -57,65 +186,156 @@
   {
    "id": "basismuesli",
    "name": "BasisMuesli",
-   "f": 6.3, "k": 58.6, "p": 13.3, "b": 10.6, "kcal": 366.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 100 },
+   "f": 6.3,
+   "k": 58.6,
+   "p": 13.3,
+   "b": 10.6,
+   "kcal": 366.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 100
+   },
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
    "id": "haferhimmel",
    "name": "Haferhimmel Porridge",
-   "f": 6.7, "k": 57.8, "p": 13.1, "b": 10.8, "kcal": 366.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 45 },
+   "f": 6.7,
+   "k": 57.8,
+   "p": 13.1,
+   "b": 10.8,
+   "kcal": 366.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 45
+   },
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
    "id": "porridge_selbst",
    "name": "Porridge selbstgemacht",
-   "f": 7.5, "k": 54.2, "p": 13.9, "b": 13.7, "kcal": 368.6, "ml": 0,
-   "portion": { "label": "Portion", "g": 50 },
+   "f": 7.5,
+   "k": 54.2,
+   "p": 13.9,
+   "b": 13.7,
+   "kcal": 368.6,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 50
+   },
    "unsicher": "Eigenrezept, Werte gerechnet, nicht geprueft"
   },
   {
    "id": "energiebombe",
    "name": "Energiebombe Riegel",
-   "f": 28.0, "k": 39.0, "p": 9.0, "b": 6.0, "kcal": 456.0, "ml": 0,
-   "portion": { "label": "Riegel", "g": 50 },
+   "f": 28.0,
+   "k": 39.0,
+   "p": 9.0,
+   "b": 6.0,
+   "kcal": 456.0,
+   "ml": 0,
+   "portion": {
+    "label": "Riegel",
+    "g": 50
+   },
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
    "id": "hafervoll",
    "name": "Hafervoll Riegel",
-   "f": 30.0, "k": 50.0, "p": 7.7, "b": 5.1, "kcal": 506.0, "ml": 0,
-   "portion": { "label": "Riegel", "g": 65 },
+   "f": 30.0,
+   "k": 50.0,
+   "p": 7.7,
+   "b": 5.1,
+   "kcal": 506.0,
+   "ml": 0,
+   "portion": {
+    "label": "Riegel",
+    "g": 65
+   },
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
    "id": "kekse",
    "name": "Kekse",
-   "f": 32.0, "k": 54.0, "p": 5.0, "b": 0.0, "kcal": 504.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 30 },
+   "f": 32.0,
+   "k": 54.0,
+   "p": 5.0,
+   "b": 0.0,
+   "kcal": 504.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 30
+   },
    "unsicher": "Sammelposten, im BLS gibt es kein passendes Erzeugnis"
   },
   {
    "id": "chickennuggets",
    "name": "ChickenNuggets",
-   "f": 9.5, "k": 12.0, "p": 14.0, "b": 0.0, "kcal": 190.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 100 },
+   "f": 9.5,
+   "k": 12.0,
+   "p": 14.0,
+   "b": 0.0,
+   "kcal": 190.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 100
+   },
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
    "id": "linsencurry",
    "name": "LinsenCurry",
-   "f": 17.0, "k": 33.0, "p": 13.0, "b": 10.3, "kcal": 360.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 100 },
+   "f": 17.0,
+   "k": 33.0,
+   "p": 13.0,
+   "b": 10.3,
+   "kcal": 360.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 100
+   },
    "unsicher": "Eigenrezept, Werte geschaetzt"
   },
   {
    "id": "mittagabendessen",
    "name": "Mittag/Abendessen",
-   "f": 8.0, "k": 15.0, "p": 15.0, "b": 7.0, "kcal": 300.0, "ml": 0,
-   "portion": { "label": "Portion", "g": 100 },
+   "f": 8.0,
+   "k": 15.0,
+   "p": 15.0,
+   "b": 7.0,
+   "kcal": 300.0,
+   "ml": 0,
+   "portion": {
+    "label": "Portion",
+    "g": 100
+   },
    "unsicher": "Platzhalter fuer nicht einzeln erfasste Mahlzeiten, grobe Schaetzung"
+  },
+  {
+   "id": "kerne_saaten",
+   "name": "Kerne und Saaten Mischung",
+   "alias": [
+    "Kerne",
+    "Saaten"
+   ],
+   "f": 43.48,
+   "k": 3.1,
+   "p": 27.96,
+   "b": 12.39,
+   "kcal": 540.7,
+   "ml": 0,
+   "portion": {
+    "label": "Handvoll",
+    "g": 30
+   },
+   "unsicher": "Mischung ohne Angabe auf der Packung. Angenommen je ein Drittel Sonnenblumenkern (h430100), Kuerbiskern (h310100), Leinsamen (h410100), alles BLS. Steht das Verhaeltnis auf der Packung, hier korrigieren."
   }
  ]
 }

@@ -21389,6 +21389,25 @@
    "unsicher": "Sammelposten, im BLS gibt es kein passendes Erzeugnis"
   },
   {
+   "id": "kerne_saaten",
+   "name": "Kerne und Saaten Mischung",
+   "alias": [
+    "Kerne",
+    "Saaten"
+   ],
+   "f": 43.48,
+   "k": 3.1,
+   "p": 27.96,
+   "b": 12.39,
+   "kcal": 540.7,
+   "ml": 0,
+   "portion": {
+    "label": "Handvoll",
+    "g": 30
+   },
+   "unsicher": "Mischung ohne Angabe auf der Packung. Angenommen je ein Drittel Sonnenblumenkern (h430100), Kuerbiskern (h310100), Leinsamen (h410100), alles BLS. Steht das Verhaeltnis auf der Packung, hier korrigieren."
+  },
+  {
    "id": "linsencurry",
    "name": "LinsenCurry",
    "f": 17.0,
@@ -21708,7 +21727,15 @@
    "p": 3.98,
    "b": 0.0,
    "kcal": 67.0,
-   "ml": 0
+   "ml": 0,
+   "alias": [
+    "Joghurt",
+    "Naturjoghurt"
+   ],
+   "portion": {
+    "label": "Becher",
+    "g": 150
+   }
   },
   {
    "id": "m141500",
