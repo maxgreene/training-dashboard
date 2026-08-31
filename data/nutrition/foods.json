@@ -21390,22 +21390,23 @@
   },
   {
    "id": "kerne_saaten",
-   "name": "Kerne und Saaten Mischung",
+   "name": "BioBio Kerne & Saaten Granola",
    "alias": [
     "Kerne",
-    "Saaten"
+    "Saaten",
+    "Granola"
    ],
-   "f": 43.48,
-   "k": 3.1,
-   "p": 27.96,
-   "b": 12.39,
-   "kcal": 540.7,
+   "kcal": 577.0,
+   "p": 18.9,
+   "k": 34.6,
+   "f": 37.4,
+   "b": 13.4,
    "ml": 0,
    "portion": {
     "label": "Handvoll",
     "g": 30
    },
-   "unsicher": "Mischung ohne Angabe auf der Packung. Angenommen je ein Drittel Sonnenblumenkern (h430100), Kuerbiskern (h310100), Leinsamen (h410100), alles BLS. Steht das Verhaeltnis auf der Packung, hier korrigieren."
+   "quelle": "Packungsangabe, EAN 4316268732222, ueber Open Food Facts. Zutaten: 29,4 % Hafervollkornflocken, 15 % Sonnenblumenkerne, 13 % Kuerbiskerne, Reissirup, 10 % Sesam, 8 % Leinsamen, 7 % Chiasamen, Sonnenblumenoel, Meersalz."
   },
   {
    "id": "linsencurry",

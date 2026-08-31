@@ -322,11 +322,29 @@ def cmd_add_wrap(a):
     commit_push(f"food: Passkey {wrap.get('label')} hinzugefuegt", KEYS)
 
 
+def when(spec: str | None):
+    """Zeitpunkt eines Eintrags. Ohne Angabe: jetzt.
+
+    Nimmt '18:30' (heute), '2026-08-30T18:30' und '2026-08-30 18:30'. Die
+    kurze Form ist der Normalfall: eingetragen wird meist abends, gegessen
+    ueber den Tag verteilt. Ohne sie haengt ein ganzer Tag auf einer Minute,
+    und die Tagesansicht wird zur Liste statt zum Verlauf.
+    """
+    now = datetime.now(TZ)
+    if not spec:
+        return now
+    spec = spec.strip().replace(" ", "T")
+    if re.fullmatch(r"\d{1,2}:\d{2}", spec):
+        h, m = (int(x) for x in spec.split(":"))
+        return now.replace(hour=h, minute=m, second=0, microsecond=0)
+    return datetime.fromisoformat(spec).replace(tzinfo=TZ)
+
+
 def cmd_add(a):
     dek = nc.load_dek()
     foods = load_foods()
     vault = read_vault(dek)
-    ts = datetime.now(TZ) if not a.at else datetime.fromisoformat(a.at).replace(tzinfo=TZ)
+    ts = when(a.at)
     added = []
     for item in a.items:
         e = resolve(item, foods)
@@ -398,7 +416,7 @@ def main():
 
     p = sub.add_parser("add")
     p.add_argument("items", nargs="+")
-    p.add_argument("--at", help="Zeitpunkt ISO, z.B. 2026-08-31T12:30")
+    p.add_argument("--at", help="Zeitpunkt: 18:30 (heute) oder 2026-08-30T18:30")
     p.set_defaults(fn=cmd_add)
 
     sub.add_parser("undo").set_defaults(fn=cmd_undo)
