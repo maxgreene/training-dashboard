@@ -116,8 +116,8 @@ const CFG = {
       { date: '2026-09-02', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · gleiche Bedingungen wie der Nullpunkt · Rampe bis zum Abbruch',
         protected: true },
-      { date: '2026-09-23', type: 'test', title: 'Rampen-Retest',
-        desc: 'Rolle · Zwischenstand FTP-300-Block · gleiche Bedingungen',
+      { date: '2026-09-30', type: 'test', title: 'Rampen-Retest',
+        desc: 'Rolle · Zwischenstand FTP-300-Block · gleiche Bedingungen · vom 23.09 nach hinten geschoben, weil 23.09 mitten im Challenge-Fenster lag',
         protected: true },
       { date: '2026-10-14', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen',
@@ -125,25 +125,29 @@ const CFG = {
 
       // Petersberg-Challenge mit Ingo (Sub-8 auf 2,1 km / 178 Hm / 8,7 %).
       // Ziel-Watt aus Physik: ~371 W (81 kg, leichtes Bergrad), unabhaengig vom
-      // FTP. 8 min all-out = VO2max/MAP, deshalb die zwei Mittwoche vor der
-      // Challenge auf VO2/race-spezifisch statt Schwelle. Die geplanten Rampen
-      // 02.09 (MAP-Baseline) und 23.09 (Form-Check) bleiben unberuehrt.
-      // Challenge-Datum ist noch Platzhalter (Sa 26.09), sobald Wolf den echten
-      // Termin nennt: diese eine Zeile plus Oeffner setzen.
+      // FTP. 8 min all-out = VO2max/MAP, deshalb die Mittwoche davor auf
+      // VO2/race-spezifisch statt Schwelle. WICHTIG: der Termin ist ein FENSTER
+      // 19.-24.09 (Wetter/Ingo), kein fixer Tag. Deshalb: letzte harte Einheit
+      // 16.09, ab 17.09 nur Taper, echter Baseline-Effort am Berg auf 13.09
+      // vorgezogen (der 19.09 kann schon Versuchstag sein). Der Rampentest lag
+      // urspruenglich 23.09, mitten im Fenster: nach 30.09 geschoben (oben).
       { date: '2026-09-09', type: 'vo2', title: 'Rolle: 5×3 min VO2max',
         desc: '110 % FTP · 3 min Trab · MAP heben fuers 8-min-Ceiling',
         protected: true },
-      { date: '2026-09-13', type: 'sim', title: 'Petersberg submaximal',
-        desc: 'Anstieg 2× kontrolliert · Pacing lernen · bewusst NICHT Vollgas',
+      { date: '2026-09-13', type: 'sim', title: 'Petersberg Baseline',
+        desc: 'Anstieg ~8 min zuegig, Zeit + Pacing nehmen · kontrolliert hart, NICHT ganz Vollgas · dein echter Ausgangswert',
         protected: true },
       { date: '2026-09-16', type: 'vo2', title: 'Rolle: 3×6 min race-spezifisch',
-        desc: '355–375 W (Sub-8-Pace) · Dauer ueber die Wochen ausbauen',
+        desc: '355–375 W (Sub-8-Pace) · LETZTE harte Einheit vor dem Fenster',
         protected: true },
-      { date: '2026-09-19', type: 'sim', title: 'Petersberg 8-min Vollgas',
-        desc: 'echter Baseline-Test am Berg · gleichmaessig ab dem Fuss · Zeit notieren',
+      { date: '2026-09-17', type: 'sim', title: 'Taper: locker',
+        desc: '45 min Z2 · keine Intervalle · Beine frisch machen',
         protected: true },
-      { date: '2026-09-26', type: 'challenge', title: 'Petersberg-Challenge mit Ingo',
-        desc: 'Ziel Sub-8 (~371 W am leichten Rad) · gleichmaessig ~15,8 km/h · nicht mit Antritt starten',
+      { date: '2026-09-19', type: 'challenge', title: 'Petersberg-Challenge – Fenster 19.–24.09',
+        desc: 'Versuchstag nach Wetter/Ingo · Oeffner 3×1 min, dann gleichmaessig Vollgas ~371 W (leichtes Rad, ~15,8 km/h) · NICHT mit Antritt starten · Sub-8',
+        protected: true },
+      { date: '2026-09-20', type: 'sim', title: 'Challenge-Fenster: Öffner + locker',
+        desc: 'Versuch moeglich · an Nicht-Versuchstagen kurz oeffnen (3×1 min) + locker · Glykogen voll halten · Fenster bis Do 24.09',
         protected: true },
     ],
   },

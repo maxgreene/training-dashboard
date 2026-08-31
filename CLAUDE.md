@@ -434,13 +434,18 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
   also schon dran, damals fitter/leichter. Gemessenes 8-min-Power aktuell ~315 W
   (interpoliert 5-min 331 / 10-min 307), aber Untergrenze: keine maximalen
   8-min-Efforts in den Daten (Intervalle, kein Dauertest). Realistischer Weg:
-  8:16-PR knacken (sicher), Sub-8 als Reach-Goal. Umsetzung im Plan als Events
+  8:16-PR knacken (sicher), Sub-8 als Reach-Goal. **Termin ist ein FENSTER
+  19.–24.09** (Wetter/Ingo), kein fixer Tag. Umsetzung im Plan als Events
   (`CFG.plan.events`, neue Typen `vo2`/`sim`/`challenge`, CSS `.ev-*` in
-  index.html): zwei Mittwoche vor der Challenge (09.09 VO2 5×3, 16.09 race-spez
-  3×6 @ 355-375 W) statt Schwelle, zwei Wochenend-Berg-Sims (13.09 submaximal,
-  19.09 8-min Vollgas als Baseline), Challenge-Marker 26.09 (Platzhalter). Die
-  geplanten Rampen 02.09/23.09 bleiben unberührt; 02.09-MAP schärft die
-  Einschätzung. Öffner + finaler Taper erst wenn der echte Termin steht.
+  index.html): letzte harte Einheit 16.09 (race-spez 3×6 @ 355-375 W), davor
+  09.09 VO2 5×3; echter Baseline-Effort am Berg 13.09 (kontrolliert hart, Zeit
+  nehmen, auf 13.09 vorgezogen weil der 19.09 schon Versuchstag sein kann); ab
+  17.09 nur noch Taper (17.09 locker), 19.09 Challenge-Fenster offen, 20.09
+  Öffner+locker bis Do 24.09. Der geplante Rampentest lag ursprünglich 23.09,
+  mitten im Fenster: **nach 30.09 geschoben**, weil eine Rampe bis zum Abbruch
+  an einem möglichen Versuchstag nicht geht. Rampe 02.09 (MAP-Baseline) bleibt.
+  Watt-Ziel Sub-8 ist Physik-Konstante (~371 W leichtes Rad), der 02.09-MAP
+  schärft nur die Einschätzung der Lücke.
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei
   2-Minuten-Blöcken verwischt sie und sieht aus wie ein Intervalltraining.
 - **Zonen sind labor-individualisiert** (Laktat-Stufentest mha-sport 16.10.2020,
