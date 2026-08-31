@@ -418,9 +418,10 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 - Rampentests in `CFG.tests`: 21.05. FTP 237 / MAP 313, 23.06. FTP 229 / MAP 305
   (früh abgebrochen, müde Beine), 22.07. FTP 271 / MAP 361 (Nullpunkt
   FTP-300-Block). Neue kommen automatisch dazu (siehe Test-Erkennung oben).
-- **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09., 23.09., 14.10.,
-  gleichmäßiger ~3-Wochen-Takt, der nächste früh. Letzter am 14.10., danach kein
-  Test mehr: so nah am Ziel 15.11. lässt sich eh nicht mehr steuern. Der
+- **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09. und 14.10. (der
+  23.09 lag im Challenge-Fenster und wurde gestrichen, waren eh zu viele).
+  Letzter am 14.10., danach kein Test mehr: so nah am Ziel 15.11. lässt sich eh
+  nicht mehr steuern. Der
   "Weg zu 300"-Plot (`plan.js:testTimeline`)
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
   "heute"-Linie, und je gemessenem Test den FTP-Wert am Marker und das Datum an
@@ -441,9 +442,9 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
   09.09 VO2 5×3; echter Baseline-Effort am Berg 13.09 (kontrolliert hart, Zeit
   nehmen, auf 13.09 vorgezogen weil der 19.09 schon Versuchstag sein kann); ab
   17.09 nur noch Taper (17.09 locker), 19.09 Challenge-Fenster offen, 20.09
-  Öffner+locker bis Do 24.09. Der geplante Rampentest lag ursprünglich 23.09,
-  mitten im Fenster: **nach 30.09 geschoben**, weil eine Rampe bis zum Abbruch
-  an einem möglichen Versuchstag nicht geht. Rampe 02.09 (MAP-Baseline) bleibt.
+  Öffner+locker bis Do 24.09. Der geplante Rampentest 23.09 lag mitten im
+  Fenster und ist **ganz gestrichen** (waren eh zu viele), es bleiben Rampe
+  02.09 (MAP-Baseline vor der Challenge) und 14.10.
   Watt-Ziel Sub-8 ist Physik-Konstante (~371 W leichtes Rad), der 02.09-MAP
   schärft nur die Einschätzung der Lücke.
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei
