@@ -497,8 +497,14 @@ function drawRideTargets() {
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       scales: {
-        x: { type: 'linear', min: 0, max: days,
-             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, stepSize: Math.ceil(days / 4),
+        // Padding links/rechts, damit die versetzten Violins/Punkte am ersten
+        // und letzten Tag (x = 0 bzw. days) nicht ueber den Achsenrand
+        // hinauslaufen und vom Clip abgeschnitten werden. Ticks bleiben auf den
+        // ganzen Tagen (0..days), das Padding traegt keine eigenen Ticks.
+        x: { type: 'linear', min: -0.6, max: days + 0.6,
+             afterBuildTicks: ax => { const s = Math.ceil(days / 4), t = [];
+               for (let v = 0; v <= days; v += s) t.push({ value: v }); ax.ticks = t; },
+             ticks: { color: CSSVAR('--t4'), font: { size: 9 }, autoSkip: false,
                       callback: v => fmtDay(addDays(lo, v)) },
              grid: { color: 'rgba(255,255,255,.05)' } },
         y: { min: 0, max: EP.relMax,
