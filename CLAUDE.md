@@ -466,6 +466,15 @@ hält nur Darstellung und Mechanik (Farben, `dayCutoffH`, Fenster, Chart-Höhen,
 Atwater-Faktoren). Ein Ziel auf `null` zeichnet weder Linie noch Balken-Rest,
 gleiche Logik wie ein EF-Band ohne genug Fahrten.
 
+**Die CLI liest den Tresor über git, der Browser über raw.** Nicht
+verwechseln. `raw` ist nach einem Push Sekunden bis Minuten hinterher, und der
+`?t=`-Parameter hilft dagegen nicht: das ist Verbreitungs-Latenz, kein
+Cache-Treffer. `nutri.py` holte den Tresor anfangs von raw, dadurch meldete
+`undo` direkt nach `add` "Nichts zu widerrufen", und der nächste Schreibvorgang
+hätte den frischen Eintrag still überschrieben. `read_vault` macht jetzt
+`git fetch` plus `--ff-only`-Merge und liest die lokale Datei. Der Browser hat
+kein git, für den bleibt raw richtig.
+
 **Die Seite liest von `raw.githubusercontent`, nicht aus dem Pages-Artefakt.**
 Pages braucht nach einem Push Minuten, raw ist sofort aktuell, liefert
 `access-control-allow-origin: *` und `cache-control: max-age=300`, deshalb hängt
