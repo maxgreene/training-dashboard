@@ -122,6 +122,29 @@ const CFG = {
       { date: '2026-10-14', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen',
         protected: true },
+
+      // Petersberg-Challenge mit Ingo (Sub-8 auf 2,1 km / 178 Hm / 8,7 %).
+      // Ziel-Watt aus Physik: ~371 W (81 kg, leichtes Bergrad), unabhaengig vom
+      // FTP. 8 min all-out = VO2max/MAP, deshalb die zwei Mittwoche vor der
+      // Challenge auf VO2/race-spezifisch statt Schwelle. Die geplanten Rampen
+      // 02.09 (MAP-Baseline) und 23.09 (Form-Check) bleiben unberuehrt.
+      // Challenge-Datum ist noch Platzhalter (Sa 26.09), sobald Wolf den echten
+      // Termin nennt: diese eine Zeile plus Oeffner setzen.
+      { date: '2026-09-09', type: 'vo2', title: 'Rolle: 5×3 min VO2max',
+        desc: '110 % FTP · 3 min Trab · MAP heben fuers 8-min-Ceiling',
+        protected: true },
+      { date: '2026-09-13', type: 'sim', title: 'Petersberg submaximal',
+        desc: 'Anstieg 2× kontrolliert · Pacing lernen · bewusst NICHT Vollgas',
+        protected: true },
+      { date: '2026-09-16', type: 'vo2', title: 'Rolle: 3×6 min race-spezifisch',
+        desc: '355–375 W (Sub-8-Pace) · Dauer ueber die Wochen ausbauen',
+        protected: true },
+      { date: '2026-09-19', type: 'sim', title: 'Petersberg 8-min Vollgas',
+        desc: 'echter Baseline-Test am Berg · gleichmaessig ab dem Fuss · Zeit notieren',
+        protected: true },
+      { date: '2026-09-26', type: 'challenge', title: 'Petersberg-Challenge mit Ingo',
+        desc: 'Ziel Sub-8 (~371 W am leichten Rad) · gleichmaessig ~15,8 km/h · nicht mit Antritt starten',
+        protected: true },
     ],
   },
 

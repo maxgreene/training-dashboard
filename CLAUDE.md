@@ -425,6 +425,22 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
   "heute"-Linie, und je gemessenem Test den FTP-Wert am Marker und das Datum an
   der Achse.
+- **Petersberg-Challenge mit Ingo (Ende Sept 2026).** Sub-8 auf dem Strava-
+  Segment "Petersberg 1" (752098): 2,1 km, 178 Hm, 8,7 %. Sub-8 = 8-min-Effort,
+  also VO2max/MAP, nicht Schwelle. Ziel-Watt aus Physik (`P = m·g·Δh/t` plus
+  Roll/Luft/Antrieb, ~91 kg System): **~375 W bei 81 kg**, mit leichtem Bergrad
+  (−1 kg) **~371 W**, je Kilo Körpergewicht ~4 W weniger. Ist eine Physik-
+  Konstante, hängt NICHT am FTP. Wolfs PR steht bei 8:16 (2018, ~362 W), er war
+  also schon dran, damals fitter/leichter. Gemessenes 8-min-Power aktuell ~315 W
+  (interpoliert 5-min 331 / 10-min 307), aber Untergrenze: keine maximalen
+  8-min-Efforts in den Daten (Intervalle, kein Dauertest). Realistischer Weg:
+  8:16-PR knacken (sicher), Sub-8 als Reach-Goal. Umsetzung im Plan als Events
+  (`CFG.plan.events`, neue Typen `vo2`/`sim`/`challenge`, CSS `.ev-*` in
+  index.html): zwei Mittwoche vor der Challenge (09.09 VO2 5×3, 16.09 race-spez
+  3×6 @ 355-375 W) statt Schwelle, zwei Wochenend-Berg-Sims (13.09 submaximal,
+  19.09 8-min Vollgas als Baseline), Challenge-Marker 26.09 (Platzhalter). Die
+  geplanten Rampen 02.09/23.09 bleiben unberührt; 02.09-MAP schärft die
+  Einschätzung. Öffner + finaler Taper erst wenn der echte Termin steht.
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei
   2-Minuten-Blöcken verwischt sie und sieht aus wie ein Intervalltraining.
 - **Zonen sind labor-individualisiert** (Laktat-Stufentest mha-sport 16.10.2020,
