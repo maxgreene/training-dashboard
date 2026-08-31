@@ -229,6 +229,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
     <button class="tab on" data-p="plan"  onclick="showPage('plan',this)">Plan</button>
     <button class="tab"    data-p="rides" onclick="showPage('rides',this)">Rides</button>
     <button class="tab"    data-p="form"  onclick="showPage('form',this)">Form</button>
+    <button class="tab"    data-p="food"  onclick="showPage('food',this)">Food</button>
   </div>
 </nav>
 
@@ -237,6 +238,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
   <div class="page on" id="page-plan"></div>
   <div class="page"    id="page-rides"></div>
   <div class="page"    id="page-form"></div>
+  <div class="page"    id="page-food"></div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -251,11 +253,13 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 <script src="js/plan.js?v=BUILD"></script>
 <script src="js/rides.js?v=BUILD"></script>
 <script src="js/form.js?v=BUILD"></script>
+<script src="js/vault.js?v=BUILD"></script>
+<script src="js/food.js?v=BUILD"></script>
 <script>
 /* Seiten werden erst gezeichnet, wenn sie sichtbar sind. Vorher ist
  * clientWidth = 0 (display:none), und jeder Canvas kaeme mit 0 px Puffer
  * heraus und wuerde von CSS auf volle Breite gezerrt. */
-const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm };
+const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm, food: renderFood };
 const drawn = {};
 let curPage = 'plan';
 
