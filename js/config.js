@@ -210,6 +210,16 @@ const CFG = {
       ml:   { lbl: 'Flüssigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
     },
 
+    // Dynamisches kcal-Ziel: Sockel (im Tresor, goals.kcalBase) plus die
+    // Fahrt-kcal des Tages. Ein Ruhetag hat ein anderes Ziel als ein Tag mit
+    // vier Stunden im Sattel.
+    energy: {
+      // Ruheumsatz je Minute im Sattel. Die Fahrt-kcal sind brutto, der
+      // Grundumsatz laeuft weiter und steckt schon im Sockel.
+      // SYNC-PFLICHT: gleicher Wert in scripts/nutri.py (REST_PER_MIN).
+      restPerMin: 1.2,
+    },
+
     // Gewichtsverlauf. Zielhorizont ist derselbe Tag wie beim FTP-Ziel
     // (athlete.ftpGoalDate), das ist derselbe Aufbau. Das Zielgewicht steht
     // NICHT hier, sondern im Tresor (goals.kg): persoenliche Zahl.

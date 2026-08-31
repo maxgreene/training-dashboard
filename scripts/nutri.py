@@ -45,6 +45,13 @@ DIR = ROOT / "data" / "nutrition"
 LOG = DIR / "log.enc.json"
 KEYS = DIR / "keys.json"
 FOODS = DIR / "foods.json"
+ACTS = ROOT / "data" / "activities.json"
+
+# Ruheumsatz je Minute im Sattel. Die Fahrt-kcal sind BRUTTO, der
+# Grundumsatz laeuft waehrenddessen weiter und steckt schon im Sockel:
+# ohne den Abzug zaehlt man ihn doppelt.
+# SYNC-PFLICHT: gleicher Wert in CFG.food.energy.restPerMin (js/config.js).
+REST_PER_MIN = 1.2
 
 # Tagesgrenze. 0 = Mitternacht. Auf 4 setzen, wenn ein Snack um 01:00 noch
 # zum Vortag zaehlen soll.
@@ -93,6 +100,63 @@ def sync_from_remote() -> None:
         return
     if git("merge", "--ff-only", "--quiet", f"origin/{BRANCH}", check=False).returncode:
         print("Hinweis: kein Fast-Forward, arbeite mit der lokalen Kopie.")
+
+
+def ride_kcal(day: str) -> float:
+    """Energieumsatz der Fahrten eines Tages, in kcal.
+
+    Quelle ist `kilojoules` aus dem Fahrtenregister, also das Arbeitsintegral
+    des Geraets (Wahoo `work_accum`). NICHT avg_power_moving x moving_sec:
+    der Schnitt laesst das Rollen ohne Tritt aussen vor, multipliziert mit der
+    vollen Bewegungszeit kommen 7 bis 23 Prozent zu viel heraus (gemessen ueber
+    54 Fahrten im August). Nur wo kilojoules fehlt, wird geschaetzt.
+
+    1 kJ Arbeit ~ 1 kcal Umsatz: bei rund 23 Prozent Wirkungsgrad braucht der
+    Koerper das 4,3-fache der mechanischen Arbeit, und 1 kcal sind 4,184 kJ.
+    """
+    if not ACTS.exists():
+        return 0.0
+    d = json.loads(ACTS.read_text(encoding="utf-8"))
+    lst = d.get("activities", d) if isinstance(d, dict) else d
+    arbeit = bewegt = 0.0
+    for a in lst:
+        if not str(a.get("date", "")).startswith(day):
+            continue
+        kj = a.get("kilojoules")
+        if not kj:
+            w = a.get("avg_power_moving") or a.get("avg_power") or 0
+            kj = w * (a.get("moving_sec") or 0) / 1000
+        arbeit += float(kj or 0)
+        bewegt += a.get("moving_sec") or 0
+    return max(0.0, arbeit - bewegt / 60 * REST_PER_MIN)
+
+
+def goals_for(goals: dict, day: str) -> dict:
+    """Ziele fuer EINEN Tag.
+
+    Mit gesetztem kcalBase wandert das kcal-Ziel mit dem Training mit:
+    Sockel (Grundumsatz + Alltag minus gewuenschtem Defizit) plus die
+    Fahrt-kcal des Tages. Ein Ruhetag hat dann ein anderes Ziel als ein Tag
+    mit vier Stunden im Sattel, und das ist der Punkt.
+
+    Protein, Fett und Ballaststoffe bleiben fest: die haengen am Koerpergewicht
+    und an der Verdauung, nicht am Tagesumsatz. Die Kohlenhydrate nehmen die
+    Differenz auf, das ist auch physiologisch die richtige Stelle.
+    """
+    g = dict(goals or {})
+    sockel = g.get("kcalBase")
+    if not sockel:
+        return g
+    g["kcal"] = round(sockel + ride_kcal(day))
+    if g.get("p") and g.get("f") is not None and g.get("b") is not None:
+        rest = g["kcal"] - g["p"]*4 - g["f"]*9 - g["b"]*2
+        # An einem Ruhetag kann der Sockel Protein und Fett schon nicht mehr
+        # decken, dann waere das KH-Ziel negativ. Auf 0 klemmen und sagen,
+        # dass die Vorgabe an dem Tag nicht aufgeht: das Defizit ist dann
+        # groesser als geplant, nicht kleiner.
+        g["k"] = max(0, round(rest / 4))
+        g["_eng"] = rest < 0
+    return g
 
 
 def empty_vault() -> dict:
@@ -262,10 +326,13 @@ def show_day(vault: dict, day: str) -> None:
         t = datetime.fromisoformat(e["ts"]).astimezone(TZ).strftime("%H:%M")
         print(f"  {t}  {e['label']:<26} {e['g']:>6.0f} g   {e['kcal']:>6.0f} kcal  P {e['p']:>5.1f}")
     t = totals(ents)
-    g = vault.get("goals") or {}
+    g = goals_for(vault.get("goals") or {}, day)
     print(f"  {'':>7}{'SUMME':<26} {'':>8}   {t['kcal']:>6.0f} kcal  "
           f"P {t['p']:>5.1f}  K {t['k']:>5.1f}  F {t['f']:>5.1f}  "
           f"B {t['b']:>5.1f}  Fl {t['ml']:>5.0f}")
+    if g.get("_eng"):
+        print("  Hinweis: Sockel deckt Protein und Fett an diesem Tag nicht,"
+              " KH-Ziel auf 0 geklemmt.")
     for key, lbl in (("kcal", "kcal"), ("p", "Protein"), ("k", "Kohlenhydr"),
                      ("f", "Fett"), ("b", "Ballast"), ("ml", "Fluessig")):
         if g.get(key):
@@ -393,6 +460,8 @@ def cmd_goals(a):
         v = getattr(a, arg)
         if v is not None:
             g[key] = v
+    if a.kcalbase is not None:
+        g["kcalBase"] = a.kcalbase
     if a.kgdate is not None:
         g["kgDate"] = when(a.kgdate).date().isoformat()
     write_vault(vault, dek)
@@ -472,6 +541,8 @@ def main():
     for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid", "kg"):
         p.add_argument(f"--{n}", type=float)
     p.add_argument("--kgdate", help="Termin des Gewichtsziels, z.B. 2026-09-19")
+    p.add_argument("--kcalbase", type=float,
+                   help="Sockel: Grundumsatz + Alltag minus Defizit. Fahrt-kcal kommen taeglich dazu.")
     p.set_defaults(fn=cmd_goals)
 
     p = sub.add_parser("weight")

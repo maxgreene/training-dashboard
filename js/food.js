@@ -191,6 +191,45 @@ function goalBar(m, val, goal) {
     </div>`;
 }
 
+/* Fahrt-Energie eines Tages, in kcal.
+ *
+ * Quelle ist `kilojoules` aus dem Fahrtenregister (Arbeitsintegral des
+ * Geraets), NICHT avg_power_moving x moving_sec: der Schnitt laesst das Rollen
+ * ohne Tritt aussen vor und liefert mal 7, mal 23 Prozent zu viel.
+ * Der Ruheumsatz waehrend der Fahrt wird abgezogen, er steckt schon im Sockel.
+ *
+ * DATA.acts ist beim Rendern schon geladen (shared.js:loadAll laeuft im Boot).
+ * Fehlt es doch, gibt die Funktion 0 und das Ziel faellt auf den Sockel.
+ */
+function rideKcal(key) {
+  const acts = (typeof DATA !== 'undefined' && DATA.acts) || [];
+  let arbeit = 0, bewegt = 0;
+  acts.forEach(a => {
+    if (String(a.date || '').slice(0, 10) !== key) return;
+    const kj = a.kilojoules ||
+      ((a.avg_power_moving || a.avg_power || 0) * (a.moving_sec || 0) / 1000);
+    arbeit += kj;
+    bewegt += a.moving_sec || 0;
+  });
+  return Math.max(0, arbeit - bewegt / 60 * FCFG.energy.restPerMin);
+}
+
+/* Ziele fuer EINEN Tag. Mit gesetztem kcalBase wandert das kcal-Ziel mit dem
+ * Training mit. Protein, Fett und Ballaststoffe bleiben fest, die haengen am
+ * Koerpergewicht, nicht am Umsatz. Die Kohlenhydrate nehmen die Differenz auf.
+ * Gegenstueck: goals_for() in scripts/nutri.py. */
+function dayGoals(g, key) {
+  if (!g || !g.kcalBase) return g || {};
+  const out = Object.assign({}, g);
+  out.kcal = Math.round(g.kcalBase + rideKcal(key));
+  if (g.p && g.f != null && g.b != null) {
+    // An einem Ruhetag deckt der Sockel Protein und Fett unter Umstaenden
+    // schon nicht mehr. Dann waere das KH-Ziel negativ: auf 0 klemmen.
+    out.k = Math.max(0, Math.round((out.kcal - g.p * 4 - g.f * 9 - g.b * 2) / 4));
+  }
+  return out;
+}
+
 /* REST DES TAGES.
  *
  * Rechnet die offene Luecke zu den Zielen aus und uebersetzt sie in Mengen.
@@ -384,7 +423,7 @@ function drawDay() {
   const key = dayKey(new Date().toISOString());
   const ents = days.get(key) || [];
   const s = sumOf(ents);
-  const g = FOOD.vault.goals || {};
+  const g = dayGoals(FOOD.vault.goals, key);
 
   const rows = ents.length ? ents.map(e => `
     <div class="day">
@@ -434,7 +473,12 @@ function lastNDays(n) {
 function drawRange(n, title) {
   const days = byDay(FOOD.vault.entries);
   const keys = lastNDays(n);
-  const g = FOOD.vault.goals || {};
+  // Ziele wandern je Tag, fuer den Schnitt also mitteln.
+  const tg = keys.map(k => dayGoals(FOOD.vault.goals, k));
+  const g = Object.assign({}, FOOD.vault.goals, {
+    kcal: tg.reduce((a, x) => a + (x.kcal || 0), 0) / keys.length || null,
+    k:    tg.reduce((a, x) => a + (x.k || 0), 0) / keys.length || null,
+  });
   const sums = keys.map(k => sumOf(days.get(k) || []));
   const logged = keys.filter(k => days.has(k)).length;
   const avg = m => logged ? sums.reduce((a, s) => a + s[m], 0) / logged : 0;

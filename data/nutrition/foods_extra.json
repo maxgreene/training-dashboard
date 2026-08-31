@@ -82,6 +82,12 @@
   "M141300": [
    "Joghurt",
    "Naturjoghurt"
+  ],
+  "T410100": [
+   "Lachs"
+  ],
+  "C332000": [
+   "Hirse"
   ]
  },
  "portions": {
@@ -177,6 +183,14 @@
   "M141300": {
    "label": "Becher",
    "g": 150
+  },
+  "T410100": {
+   "label": "Filet",
+   "g": 130
+  },
+  "C332000": {
+   "label": "Portion",
+   "g": 80
   }
  },
  "overrides": {
