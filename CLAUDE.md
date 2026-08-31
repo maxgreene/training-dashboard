@@ -80,6 +80,7 @@ js/food.js                        Food-Seite: Tag/Woche/Monat, Ziel-Balken,
 scripts/nutri.py                  Ernährungs-CLI: init, add, undo, today,
                                   goals, search, add-wrap, import-key
 scripts/nutri_crypto.py           AES-256-GCM, DEK-Wrapping, Schlüsseldatei
+scripts/build_foods.py            BLS 4.0 nach foods.json
 .githooks/pre-commit              blockt Klartext-Log und rohe Schlüssel
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
 scripts/fetch_garmin_activities.py Garmin Indoor/Rolle nach activities.json + streams/
@@ -92,7 +93,8 @@ data/streams/{id}.json            ROH, 1 Hz. NIE anfassen.
 data/activities.json              Index mit allen Kennzahlen
 data/analysis/{id}.json           Eine Serie pro Fahrt
 data/health.json                  Garmin: HRV, RHR, Schlaf, Stress
-data/nutrition/foods.json         Lebensmitteltabelle (provisorisch)
+data/nutrition/foods.json         Lebensmitteltabelle, erzeugt aus BLS 4.0
+data/nutrition/foods_extra.json   Kurznamen, Portionen, eigene Einträge
 data/nutrition/keys.json          eingewickelte DEKs (Passphrase + je Gerät)
 data/nutrition/log.enc.json       der Tresor, AES-256-GCM
 ```
@@ -481,6 +483,28 @@ Pages braucht nach einem Push Minuten, raw ist sofort aktuell, liefert
 an jedem Abruf ein `?t=<timestamp>`. Pages liefert nur die statische Hülle plus
 `foods.json`.
 
+**Die Lebensmitteltabelle kommt aus dem BLS 4.0**, der nationalen
+Nährstoffdatenbank des Max Rubner-Instituts, seit Dezember 2025 Open Data unter
+CC BY 4.0. 7140 Lebensmittel aus Laboranalysen. `scripts/build_foods.py`
+erzeugt daraus `foods.json` (`--download` holt die ZIP selbst, sonst Pfad
+angeben). Die 14-MB-Quelldatei bleibt draußen.
+
+**Zwei Schichten, `foods.json` ist erzeugt und wird nie von Hand editiert.**
+Kurznamen (`alias`), Portionsgrößen und eigene Einträge für Markenprodukte
+stehen in `foods_extra.json` und überleben jeden Neubau. Wer einen Wert
+korrigieren will, trägt ihn dort unter `overrides` ein.
+
+`resolve()` in `nutri.py` sucht in vier Stufen: Kurzname, exakter Name, id,
+Teilstring. Bei 7149 Einträgen liefert eine reine Teilstring-Suche für "Kaffee"
+40 Treffer, also nur noch Fehlermeldungen. Der Kurzname gewinnt deshalb vor
+jedem BLS-Namen.
+
+**Der Browser lädt aus `data/nutrition` nur `keys.json` und `log.enc.json`.**
+`foods.json` (1,2 MB) braucht allein die CLI, in den Einträgen im Tresor stehen
+die Nährwerte schon ausgerechnet. Deshalb kommt `data/nutrition` **nicht** ins
+Pages-Artefakt. Wer es doch hineinkopiert, wiederholt den Fehler, der die
+Deploy-Timeouts verursacht hat (siehe ARCHITECTURE.md).
+
 `.githooks/pre-commit` blockt Klartext-Log und rohe Schlüssel. Aktiv erst nach
 `git config core.hooksPath .githooks`, das ist lokale Konfiguration und wandert
 nicht mit dem Klon mit.
@@ -584,16 +608,18 @@ nicht mit dem Klon mit.
 2. `plan.template` reicht nur für den aktuellen Block, weitere später.
 3. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
-4. `data/nutrition/foods.json` ist aus einem Screenshot abgetippt und nicht
-   belastbar (beim Ei ist die kcal-Spalte pro Portion, die Makros pro 100 g,
-   Atwater ergibt 137 kcal/100 g). Ersatz: Google-Tabelle als CSV, oder aus
-   BLS 4.0 erzeugen (7140 Lebensmittel, lizenzfrei, blsdb.de).
-   `scripts/build_foods.py` fehlt noch.
-5. Kein Schreibweg vom Handy. Bewusst so, GitHub Pages ist statisch. Wer in der
+4. Neun Alteinträge in `foods_extra.json` sind als `unsicher` markiert
+   (BasisMuesli, Haferhimmel, Energiebombe, Hafervoll, Kekse, ChickenNuggets,
+   LinsenCurry, Porridge, Platzhalter Mittag/Abendessen). Die stammen weiter
+   aus der abgetippten Tabelle. Bei Gelegenheit gegen die Verpackung prüfen.
+5. Der Mengen-Parser kennt nur `g`, `ml`, `stk`, `x`. "eine Handvoll Cashews"
+   versteht er nicht, obwohl die Portion `Handvoll` heißt. Portionslabels als
+   Einheit zuzulassen wäre die naheliegende Erweiterung.
+6. Kein Schreibweg vom Handy. Bewusst so, GitHub Pages ist statisch. Wer in der
    Bäckerei loggen will, bräuchte Cloudflare Pages plus Access.
-6. Energieziel steht fix im Tresor. Offen, ob es später aus dem Tages-TSS
+7. Energieziel steht fix im Tresor. Offen, ob es später aus dem Tages-TSS
    skalieren soll, die Daten liegen im selben Repo.
-7. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
+8. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
    den CP-Fit. Verfeinerung wäre, nur nahe-maximale Efforts zu zählen (HF nahe
    Max oder Wert passt zur Kurve), damit ein lockeres 20-min CP nicht verzerrt.
 

@@ -55,7 +55,9 @@ GitHub Pages braucht nach einem Push bis zu einige Minuten. `raw.github`
 | `scripts/nutri_crypto.py` | AES-GCM, DEK-Wrapping, Schlüsseldatei |
 | `js/vault.js` | Browser: PRF, PBKDF2, entschlüsseln |
 | `js/food.js` | Food-Seite: Entsperren, Tag/Woche/Monat |
-| `data/nutrition/foods.json` | Lebensmitteltabelle (**provisorisch**, s.u.) |
+| `scripts/build_foods.py` | BLS 4.0 nach `foods.json` |
+| `data/nutrition/foods.json` | Lebensmitteltabelle, erzeugt (BLS 4.0, 7149 Eintraege) |
+| `data/nutrition/foods_extra.json` | Kurznamen, Portionen, eigene Eintraege |
 | `data/nutrition/keys.json` | entsteht bei `nutri.py init` |
 | `data/nutrition/log.enc.json` | der Tresor |
 | `.githooks/pre-commit` | verhindert Klartext- und Schlüssel-Commits |
@@ -127,18 +129,22 @@ Der Parser versteht `100 g X`, `2 X` (Portionen), `500 ml X` und `X` allein
 
 ## Offene Punkte
 
-1. **`foods.json` ist abgetippt** aus einem Screenshot und nicht belastbar.
-   Entweder die Google-Tabelle als CSV exportieren und importieren, oder aus
-   BLS 4.0 erzeugen (7 140 Lebensmittel, lizenzfrei, `BLS_4_0_Daten_2025_DE.xlsx`
-   von [blsdb.de](https://www.blsdb.de/)). `scripts/build_foods.py` fehlt noch.
+1. ~~`foods.json` ist abgetippt~~ **Erledigt am 31.08.2026.** Die Tabelle kommt
+   aus dem BLS 4.0 (Max Rubner-Institut, Open Data, CC BY 4.0), 7140
+   Lebensmittel. `scripts/build_foods.py --download` baut sie neu. Das alte
+   Ei-Problem (kcal je Portion, Makros je 100 g) erledigt sich damit: das BLS
+   führt Hühnerei roh mit 135 kcal/100 g.
 
-2. **Ei**: kcal-Spalte ist dort pro Portion (79 kcal für 58 g), die Makros pro
-   100 g. Atwater ergibt 137 kcal/100 g. Vor dem Import korrigieren.
+   Handgepflegtes steht in `foods_extra.json` und überlebt jeden Neubau:
+   Kurznamen, Portionsgrößen, `overrides` für einzelne Werte und eigene
+   Einträge für Markenprodukte. Neun Altposten sind dort als `unsicher`
+   markiert, die stammen weiter aus der abgetippten Tabelle.
 
-3. **Energieziel 1800 kcal** aus Zeile 63 der Tabelle. Bei 80,5 kg und dem
-   Trainingsumfang ist das eher eine Defizitvorgabe als ein Erhaltungswert.
-   Offen, ob das Ziel fix bleibt oder aus dem TSS des Tages skaliert werden
-   soll — die Garmin- und Wahoo-Daten liegen im selben Repo bereits vor.
+2. **Energieziel 1800 kcal**, gesetzt per `nutri.py goals --kcal 1800`, liegt
+   im Tresor. Bei 81 kg und dem Trainingsumfang ist das eine Defizitvorgabe,
+   kein Erhaltungswert. Offen, ob das Ziel fix bleibt oder aus dem TSS des
+   Tages skaliert werden soll: die Garmin- und Wahoo-Daten liegen im selben
+   Repo bereits vor.
 
 4. **Tagesgrenze** steht auf Mitternacht (`DAY_CUTOFF_H = 0` in `nutri.py`
    *und* `food.js`, müssen übereinstimmen). Auf 4 setzen, wenn ein Snack um
