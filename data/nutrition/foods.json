@@ -19797,6 +19797,24 @@
    "unsicher": "aus der Google-Tabelle abgetippt, nicht gegen die Packung geprueft"
   },
   {
+   "id": "haribo_ballaballa",
+   "name": "Haribo Balla Balla",
+   "alias": [
+    "Ballaballa"
+   ],
+   "kcal": 387.0,
+   "p": 1.5,
+   "k": 84.0,
+   "f": 4.3,
+   "b": 0.7,
+   "ml": 0,
+   "portion": {
+    "label": "Handvoll",
+    "g": 50
+   },
+   "quelle": "Herstellerangabe ueber FDDB und wikifit, zwei Quellen gleich. Das Fett (4,3 g) kommt vom Ueberzug, untypisch fuer Fruchtgummi, deshalb gegengeprueft."
+  },
+  {
    "id": "k110100",
    "name": "Kartoffel geschält, roh",
    "f": 0.1,

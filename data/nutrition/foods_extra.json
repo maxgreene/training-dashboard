@@ -337,6 +337,24 @@
     "g": 30
    },
    "quelle": "Packungsangabe, EAN 4316268732222, ueber Open Food Facts. Zutaten: 29,4 % Hafervollkornflocken, 15 % Sonnenblumenkerne, 13 % Kuerbiskerne, Reissirup, 10 % Sesam, 8 % Leinsamen, 7 % Chiasamen, Sonnenblumenoel, Meersalz."
+  },
+  {
+   "id": "haribo_ballaballa",
+   "name": "Haribo Balla Balla",
+   "alias": [
+    "Ballaballa"
+   ],
+   "kcal": 387.0,
+   "p": 1.5,
+   "k": 84.0,
+   "f": 4.3,
+   "b": 0.7,
+   "ml": 0,
+   "portion": {
+    "label": "Handvoll",
+    "g": 50
+   },
+   "quelle": "Herstellerangabe ueber FDDB und wikifit, zwei Quellen gleich. Das Fett (4,3 g) kommt vom Ueberzug, untypisch fuer Fruchtgummi, deshalb gegengeprueft."
   }
  ]
 }
