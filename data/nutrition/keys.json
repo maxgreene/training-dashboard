@@ -1,0 +1,17 @@
+{
+ "v": 1,
+ "prfSalt": "nutri457-dek-v1",
+ "wraps": [
+  {
+   "type": "passphrase",
+   "label": "Wiederherstellung",
+   "kdf": {
+    "name": "PBKDF2-SHA256",
+    "iterations": 600000,
+    "salt": "IRmtMrnky37WYSTn3M+Qww=="
+   },
+   "nonce": "OOQgwlbMatXOb/Uu",
+   "ct": "0rw2xhPndQYO5cLi+nPzW+f7pWBAR6xOvE+AUnFxxjD7YP0bdUyj6GKKTk/TuVO4"
+  }
+ ]
+}
