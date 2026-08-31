@@ -505,6 +505,24 @@ die Nährwerte schon ausgerechnet. Deshalb kommt `data/nutrition` **nicht** ins
 Pages-Artefakt. Wer es doch hineinkopiert, wiederholt den Fehler, der die
 Deploy-Timeouts verursacht hat (siehe ARCHITECTURE.md).
 
+**Körpergewicht** liegt ebenfalls im Tresor (`vault.weights`, ein Wert je Tag,
+`nutri.py weight 80.4`), Zielgewicht unter `goals.kg`. Folge davon, bewusst in
+Kauf genommen: die Rides-Seite kann es für W/kg **nicht** benutzen, die liest
+keinen Tresor. `CFG.athlete.weight` bleibt dafür der Handwert und muss bei
+größeren Änderungen nachgezogen werden. Wer W/kg live haben will, müsste das
+Gewicht öffentlich ablegen, dann steht es aber im offenen Repo.
+
+Die Karte GEWICHT auf der Food-Seite zeichnet Messpunkte, einen
+zeit-gewichteten EWMA (`CFG.food.weight.tau`, 10 d) und die Achse bis
+`CFG.athlete.ftpGoalDate`. Zeit-gewichtet aus demselben Grund wie der EF-Trend:
+ein festes Alpha je Messung zackt, sobald eine Woche fehlt.
+
+**Die Karte REST DES TAGES** rechnet die Lücke zu den Zielen in Mengen um,
+Füller und ihre Nährwerte stehen in `CFG.food.fillers` (BLS-Codes im
+Kommentar). Vorschläge, die allein schon über dem kcal-Rest liegen, werden gelb
+markiert statt verschwiegen. Die Uhrzeit steht in der Karte, weil ein offenes
+Budget um 17 Uhr das Abendessen ist und um 23 Uhr ein Defizit.
+
 `.githooks/pre-commit` blockt Klartext-Log und rohe Schlüssel. Aktiv erst nach
 `git config core.hooksPath .githooks`, das ist lokale Konfiguration und wandert
 nicht mit dem Klon mit.
