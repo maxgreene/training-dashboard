@@ -18,7 +18,7 @@ Beispiele
   nutri.py add "100 g Proteinbrot" "2 Ei" "500 ml Wasser"
   nutri.py today
   nutri.py undo
-  nutri.py goals --kcal 2600 --protein 125 --fibre 30 --fluid 2500
+  nutri.py goals --kcal 1800 --protein 145 --carbs 170 --fat 60 --fibre 30 --fluid 3000
   nutri.py add-wrap wrap.json      # Passkey vom Handy nachtragen
 """
 
@@ -97,7 +97,8 @@ def sync_from_remote() -> None:
 def empty_vault() -> dict:
     return {
         "version": 1,
-        "goals": {"kcal": None, "p": None, "b": None, "ml": None},
+        "goals": {"kcal": None, "p": None, "k": None, "f": None,
+                  "b": None, "ml": None},
         "entries": [],
     }
 
@@ -257,8 +258,11 @@ def show_day(vault: dict, day: str) -> None:
         print(f"  {t}  {e['label']:<26} {e['g']:>6.0f} g   {e['kcal']:>6.0f} kcal  P {e['p']:>5.1f}")
     t = totals(ents)
     g = vault.get("goals") or {}
-    print(f"  {'':>7}{'SUMME':<26} {'':>8}   {t['kcal']:>6.0f} kcal  P {t['p']:>5.1f}  B {t['b']:>5.1f}  Fl {t['ml']:>5.0f}")
-    for key, lbl in (("kcal", "kcal"), ("p", "Protein"), ("b", "Ballast"), ("ml", "Fluessig")):
+    print(f"  {'':>7}{'SUMME':<26} {'':>8}   {t['kcal']:>6.0f} kcal  "
+          f"P {t['p']:>5.1f}  K {t['k']:>5.1f}  F {t['f']:>5.1f}  "
+          f"B {t['b']:>5.1f}  Fl {t['ml']:>5.0f}")
+    for key, lbl in (("kcal", "kcal"), ("p", "Protein"), ("k", "Kohlenhydr"),
+                     ("f", "Fett"), ("b", "Ballast"), ("ml", "Fluessig")):
         if g.get(key):
             rest = g[key] - t[key]
             print(f"  Rest {lbl:<10} {rest:>8.1f} von {g[key]}")
@@ -360,7 +364,8 @@ def cmd_goals(a):
     dek = nc.load_dek()
     vault = read_vault(dek)
     g = vault.setdefault("goals", {})
-    for arg, key in (("kcal", "kcal"), ("protein", "p"), ("fibre", "b"), ("fluid", "ml")):
+    for arg, key in (("kcal", "kcal"), ("protein", "p"), ("carbs", "k"),
+                     ("fat", "f"), ("fibre", "b"), ("fluid", "ml")):
         v = getattr(a, arg)
         if v is not None:
             g[key] = v
@@ -401,7 +406,7 @@ def main():
     p = sub.add_parser("today"); p.add_argument("--day"); p.set_defaults(fn=cmd_today)
 
     p = sub.add_parser("goals")
-    for n in ("kcal", "protein", "fibre", "fluid"):
+    for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid"):
         p.add_argument(f"--{n}", type=float)
     p.set_defaults(fn=cmd_goals)
 

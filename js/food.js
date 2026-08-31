@@ -213,8 +213,8 @@ function drawDay() {
     <div class="card">
       <div class="card-hd"><span class="t">HEUTE</span><span class="s">${key}</span></div>
       <div class="ftp3-grid">
-        <div>${goalBar('kcal', s.kcal, g.kcal)}${goalBar('p', s.p, g.p)}${goalBar('b', s.b, g.b)}</div>
-        <div>${goalBar('k', s.k, null)}${goalBar('f', s.f, null)}${goalBar('ml', s.ml, g.ml)}</div>
+        <div>${goalBar('kcal', s.kcal, g.kcal)}${goalBar('p', s.p, g.p)}${goalBar('k', s.k, g.k)}</div>
+        <div>${goalBar('f', s.f, g.f)}${goalBar('b', s.b, g.b)}${goalBar('ml', s.ml, g.ml)}</div>
       </div>
       <div class="ez-meta">Makro-Verteilung nach Energie:
         ${['p', 'k', 'f'].map(m => {
@@ -262,8 +262,8 @@ function drawRange(n, title) {
     <div class="card">
       <div class="card-hd"><span class="t">SCHNITT</span><span class="s">nur geloggte Tage</span></div>
       <div class="ftp3-grid">
-        <div>${goalBar('kcal', avg('kcal'), g.kcal)}${goalBar('p', avg('p'), g.p)}</div>
-        <div>${goalBar('b', avg('b'), g.b)}${goalBar('ml', avg('ml'), g.ml)}</div>
+        <div>${goalBar('kcal', avg('kcal'), g.kcal)}${goalBar('p', avg('p'), g.p)}${goalBar('k', avg('k'), g.k)}</div>
+        <div>${goalBar('f', avg('f'), g.f)}${goalBar('b', avg('b'), g.b)}${goalBar('ml', avg('ml'), g.ml)}</div>
       </div>
     </div>`;
 
