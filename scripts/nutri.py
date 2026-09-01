@@ -450,6 +450,18 @@ def cmd_today(a):
     show_day(vault, a.day or day_of(datetime.now(TZ)))
 
 
+def goalval(s: str):
+    """Zielwert: eine Zahl, oder "none" zum Loeschen.
+
+    Ein geloeschtes Ziel ist nicht dasselbe wie 0: die Anzeige laesst die
+    Zeile dann ganz weg (show_day prueft auf truthy, goalBar schreibt "kein
+    Ziel gesetzt"), waehrend 0 als erreichtes Nullziel gelesen wuerde.
+    """
+    if s.strip().lower() in ("none", "off", "aus", "-"):
+        return "none"
+    return float(s)
+
+
 def cmd_goals(a):
     dek = nc.load_dek()
     vault = read_vault(dek)
@@ -458,7 +470,9 @@ def cmd_goals(a):
                      ("kg", "kg"),
                      ("fat", "f"), ("fibre", "b"), ("fluid", "ml")):
         v = getattr(a, arg)
-        if v is not None:
+        if v == "none":
+            g.pop(key, None)
+        elif v is not None:
             g[key] = v
     if a.kcalbase is not None:
         g["kcalBase"] = a.kcalbase
@@ -539,7 +553,8 @@ def main():
 
     p = sub.add_parser("goals")
     for n in ("kcal", "protein", "carbs", "fat", "fibre", "fluid", "kg"):
-        p.add_argument(f"--{n}", type=float)
+        p.add_argument(f"--{n}", type=goalval,
+                       help="Zahl, oder 'none' zum Loeschen des Ziels")
     p.add_argument("--kgdate", help="Termin des Gewichtsziels, z.B. 2026-09-19")
     p.add_argument("--kcalbase", type=float,
                    help="Sockel: Grundumsatz + Alltag minus Defizit. Fahrt-kcal kommen taeglich dazu.")
