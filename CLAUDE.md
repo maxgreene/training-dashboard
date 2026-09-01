@@ -466,7 +466,9 @@ gesetzt per `nutri.py goals --kcal 1800`. Das ist die Ausnahme zur Regel "alle
 Zahlen in der Config": die Config ist öffentlich, der Tresor nicht. `CFG.food`
 hält nur Darstellung und Mechanik (Farben, `dayCutoffH`, Fenster, Chart-Höhen,
 Atwater-Faktoren). Ein Ziel auf `null` zeichnet weder Linie noch Balken-Rest,
-gleiche Logik wie ein EF-Band ohne genug Fahrten.
+gleiche Logik wie ein EF-Band ohne genug Fahrten. Gelöscht wird eines mit
+`nutri.py goals --fluid none` (`none`/`off`/`aus`/`-`), nicht mit `0`: die 0
+wäre ein erreichtes Nullziel, `none` lässt die Zeile ganz weg.
 
 **Die CLI liest den Tresor über git, der Browser über raw.** Nicht
 verwechseln. `raw` ist nach einem Push Sekunden bis Minuten hinterher, und der
