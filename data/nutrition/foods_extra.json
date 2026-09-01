@@ -445,9 +445,9 @@
    "ml": 100,
    "portion": {
     "label": "Tasse",
-    "g": 200
+    "g": 160
    },
-   "quelle": "85 % Kaffee (BLS n410100) + 15 % Vollmilch 3,5 %. Die Milch ist aus n491000 (BLS-Mischung halb und halb) rueckgerechnet: 61 kcal, P 3.56, K 4.02, F 3.48 je 100 g. Wolfs Standardkaffee, Tasse bei der Arbeit ~200 ml (noch nicht nachgemessen)."
+   "quelle": "85 % Kaffee (BLS n410100) + 15 % Vollmilch 3,5 %. Die Milch ist aus n491000 (BLS-Mischung halb und halb) rueckgerechnet: 61 kcal, P 3.56, K 4.02, F 3.48 je 100 g. Wolfs Standardkaffee, Tasse bei der Arbeit 160 ml (nachgemessen 01.09.2026)."
   }
  ]
 }
