@@ -5662,7 +5662,14 @@
    "p": 8.39,
    "b": 2.9,
    "kcal": 404.0,
-   "ml": 0
+   "ml": 0,
+   "alias": [
+    "Marmorkuchen"
+   ],
+   "portion": {
+    "label": "Stueck",
+    "g": 60
+   }
   },
   {
    "id": "d431200",

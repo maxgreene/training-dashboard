@@ -103,6 +103,9 @@
   "B723000": [
    "Laugenstange",
    "Laugengebaeck"
+  ],
+  "D431100": [
+   "Marmorkuchen"
   ]
  },
  "portions": {
@@ -222,6 +225,10 @@
   "B723000": {
    "label": "Stange",
    "g": 100
+  },
+  "D431100": {
+   "label": "Stueck",
+   "g": 60
   }
  },
  "overrides": {
