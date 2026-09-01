@@ -88,6 +88,17 @@
   ],
   "C332000": [
    "Hirse"
+  ],
+  "F304100": [
+   "Heidelbeeren",
+   "Heidelbeere"
+  ],
+  "M713100": [
+   "Magerquark"
+  ],
+  "M141500": [
+   "Sahnejoghurt",
+   "Joghurt10"
   ]
  },
  "portions": {
@@ -191,6 +202,18 @@
   "C332000": {
    "label": "Portion",
    "g": 80
+  },
+  "F304100": {
+   "label": "Schale",
+   "g": 150
+  },
+  "M713100": {
+   "label": "Becher",
+   "g": 250
+  },
+  "M141500": {
+   "label": "Becher",
+   "g": 150
   }
  },
  "overrides": {
