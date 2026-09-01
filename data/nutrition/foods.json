@@ -21452,6 +21452,25 @@
    "ml": 0
   },
   {
+   "id": "kaffee_milch",
+   "name": "Kaffee mit Milch 15 %",
+   "alias": [
+    "Kaffee",
+    "Milchkaffee"
+   ],
+   "f": 0.52,
+   "k": 0.6,
+   "p": 0.64,
+   "b": 0.26,
+   "kcal": 10.0,
+   "ml": 100,
+   "portion": {
+    "label": "Tasse",
+    "g": 200
+   },
+   "quelle": "85 % Kaffee (BLS n410100) + 15 % Vollmilch 3,5 %. Die Milch ist aus n491000 (BLS-Mischung halb und halb) rueckgerechnet: 61 kcal, P 3.56, K 4.02, F 3.48 je 100 g. Wolfs Standardkaffee, Tasse bei der Arbeit ~200 ml (noch nicht nachgemessen)."
+  },
+  {
    "id": "kekse",
    "name": "Kekse",
    "f": 32.0,
@@ -24904,15 +24923,7 @@
    "p": 0.23,
    "b": 0.3,
    "kcal": 3.0,
-   "ml": 100,
-   "alias": [
-    "Kaffee",
-    "Milchkaffee"
-   ],
-   "portion": {
-    "label": "Tasse",
-    "g": 150
-   }
+   "ml": 100
   },
   {
    "id": "n410300",

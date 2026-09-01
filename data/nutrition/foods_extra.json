@@ -22,10 +22,6 @@
    "Gefluegelsalami",
    "Salamisticks"
   ],
-  "N410200": [
-   "Kaffee",
-   "Milchkaffee"
-  ],
   "N127000": [
    "Sprudel",
    "Mineralwasser"
@@ -129,10 +125,6 @@
   "W147000": {
    "label": "Stick",
    "g": 25
-  },
-  "N410200": {
-   "label": "Tasse",
-   "g": 150
   },
   "N127000": {
    "label": "Glas",
@@ -437,6 +429,25 @@
     "g": 125
    },
    "quelle": "Packungsangabe Hofmaier Haehnchenbrust natur"
+  },
+  {
+   "id": "kaffee_milch",
+   "name": "Kaffee mit Milch 15 %",
+   "alias": [
+    "Kaffee",
+    "Milchkaffee"
+   ],
+   "f": 0.52,
+   "k": 0.6,
+   "p": 0.64,
+   "b": 0.26,
+   "kcal": 10.0,
+   "ml": 100,
+   "portion": {
+    "label": "Tasse",
+    "g": 200
+   },
+   "quelle": "85 % Kaffee (BLS n410100) + 15 % Vollmilch 3,5 %. Die Milch ist aus n491000 (BLS-Mischung halb und halb) rueckgerechnet: 61 kcal, P 3.56, K 4.02, F 3.48 je 100 g. Wolfs Standardkaffee, Tasse bei der Arbeit ~200 ml (noch nicht nachgemessen)."
   }
  ]
 }
