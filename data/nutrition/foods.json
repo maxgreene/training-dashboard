@@ -1532,7 +1532,15 @@
    "p": 9.13,
    "b": 3.75,
    "kcal": 282.0,
-   "ml": 0
+   "ml": 0,
+   "alias": [
+    "Laugengebaeck",
+    "Laugenstange"
+   ],
+   "portion": {
+    "label": "Stange",
+    "g": 100
+   }
   },
   {
    "id": "b723100",
@@ -18354,6 +18362,21 @@
    "ml": 0
   },
   {
+   "id": "gervais_huettenkaese",
+   "name": "Gervais Huettenkaese Original 3,9 %",
+   "f": 3.9,
+   "k": 1.6,
+   "p": 12.3,
+   "b": 0.0,
+   "kcal": 91.0,
+   "ml": 0,
+   "portion": {
+    "label": "Becher",
+    "g": 200
+   },
+   "quelle": "Packungsangabe Hochland/Gervais, 3,9 % Fett"
+  },
+  {
    "id": "h011000",
    "name": "Sojaproteinisolat",
    "f": 3.39,
@@ -19828,6 +19851,21 @@
     "g": 50
    },
    "quelle": "Herstellerangabe ueber FDDB und wikifit, zwei Quellen gleich. Das Fett (4,3 g) kommt vom Ueberzug, untypisch fuer Fruchtgummi, deshalb gegengeprueft."
+  },
+  {
+   "id": "hofmaier_haehnchenbrust",
+   "name": "Hofmaier Haehnchenbrustfilet",
+   "f": 2.0,
+   "k": 1.0,
+   "p": 20.9,
+   "b": 0.0,
+   "kcal": 107.0,
+   "ml": 0,
+   "portion": {
+    "label": "Packung",
+    "g": 125
+   },
+   "quelle": "Packungsangabe Hofmaier Haehnchenbrust natur"
   },
   {
    "id": "k110100",
