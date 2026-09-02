@@ -548,9 +548,16 @@ nicht mit dem Klon mit.
 
 ## Trainingskontext
 
-- FTP wird aus dem jüngsten Rampentest abgeleitet, aktuell **271 W** (22.07.,
-  0.75 x MAP 361). Ziel **300 bis 15.11.2026**, 81 kg. HRmax aus demselben Test,
-  aktuell 171.
+- FTP wird aus dem jüngsten Rampentest abgeleitet, aktuell **283 W** (02.09.,
+  0.75 x MAP 377, Rolle, auto-erkannt). Ziel **300 bis 15.11.2026**, 81 kg (80,9
+  am 02.09.). HRmax aus demselben Test, jetzt **173** (Peak in der 02.09-Rampe,
+  vorher 171). Vorherige Rampe 22.07.: 271 / MAP 361. Die 02.09-Rampe war ein
+  sauberer Maximaltest (HF bis 173 = neue Max, Leistung glatt bis 387 W Peak,
+  Trittfrequenz 101-108 bis zum Abbruch stabil): Beine und Lunge kohärent am
+  Limit, kein früher Bein- oder Lungeneinbruch. Drei-Wege-Schätzung: Rampe
+  0.75xMAP = 283 (oberes Ende, MAP überschätzt bei anaerobem Profil), CP-Fit
+  256-282 je nach Dauern, 20-min x0.95 = 265 (aus altem 279er 20-min). Realistische
+  Schwelle daher eher ~270, die Seite trägt konventionsgemäß 283.
 - Hatte 300 bereits 2021 und 2023/24.
 - Rampentests in `CFG.tests`: 21.05. FTP 237 / MAP 313, 23.06. FTP 229 / MAP 305
   (früh abgebrochen, müde Beine), 22.07. FTP 271 / MAP 361 (Nullpunkt
