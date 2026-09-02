@@ -448,6 +448,25 @@
     "g": 160
    },
    "quelle": "85 % Kaffee (BLS n410100) + 15 % Vollmilch 3,5 %. Die Milch ist aus n491000 (BLS-Mischung halb und halb) rueckgerechnet: 61 kcal, P 3.56, K 4.02, F 3.48 je 100 g. Wolfs Standardkaffee, Tasse bei der Arbeit 160 ml (nachgemessen 01.09.2026)."
+  },
+  {
+   "id": "joghurt_griechisch",
+   "name": "Griechischer Joghurt 10 % Fett",
+   "alias": [
+    "Griechischer Joghurt",
+    "Griechenjoghurt"
+   ],
+   "f": 10.0,
+   "k": 3.6,
+   "p": 4.0,
+   "b": 0.0,
+   "kcal": 133.0,
+   "ml": 0,
+   "portion": {
+    "label": "Becher",
+    "g": 200
+   },
+   "quelle": "Handelsueblicher griechischer Joghurt 10 % Fett (Naehrwertrechner, Lyttos/Aldi u. a.). NICHT der abgeseihte High-Protein-Typ (Fage Total 5 %: P 9,0), der hat gut das Doppelte an Eiweiss."
   }
  ]
 }

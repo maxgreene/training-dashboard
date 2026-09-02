@@ -19875,6 +19875,25 @@
    "quelle": "Packungsangabe Hofmaier Haehnchenbrust natur"
   },
   {
+   "id": "joghurt_griechisch",
+   "name": "Griechischer Joghurt 10 % Fett",
+   "alias": [
+    "Griechischer Joghurt",
+    "Griechenjoghurt"
+   ],
+   "f": 10.0,
+   "k": 3.6,
+   "p": 4.0,
+   "b": 0.0,
+   "kcal": 133.0,
+   "ml": 0,
+   "portion": {
+    "label": "Becher",
+    "g": 200
+   },
+   "quelle": "Handelsueblicher griechischer Joghurt 10 % Fett (Naehrwertrechner, Lyttos/Aldi u. a.). NICHT der abgeseihte High-Protein-Typ (Fage Total 5 %: P 9,0), der hat gut das Doppelte an Eiweiss."
+  },
+  {
    "id": "k110100",
    "name": "Kartoffel geschält, roh",
    "f": 0.1,
