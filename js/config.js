@@ -107,6 +107,16 @@ const CFG = {
       { title: '3×15 min Schwelle', desc: '96–100 % FTP · 6 min Pause' },
     ],
 
+    // Auto-Rampenerkennung (shared.js:autoRampTests). Ein geplanter Test-Tag
+    // allein macht aus JEDER Fahrt an dem Tag noch keine Rampe, sonst wird die
+    // Morgen-Commute am Testtag faelschlich als Rampe in den FTP-Plot gesetzt.
+    // Der datumsgetriggerte Pfad verlangt zusaetzlich: Rolle (indoor) UND lang
+    // genug. Eine Fahrt mit "ramp" im Namen bleibt expliziter Override.
+    rampDetect: {
+      indoorOnly: true,     // Rampe laeuft auf der Rolle, nicht als Commute
+      minMovingMin: 18,     // kurzer Spin am Testtag zaehlt nicht
+    },
+
     // Termine, die das Template ueberschreiben. Datum ISO, damit kein Jahr
     // irgendwo hartcodiert werden muss.
     events: [

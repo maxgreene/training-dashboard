@@ -166,8 +166,14 @@ speichern, nie in Prozent vom FTP.
 
 ## Tests, FTP und Leistungsprofil
 
-**Rampentests werden automatisch erkannt:** Name enthält "ramp" ODER das Datum
-ist ein geplanter Test (`CFG.plan.events`, type:'test'). FTP = 0.75 x MAP (bester
+**Rampentests werden automatisch erkannt:** Name enthält "ramp" (expliziter
+Override) ODER das Datum ist ein geplanter Test (`CFG.plan.events`, type:'test')
+UND die Fahrt ist plausibel eine Rolle-Rampe: indoor plus lang genug
+(`CFG.plan.rampDetect`, `indoorOnly`/`minMovingMin`). Der zweite Teil ist
+wichtig, sonst wird die Morgen-Commute AM Testtag fälschlich als Rampe in den
+FTP-Plot gesetzt (am 02.09.2026 genau so passiert: Commute vor der Abend-Rolle).
+Die Rampe läuft immer auf der Rolle (Garmin, `indoor:true`), der Commute ist
+Wahoo-Outdoor (`indoor` falsy), das trennt sauber. FTP = 0.75 x MAP (bester
 60-s-Wert). Kein Handeintrag mehr nötig, der Test erscheint nach der Analyse von
 selbst. `CFG.tests` bleibt für Altfahrten ohne Daten hier, 20-Min-Tests und
 Overrides: ein Handeintrag mit gesetztem `ftp` gewinnt gegen den automatischen

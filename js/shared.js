@@ -284,15 +284,22 @@ function best(key, days) {
 
 // ── FTP / HRmax: EINE Quelle, aus den Daten aufgeloest ──────────────────────
 /* Rampentests automatisch aus den Fahrten ableiten. Eine Fahrt ist ein
- * Rampentest, wenn ihr Datum auf einen geplanten Test faellt (CFG.plan.events,
- * type:'test') ODER ihr Name "ramp" enthaelt. FTP = 0.75 x MAP (bester 60-s-
- * Wert) - die Rampen-Konvention dieses Projekts. Kein Handeintrag noetig. */
+ * Rampentest, wenn ihr Name "ramp" enthaelt (expliziter Override) ODER ihr
+ * Datum auf einen geplanten Test faellt UND sie plausibel eine Rolle-Rampe ist
+ * (indoor + lang genug, CFG.plan.rampDetect). Ohne den zweiten Teil wuerde die
+ * Morgen-Commute am Testtag faelschlich als Rampe gelten. FTP = 0.75 x MAP
+ * (bester 60-s-Wert) - die Rampen-Konvention dieses Projekts. */
 function autoRampTests() {
   const testDates = new Set(
     (CFG.plan.events || []).filter(e => e.type === 'test').map(e => e.date));
+  const rd = CFG.plan.rampDetect || {};
   const out = [];
   for (const a of DATA.acts) {
-    const isRamp = testDates.has(a.date) || /ramp/i.test(a.name || '');
+    const named = /ramp/i.test(a.name || '');
+    const planned = testDates.has(a.date)
+      && (!rd.indoorOnly || a.indoor === true)
+      && (a.moving_sec || 0) >= (rd.minMovingMin || 0) * 60;
+    const isRamp = named || planned;
     const map = a.power_curve && a.power_curve['60'];
     if (isRamp && a.has_power && map) {
       out.push({ date: a.date, kind: 'ramp', id: String(a.id),
