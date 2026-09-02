@@ -29087,7 +29087,15 @@
    "p": 3.6,
    "b": 0.0,
    "kcal": 281.0,
-   "ml": 0
+   "ml": 0,
+   "alias": [
+    "Eis",
+    "Sahneeis"
+   ],
+   "portion": {
+    "label": "Kugel",
+    "g": 50
+   }
   },
   {
    "id": "s231000",

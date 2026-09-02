@@ -102,6 +102,10 @@
   ],
   "D431100": [
    "Marmorkuchen"
+  ],
+  "S230000": [
+   "Eis",
+   "Sahneeis"
   ]
  },
  "portions": {
@@ -221,6 +225,10 @@
   "D431100": {
    "label": "Stueck",
    "g": 60
+  },
+  "S230000": {
+   "label": "Kugel",
+   "g": 50
   }
  },
  "overrides": {
