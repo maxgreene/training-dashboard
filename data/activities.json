@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-02T16:01:03.348173+00:00",
+  "updated_at": "2026-09-02T16:05:58.336143+00:00",
   "analysis_version": 17,
   "athlete": {
     "id": 13589996,
@@ -9,9 +9,9 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 225,
-    "recent_count": 225,
-    "recent_hours": 173.5
+    "total_activities": 226,
+    "recent_count": 226,
+    "recent_hours": 174.0
   },
   "wahoo_skipped": false,
   "activities": [
