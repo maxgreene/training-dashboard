@@ -308,7 +308,10 @@ const CFG = {
              xTicks: [5, 15, 30, 60, 300, 1200, 3600, 7200],
              yTicks: [50, 100, 200, 300, 500, 750, 1000] },
       // HF gegen Leistung, linear. yMax null = HRmax aus athlete.
-      scatter: { xMin: 80, xMax: 500, yMin: 80, yMax: null },
+      // minStable: ab so vielen stabilen Phasen gibt es Trendlinie + R²/%-Kennzahl.
+      // Darunter zeigt der Plot nur die blasse Rohwolke (+ die wenigen stabilen
+      // Punkte), z. B. bei einer zerhackten Commute.
+      scatter: { xMin: 80, xMax: 500, yMin: 80, yMax: null, minStable: 12 },
     },
 
     // Belastungsmodell

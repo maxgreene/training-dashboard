@@ -354,6 +354,17 @@ gestrichelte Waagerechte (Labels rechts), Leistungszonen als Senkrechte (Labels
 oben), wie bei der MMP-Kurve. Beide Achsen ziehen aus `CFG.athlete.ftp/hrmax`
 (Config-Basis), nicht aus dem live aufgelösten FTP, gleich wie `zoneTable`.
 
+**Zwei Schichten, nie mehr leer.** Der Scatter zeichnet immer erst die
+**Rohwolke** (jedes `(Watt, HF)`-Paar der Serie, blass, klein) und darüber die
+**stabilen Phasen** als deutliche Punkte. Trendlinie + R² + `% drin` erscheinen
+erst ab `CFG.ui.detail.scatter.minStable` (12) stabilen Punkten, darunter steht
+`n stabil (zu wenig für Trend) · m roh` und man sieht nur die Wolke. Grund (auf
+Wolfs Wunsch): eine zerhackte Commute hat kaum Steady-State, soll aber trotzdem
+ihre Punktwolke zeigen statt „zu wenige stabile Phasen". Die alte
+Leer-Meldung mit frühem `return` ist raus. Die Stabilitätsfilter (W≥60, HF≥90,
+Leistungs-CV≤12 % über ~35 s, HF-Drift≤6 bpm) gelten weiter, aber nur noch für
+die Auswahl der deutlichen Punkte, nicht mehr als Alles-oder-nichts.
+
 ---
 
 ## Token-Ketten

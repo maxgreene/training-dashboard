@@ -195,8 +195,11 @@ function drawScatter(box, s) {
   });
 
   const win = Math.max(3, Math.round(30 / s.step));
-  const W = s.w || [], H = s.hr || [], pts = [];
-  for (let i = win; i < s.n; i++) {
+  const W = s.w || [], H = s.hr || [], pts = [], raw = [];
+  for (let i = 0; i < s.n; i++) {
+    if (W[i] == null || H[i] == null) continue;
+    raw.push([W[i], H[i]]);                          // ALLE Paare (Rohwolke)
+    if (i < win) continue;
     const ww = W.slice(i - win, i + 1), hh = H.slice(i - win, i + 1);
     if (ww.some(x => x == null) || hh.some(x => x == null)) continue;
     if (W[i] < 60 || H[i] < 90) continue;
@@ -205,39 +208,52 @@ function drawScatter(box, s) {
     const sd = Math.sqrt(ww.reduce((a, b) => a + (b - m) ** 2, 0) / ww.length);
     if (sd / m > 0.12) continue;
     if (Math.abs(hh[0] - hh[hh.length - 1]) > 6) continue;
-    pts.push([W[i], H[i]]);
+    pts.push([W[i], H[i]]);                           // stabile Phasen (Teilmenge)
   }
   ctx.font = '9px ' + CSSVAR('--mono');
-  if (pts.length < 12) {
-    ctx.fillStyle = CSSVAR('--t5'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('zu wenige stabile Phasen', w / 2, h / 2);
-    return;
-  }
+
   // Clipping: feste Achsen koennen Punkte ausserhalb lassen.
   ctx.save();
   ctx.beginPath(); ctx.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); ctx.clip();
-  ctx.fillStyle = 'rgba(96,165,250,.5)';
-  pts.forEach(p => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 2.2, 0, 7); ctx.fill(); });
-  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), n = pts.length;
-  const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
-  const varx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+  // Rohwolke blass im Hintergrund: jedes (Watt, HF)-Paar, auch Antritte und
+  // Coasting. Dichte zeigt, wo die Zeit lag. Immer da, egal wie zerhackt.
+  ctx.fillStyle = 'rgba(96,165,250,.13)';
+  raw.forEach(p => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 1.5, 0, 7); ctx.fill(); });
+  // Stabile Phasen deutlich darueber.
+  ctx.fillStyle = 'rgba(96,165,250,.9)';
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 2.3, 0, 7); ctx.fill(); });
+
+  // Trendlinie + R² nur, wenn genug stabile Phasen zusammenkommen. Sonst bleibt
+  // es bei der Rohwolke (plus den wenigen stabilen Punkten).
+  const n = pts.length, enough = n >= (C.minStable || 12);
   let r2 = null;
-  if (varx) {
-    const bb = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / varx, a0 = my - bb * mx;
-    const ssTot = ys.reduce((s2, y) => s2 + (y - my) ** 2, 0);
-    const ssRes = pts.reduce((s2, p) => s2 + (p[1] - (a0 + bb * p[0])) ** 2, 0);
-    r2 = 1 - ssRes / ssTot;
-    ctx.beginPath(); ctx.moveTo(X(C.xMin), Y(a0 + bb * C.xMin));
-    ctx.lineTo(X(C.xMax), Y(a0 + bb * C.xMax));
-    ctx.strokeStyle = CSSVAR('--ok'); ctx.lineWidth = 1.5; ctx.stroke();
+  if (enough) {
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+    const varx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+    if (varx) {
+      const bb = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / varx, a0 = my - bb * mx;
+      const ssTot = ys.reduce((s2, y) => s2 + (y - my) ** 2, 0);
+      const ssRes = pts.reduce((s2, p) => s2 + (p[1] - (a0 + bb * p[0])) ** 2, 0);
+      r2 = 1 - ssRes / ssTot;
+      ctx.beginPath(); ctx.moveTo(X(C.xMin), Y(a0 + bb * C.xMin));
+      ctx.lineTo(X(C.xMax), Y(a0 + bb * C.xMax));
+      ctx.strokeStyle = CSSVAR('--ok'); ctx.lineWidth = 1.5; ctx.stroke();
+    }
   }
   ctx.restore();
-  const off = pts.filter(p => p[0] > C.xMax || p[1] > yMax || p[0] < C.xMin || p[1] < C.yMin).length;
-  const inZ = Math.round(100 * pts.filter(p => p[0] <= pZ && p[1] <= hZ).length / n);
+
   ctx.fillStyle = CSSVAR('--t3'); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText((r2 != null ? 'R² ' + r2.toFixed(2) + ' · ' : '') + 'n=' + n
-               + ' · ' + inZ + '% drin'
-               + (off ? ' · ' + off + ' außerhalb' : ''), pad.l + 5, pad.t + 2);
+  let txt;
+  if (enough) {
+    const off = pts.filter(p => p[0] > C.xMax || p[1] > yMax || p[0] < C.xMin || p[1] < C.yMin).length;
+    const inZ = Math.round(100 * pts.filter(p => p[0] <= pZ && p[1] <= hZ).length / n);
+    txt = (r2 != null ? 'R² ' + r2.toFixed(2) + ' · ' : '') + 'n=' + n
+        + ' · ' + inZ + '% drin' + (off ? ' · ' + off + ' außerhalb' : '');
+  } else {
+    txt = n + ' stabil (zu wenig für Trend) · ' + raw.length + ' roh';
+  }
+  ctx.fillText(txt, pad.l + 5, pad.t + 2);
 }
 
 // ── Detail: MMP-Kurve ───────────────────────────────────────────────────────
