@@ -336,8 +336,16 @@ function renderEF() {
   const box = $('#ef-box');
   if (!box || !window.Chart) return;
   box.style.height = C.height + 'px';
+  // Rampentests kennt das Dashboard aus testPoints (Auto + CFG.tests), NICHT am
+  // Namen: die alte Namensheuristik verpasste die abgebrochene Rampe vom 23.06
+  // ("Night Ride") und alles ohne "ftp/rampe/test" im Titel. Test = per ID
+  // markiert, die Namensheuristik bleibt als Fallback. Tests umgehen zusaetzlich
+  // die Mindestdauer, sonst faellt eine kurze/abgebrochene Rampe (< minDurMin)
+  // ganz aus dem Plot.
+  const testIds = new Set((testPoints() || []).map(t => String(t.id)).filter(Boolean));
+  const isTest = a => testIds.has(String(a.id)) || /ftp|rampe|test/i.test(a.name || '');
   const acts = DATA.acts.filter(a =>
-    a.ef && a.ef > 0.8 && a.ef < 2.5 && (a.moving_sec || 0) >= C.minDurMin * 60);
+    a.ef && a.ef > 0.8 && a.ef < 2.5 && (isTest(a) || (a.moving_sec || 0) >= C.minDurMin * 60));
   if (!acts.length) { box.innerHTML = '<div class="muted">keine Fahrten im Filter</div>'; return; }
 
   const T = timeAxis();
@@ -345,16 +353,16 @@ function renderEF() {
   const rOf = min => C.dotMinR + (C.dotMaxR - C.dotMinR) *
     Math.max(0, Math.min(1, Math.log(Math.max(min, C.dotMinDur) / C.dotMinDur) / span));
   const BLUE = '96,165,250', ORANGE = '249,115,22';
-  const catOf = (name, min) =>
-    /bonn|saar/i.test(name) ? 'grau'
-    : /ftp|rampe|test/i.test(name) ? 'test'
+  const catOf = (a, min) =>
+    isTest(a) ? 'test'
+    : /bonn|saar/i.test(a.name || '') ? 'grau'
     : min >= 90 ? 'orange' : 'blau';
-  const colOf = (name, min) => {
-    const a = C.alpha, c = catOf(name, min);
-    if (c === 'grau') return `rgba(150,150,150,${a})`;
-    if (c === 'test') return `rgba(180,60,220,${a})`;
-    if (c === 'orange') return `rgba(${ORANGE},${a})`;
-    return `rgba(${BLUE},${a})`;
+  const colOf = (a, min) => {
+    const al = C.alpha, c = catOf(a, min);
+    if (c === 'grau') return `rgba(150,150,150,${al})`;
+    if (c === 'test') return `rgba(180,60,220,${al})`;
+    if (c === 'orange') return `rgba(${ORANGE},${al})`;
+    return `rgba(${BLUE},${al})`;
   };
   // y-Grenzen: feste Werte aus der Config, sonst automatisch aus den Daten.
   const efs = acts.map(a => a.ef);
@@ -363,8 +371,8 @@ function renderEF() {
 
   const pts = acts.map(a => {
     const min = (a.moving_sec || 0) / 60;
-    return { x: T.dayOf(a.date), y: a.ef, r: rOf(min), cat: catOf(a.name || '', min),
-             bg: colOf(a.name || '', min), name: a.name || 'Fahrt', dur: Math.round(min) };
+    return { x: T.dayOf(a.date), y: a.ef, r: rOf(min), cat: catOf(a, min),
+             bg: colOf(a, min), name: a.name || 'Fahrt', dur: Math.round(min) };
   });
   // Zwei EWMA-Baender statt einem: eins fuer die blauen (kurz/mittel), eins fuer
   // die orangenen (lange) Fahrten. Jede Kategorie hat ihre eigene EF-Lage und

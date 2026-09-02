@@ -332,6 +332,12 @@ die blauen (kurz/mittel) und die orangenen (lange, >=90 min) Fahrten. Beide
 Kategorien haben eigene EF-Lage und Streuung, ein gemeinsamer Trend vermischt
 sie. Grau (Bonn/Saar) und Test bleiben nur Punkte. Ein Band braucht >=3 Fahrten,
 sonst faellt es weg.
+**Rampen werden per ID erkannt, nicht am Namen** (`isTest` in `renderEF` gegen
+`testPoints()`): die alte Namensheuristik `/ftp|rampe|test/` verpasste die
+abgebrochene Rampe vom 23.06 ("Night Ride") und alles ohne passenden Titel, so
+fehlten Punkte im lila-Cluster. Test-Fahrten umgehen zusaetzlich die
+`minDurMin`-Grenze, sonst faellt eine kurze/abgebrochene Rampe (23.06 war 24.8
+min < 25) ganz raus. Die Namensheuristik bleibt nur noch als Fallback.
 
 **`log(0)` existiert nicht.** Die MMP-y-Achse beginnt deshalb bei 50 W, nicht 0.
 
