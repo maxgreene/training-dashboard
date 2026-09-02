@@ -230,7 +230,13 @@ def day_of(ts: datetime) -> str:
 
 # ── Mengen-Parser ─────────────────────────────────────────────────────────
 # Versteht: "100 g Proteinbrot" | "2 Ei" | "500 ml Wasser" | "Gouda"
-QTY = re.compile(r"^\s*(?P<n>[\d.,]+)?\s*(?P<u>g|gramm|ml|stk|stueck|x)?\s*(?P<name>.+?)\s*$", re.I)
+# Die Einheit muss an einer Wortgrenze enden. Ohne den Lookahead frisst das
+# "g" den ersten Buchstaben des Lebensmittels: "3 Gouda" wurde als 3 Gramm
+# "ouda" gelesen und brach mit "mehrdeutig" ab. Trifft jedes Wort, das mit
+# g oder ml beginnt (Gouda, Gurke, Milchkaffee).
+QTY = re.compile(
+    r"^\s*(?P<n>[\d.,]+)?\s*(?P<u>(?:g|gramm|ml|stk|stueck|x)(?![^\W\d_]))?"
+    r"\s*(?P<name>.+?)\s*$", re.I)
 
 
 def resolve(text: str, foods: dict) -> dict:
