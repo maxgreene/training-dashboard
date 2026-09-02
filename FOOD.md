@@ -127,6 +127,21 @@ python scripts/nutri.py undo
 Der Parser versteht `100 g X`, `2 X` (Portionen), `500 ml X` und `X` allein
 (eine Portion). Unbekannte Namen brechen ab, statt zu raten.
 
+### Wo geloggt wird
+
+Loggen geht **nur in einer Claude-Code-Sitzung im Arbeitsverzeichnis**
+`training-dashboard`. Dort liegen `nutri.py`, der lokale DEK und git. Ein Chat
+in der Claude-App (claude.ai) hat kein Dateisystem und keinen Schluessel, der
+kann grundsaetzlich nichts eintragen, egal wie oft man fragt. Ebenso eine
+Claude-Code-Sitzung in einem anderen Ordner.
+
+Chats teilen **keinen** Verlauf. Gemeinsam ist ihnen nur, was auf der Platte
+liegt: das Repo, der Tresor und das Memory-Verzeichnis. Deshalb geht beim
+Wechsel der Sitzung nichts verloren, `nutri.py today` zeigt in jeder Sitzung
+denselben Stand.
+
+Probe fuer die richtige Sitzung: sie kann `git status` ausfuehren.
+
 ## Offene Punkte
 
 1. ~~`foods.json` ist abgetippt~~ **Erledigt am 31.08.2026.** Die Tabelle kommt
