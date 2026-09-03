@@ -480,7 +480,7 @@ function profileCard() {
       <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
     <div class="stats">${tiles}${cpTile}</div>
     <div id="pt-box"></div>
-    <div class="ez-hint">Nur echte Versuche je Anker (>=${Math.round((CFG.profile.attemptPct||0.9)*100)} % des jüngsten Bestwerts) · lockere Wochen = Lücke, kein Formverlust</div>
+    <div class="ez-hint">Rekord-Treppe je Anker: nur neue Bestwerte · fällt nie · wo sie endet, lag der Prime an der Dauer</div>
   </div>`;
 }
 
@@ -490,7 +490,7 @@ let _pt = null;
 function drawProfileTrend() {
   const box = $('#pt-box');
   if (!box || !window.Chart) return;
-  const series = CFG.profile.anchors.map(an => ({ an, pts: attemptBest(an.key) }))
+  const series = CFG.profile.anchors.map(an => ({ an, pts: recordBest(an.key) }))
     .filter(s => s.pts.length);
   if (!series.length) return;
   box.style.height = '240px';

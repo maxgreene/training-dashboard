@@ -185,18 +185,22 @@ Schwelle (1200 s) der Bestwert seit Trainingsstart (`CFG.profile.since`), mit
 W/kg, Alter, frisch/veraltet. Dazu ein CP/W'-Modell (2-Parameter Work-Time-Fit
 aus 2/5/10/20-min-Bestwerten) als Gegenprobe zum Rampen-FTP, plus ein
 Wochen-Verlaufsplot der Anker-Bestwerte (1-Wochen-Bins). Rechnung zentral in
-`shared.js`: `bestSince`, `powerProfile`, `cpModel`, `weeklyBest`, `attemptBest`.
+`shared.js`: `bestSince`, `powerProfile`, `cpModel`, `weeklyBest`, `attemptBest`,
+`recordBest`.
 
-**Der Verlaufsplot zeigt nur ECHTE Versuche, nicht das Wochen-Max über alle
-Fahrten** (`attemptBest`, `drawProfileTrend`). Sonst setzt eine lockere Woche
+**Der Verlaufsplot zeigt die Rekord-Progression, nicht das Wochen-Max über alle
+Fahrten** (`recordBest`, `drawProfileTrend`). Sonst setzt eine lockere Woche
 einen niedrigen Punkt und die Linie fällt, als wäre die Form eingebrochen,
-obwohl an der Dauer nur nicht getestet wurde. Eine Woche zählt als Versuch, wenn
-ihr Bestwert an der Dauer >= `CFG.profile.attemptPct` (0.90) des jüngsten
-Bestwerts im gleitenden Fenster (`attemptWindowDays`, 56 d) liegt. Referenz ist
-gleitend, nicht der Saison-Bestwert, damit frühe echte Versuche erhalten bleiben
-und der Aufwärtstrend sichtbar ist. Lockere Wochen fallen als Lücke raus
-("nicht getestet = nicht auswertbar"). `weeklyBest` bleibt die Rohbasis, die
-Kacheln (`powerProfile`/`bestSince`) sind unberührt.
+obwohl an der Dauer nur nicht getestet wurde. `recordBest` gibt je Anker nur
+Wochen mit einem NEUEN Bestwert seit Start (laufendes Maximum), also eine
+monotone Treppe, die nie fällt. Wo sie endet, lag der Prime an der Dauer: hört
+sie früh auf (z. B. Schwelle 20 min zuletzt 20.07), war der beste Effort früh,
+läuft sie bis heute (MAP), steigerst du dich noch. Ein Scheinrückschritt ist
+unmöglich, weil nichts nach unten geht. Vorsicht: bei ungetesteten Dauern
+(20 min, Wolf fährt Intervalle) markiert das Ende nur den letzten zufällig
+langen/harten Effort, nicht zwingend die wahre Spitze. `attemptBest` (nur echte
+Versuche >= `attemptPct` des gleitenden Bestwerts) liegt als Alternative daneben,
+`weeklyBest` ist die Rohbasis. Kacheln (`powerProfile`/`bestSince`) unberührt.
 
 **Beobachtung zur Gegenprobe:** Die Rampe (0.75 x MAP) überschätzt bei starkem
 anaeroben Profil, weil die letzte Rampen-Minute viel Anaerobes trägt. CP aus den

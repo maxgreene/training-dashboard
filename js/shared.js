@@ -470,6 +470,16 @@ function attemptBest(key) {
   });
 }
 
+/* Rekord-Progression: nur Wochen, die einen NEUEN Bestwert seit Start setzen
+ * (laufendes Maximum). Ergibt eine monotone Treppe, die nie faellt. Der letzte
+ * Punkt ist der juengste Rekord: hoert die Treppe frueh auf, lag der Prime an
+ * der Dauer frueh, laeuft sie bis heute, steigerst du dich noch. Kein
+ * Scheinrueckschritt moeglich, weil per Definition nichts nach unten geht. */
+function recordBest(key) {
+  let max = 0;
+  return weeklyBest(key).filter(p => (p.w > max) && (max = p.w));
+}
+
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
  * holt sie hier - so gibt es sie genau einmal. */
