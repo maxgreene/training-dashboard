@@ -183,6 +183,13 @@ const CFG = {
       { key: '1200', label: 'Schwelle', full: 'Schwelle · 20 min',            col: '#3b82f6' },
     ],
     cpDurations: [120, 300, 600, 1200], // Bestwerte fuer den CP/W'-Fit (2-20 min)
+    // Verlaufsplot (drawProfileTrend): nur ECHTE Versuche zeigen, nicht das
+    // Wochen-Maximum ueber alle Fahrten. Eine Woche zaehlt als Versuch an einer
+    // Dauer, wenn ihr Bestwert >= attemptPct des juengsten Bestwerts im Fenster
+    // (attemptWindowDays) liegt. Lockere Wochen fallen als Luecke raus, statt die
+    // Linie faelschlich absacken zu lassen ("nicht getestet = nicht auswertbar").
+    attemptPct: 0.90,
+    attemptWindowDays: 56,
   },
 
   // ── Ernaehrung ────────────────────────────────────────────────────────────

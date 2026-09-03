@@ -449,6 +449,27 @@ function weeklyBest(key) {
   return Object.keys(byWeek).sort().map(wk => ({ date: wk, w: byWeek[wk] }));
 }
 
+/* Wie weeklyBest, aber nur WOCHEN MIT ECHTEM VERSUCH an der Dauer. Problem des
+ * reinen Wochen-Max: eine lockere Woche setzt einen niedrigen Punkt, die Linie
+ * faellt und sieht aus wie Formverlust, obwohl nur nicht getestet wurde. Fix:
+ * eine Woche zaehlt nur, wenn ihr Wert >= CFG.profile.attemptPct des juengsten
+ * Bestwerts im gleitenden Fenster (attemptWindowDays) liegt, also nah genug am
+ * Limit war, um als Versuch zu gelten. Referenz ist gleitend (nicht der
+ * Saison-Bestwert), damit fruehe echte Versuche erhalten bleiben und der
+ * Aufwaertstrend sichtbar ist. Lockere Wochen fallen als Luecke raus. */
+function attemptBest(key) {
+  const all = weeklyBest(key);                    // {date, w} je Woche, chronologisch
+  const pct = CFG.profile.attemptPct != null ? CFG.profile.attemptPct : 0.9;
+  const winMs = (CFG.profile.attemptWindowDays || 56) * 86400000;
+  return all.filter(p => {
+    const t = d(p.date).getTime();
+    let ref = 0;                                  // bestes Wochen-Max im Fenster bis inkl. jetzt
+    all.forEach(q => { const tq = d(q.date).getTime();
+      if (tq <= t && t - tq <= winMs && q.w > ref) ref = q.w; });
+    return ref > 0 && p.w >= pct * ref;
+  });
+}
+
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
  * holt sie hier - so gibt es sie genau einmal. */

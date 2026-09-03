@@ -480,7 +480,7 @@ function profileCard() {
       <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
     <div class="stats">${tiles}${cpTile}</div>
     <div id="pt-box"></div>
-    <div class="ez-hint">Wochen-Bestwerte je Anker · 1-Wochen-Bins · Linie verbindet Wochen mit Effort</div>
+    <div class="ez-hint">Nur echte Versuche je Anker (>=${Math.round((CFG.profile.attemptPct||0.9)*100)} % des jüngsten Bestwerts) · lockere Wochen = Lücke, kein Formverlust</div>
   </div>`;
 }
 
@@ -490,7 +490,7 @@ let _pt = null;
 function drawProfileTrend() {
   const box = $('#pt-box');
   if (!box || !window.Chart) return;
-  const series = CFG.profile.anchors.map(an => ({ an, pts: weeklyBest(an.key) }))
+  const series = CFG.profile.anchors.map(an => ({ an, pts: attemptBest(an.key) }))
     .filter(s => s.pts.length);
   if (!series.length) return;
   box.style.height = '240px';
@@ -504,7 +504,7 @@ function drawProfileTrend() {
         type: 'line', label: s.an.label,
         data: s.pts.map(p => ({ x: X(p), y: p.w })),
         borderColor: s.an.col, backgroundColor: s.an.col,
-        borderWidth: 1.6, pointRadius: 2, spanGaps: true, tension: 0.2,
+        borderWidth: 1.6, pointRadius: 3, spanGaps: true, tension: 0.2,
       })),
     },
     options: {
