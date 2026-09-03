@@ -480,7 +480,7 @@ function profileCard() {
       <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
     <div class="stats">${tiles}${cpTile}</div>
     <div id="pt-box"></div>
-    <div class="ez-hint">Rekord-Treppe je Anker: nur neue Bestwerte · fällt nie · wo sie endet, lag der Prime an der Dauer</div>
+    <div class="ez-hint">Rekord-Treppe je Anker: nur neue Bestwerte · fällt nie · gestrichelt bis heute = Bestwert steht noch, Länge = Zeit seit dem Prime</div>
   </div>`;
 }
 
@@ -519,6 +519,26 @@ function drawProfileTrend() {
       },
       plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } } },
     },
+    plugins: [{
+      id: 'recordTail',
+      // Vom letzten Rekord jeder Treppe eine gestrichelte Waagerechte bis heute:
+      // "dieser Bestwert steht noch", Laenge = Zeit seit dem Prime.
+      afterDatasetsDraw(ch) {
+        const { ctx, chartArea: ca, scales } = ch;
+        const xToday = Math.min(ca.right, scales.x.getPixelForValue(T.dayOf(iso(today()))));
+        ctx.save();
+        ch.data.datasets.forEach((ds, i) => {
+          const dp = ds.data[ds.data.length - 1];
+          if (!dp) return;
+          const x0 = scales.x.getPixelForValue(dp.x), y = scales.y.getPixelForValue(dp.y);
+          if (xToday - x0 < 2) return;              // Rekord ist quasi heute, kein Schwanz
+          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xToday, y);
+          ctx.strokeStyle = ds.borderColor; ctx.setLineDash([4, 3]);
+          ctx.lineWidth = 1; ctx.globalAlpha = 0.55; ctx.stroke();
+        });
+        ctx.restore();
+      },
+    }],
   });
 }
 
