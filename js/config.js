@@ -126,8 +126,8 @@ const CFG = {
       { date: '2026-09-02', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · gleiche Bedingungen wie der Nullpunkt · Rampe bis zum Abbruch',
         protected: true },
-      { date: '2026-10-14', type: 'test', title: 'Rampen-Retest',
-        desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen',
+      { date: '2026-10-07', type: 'test', title: 'Rampen-Retest',
+        desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen · aus 14.10 vorverlegt',
         protected: true },
 
       // Petersberg-Challenge mit Ingo (Sub-8 auf 2,1 km / 178 Hm / 8,7 %).
