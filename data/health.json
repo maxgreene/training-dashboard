@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-04T18:45:46.098989+00:00",
+  "updated_at": "2026-09-04T22:30:46.722815+00:00",
   "days": [
     {
       "date": "2026-09-04",
@@ -8,7 +8,7 @@
       "resting_hr_7d": 44,
       "stress_avg": 22,
       "bb_high": 90,
-      "bb_low": 40,
+      "bb_low": 39,
       "hrv": 36,
       "hrv_status": "BALANCED",
       "sleep_h": 7.7
