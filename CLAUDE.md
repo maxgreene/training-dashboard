@@ -603,14 +603,17 @@ nicht mit dem Klon mit.
   8-min-Efforts in den Daten (Intervalle, kein Dauertest). Realistischer Weg:
   8:16-PR knacken (sicher), Sub-8 als Reach-Goal. **Termin ist ein FENSTER
   19.–24.09** (Wetter/Ingo), kein fixer Tag. Umsetzung im Plan als Events
-  (`CFG.plan.events`, neue Typen `vo2`/`sim`/`challenge`, CSS `.ev-*` in
-  index.html): letzte harte Einheit 16.09 (race-spez 3×6 @ 355-375 W), davor
-  09.09 VO2 5×3; echter Baseline-Effort am Berg 13.09 (kontrolliert hart, Zeit
-  nehmen, auf 13.09 vorgezogen weil der 19.09 schon Versuchstag sein kann); ab
-  17.09 nur noch Taper (17.09 locker), 19.09 Challenge-Fenster offen, 20.09
-  Öffner+locker bis Do 24.09. Der geplante Rampentest 23.09 lag mitten im
-  Fenster und ist **ganz gestrichen** (waren eh zu viele), es bleiben Rampe
-  02.09 (MAP-Baseline vor der Challenge) und 07.10 (aus 14.10 vorverlegt).
+  (`CFG.plan.events`, Typen `vo2`/`sim`/`challenge`/`rest`, CSS `.ev-*` in
+  index.html). **Randbedingung Urlaub Texel So 13.09 bis Mi 16.09** (flach, evtl.
+  lockeres Radeln, keine Rolle): deshalb muss alle Qualität VOR den 12.09. Ablauf:
+  08.09 Recovery (nach dem 328-TSS-Sonntag 06.09, Di-SS entfällt), 09.09 VO2 5×3
+  (letzte strukturierte Intensität, nur wenn erholt), 11.09 locker+Öffner, **12.09
+  Petersberg-Baseline** (aus 13.09 vorverlegt, kontrolliert hart, Zeit nehmen),
+  13.-16.09 Urlaub (locker/frei, keine Intervalle), 17.09 Taper locker, 18.09
+  Öffner, 19.09 Challenge-Fenster offen, 20.09 Öffner+locker bis Do 24.09. Die
+  ursprünglich für 16.09 geplante letzte VO2 **entfällt** (Urlaub). Der geplante
+  Rampentest 23.09 lag mitten im Fenster und ist **ganz gestrichen**, es bleiben
+  Rampe 02.09 (MAP-Baseline) und 07.10 (aus 14.10 vorverlegt).
   Watt-Ziel Sub-8 ist Physik-Konstante (~371 W leichtes Rad), der 02.09-MAP
   schärft nur die Einschätzung der Lücke.
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei

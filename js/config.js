@@ -132,23 +132,42 @@ const CFG = {
 
       // Petersberg-Challenge mit Ingo (Sub-8 auf 2,1 km / 178 Hm / 8,7 %).
       // Ziel-Watt aus Physik: ~371 W (81 kg, leichtes Bergrad), unabhaengig vom
-      // FTP. 8 min all-out = VO2max/MAP, deshalb die Mittwoche davor auf
-      // VO2/race-spezifisch statt Schwelle. WICHTIG: der Termin ist ein FENSTER
-      // 19.-24.09 (Wetter/Ingo), kein fixer Tag. Deshalb: letzte harte Einheit
-      // 16.09, ab 17.09 nur Taper, echter Baseline-Effort am Berg auf 13.09
-      // vorgezogen (der 19.09 kann schon Versuchstag sein). Der Rampentest lag
-      // urspruenglich 23.09, mitten im Fenster: nach 30.09 geschoben (oben).
+      // FTP. 8 min all-out = VO2max/MAP. Termin ist ein FENSTER 19.-24.09
+      // (Wetter/Ingo). RANDBEDINGUNG: Urlaub Texel So 13.09 bis Mi 16.09 (flach,
+      // evtl. lockeres Radeln, keine Rolle), deshalb muss alle Qualitaet VOR den
+      // 12.09: Baseline-Effort am Berg auf Sa 12.09 vorverlegt (statt 13.09), die
+      // fuer 16.09 geplante letzte VO2 entfaellt (Urlaub). Dazu Ruecksicht auf den
+      // 328-TSS-Sonntag (06.09): Mo/Di Recovery, Mi-VO2 nur wenn erholt. Danach
+      // langer Taper ueber den Urlaub, Oeffner 18.09, Fenster ab 19.09.
+      { date: '2026-09-08', type: 'rest', title: 'Recovery locker',
+        desc: 'nach dem 328-TSS-Sonntag · Z1-Z2, keine Intervalle · Beine ausrollen (Di-SS entfaellt)',
+        protected: true },
       { date: '2026-09-09', type: 'vo2', title: 'Rolle: 5×3 min VO2max',
-        desc: '110 % FTP · 3 min Trab · MAP heben fuers 8-min-Ceiling',
+        desc: '110 % FTP · 3 min Trab · letzte strukturierte Intensitaet vor dem Urlaub · nur wenn nach So erholt (Heute-Feld checken), sonst 4×3',
         protected: true },
-      { date: '2026-09-13', type: 'sim', title: 'Petersberg Baseline',
-        desc: 'Anstieg ~8 min zuegig, Zeit + Pacing nehmen · kontrolliert hart, NICHT ganz Vollgas · dein echter Ausgangswert',
+      { date: '2026-09-11', type: 'sim', title: 'Locker + Öffner',
+        desc: 'Tag vor dem Baseline · 2-3×1 min oeffnen, sonst Z1-Z2 · frische Beine fuer Samstag',
         protected: true },
-      { date: '2026-09-16', type: 'vo2', title: 'Rolle: 3×6 min race-spezifisch',
-        desc: '355–375 W (Sub-8-Pace) · LETZTE harte Einheit vor dem Fenster',
+      { date: '2026-09-12', type: 'sim', title: 'Petersberg Baseline (vorverlegt)',
+        desc: 'aus 13.09 vor wegen Urlaub · Anstieg ~8 min zuegig, Zeit + Pacing nehmen · kontrolliert hart, NICHT ganz Vollgas · dein echter Ausgangswert',
+        protected: true },
+      { date: '2026-09-13', type: 'rest', title: 'Urlaub Texel (bis Mi 16.09)',
+        desc: 'flach · wenn Rad, dann locker Z2 (Volumen/Erholung), keine Intervalle · keine Rolle',
+        protected: true },
+      { date: '2026-09-14', type: 'rest', title: 'Urlaub Texel',
+        desc: 'locker Z2 oder frei',
+        protected: true },
+      { date: '2026-09-15', type: 'rest', title: 'Urlaub Texel',
+        desc: 'locker Z2 oder frei',
+        protected: true },
+      { date: '2026-09-16', type: 'rest', title: 'Urlaub Texel · Rückreise',
+        desc: 'locker oder frei · keine harte Einheit (die fuer heute geplante Rolle-VO2 entfaellt)',
         protected: true },
       { date: '2026-09-17', type: 'sim', title: 'Taper: locker',
-        desc: '45 min Z2 · keine Intervalle · Beine frisch machen',
+        desc: 'zurueck · 45 min Z2, keine Intervalle · Beine wecken',
+        protected: true },
+      { date: '2026-09-18', type: 'sim', title: 'Öffner',
+        desc: '3×1-2 min scharf, sonst locker · schaerft nach den ruhigen Urlaubstagen, vor dem Fenster',
         protected: true },
       { date: '2026-09-19', type: 'challenge', title: 'Petersberg-Challenge – Fenster 19.–24.09',
         desc: 'Versuchstag nach Wetter/Ingo · Oeffner 3×1 min, dann gleichmaessig Vollgas ~371 W (leichtes Rad, ~15,8 km/h) · NICHT mit Antritt starten · Sub-8',
