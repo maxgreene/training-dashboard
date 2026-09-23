@@ -175,6 +175,32 @@ const CFG = {
       { date: '2026-09-20', type: 'sim', title: 'Challenge-Fenster: Öffner + locker',
         desc: 'Versuch moeglich · an Nicht-Versuchstagen kurz oeffnen (3×1 min) + locker · Glykogen voll halten · Fenster bis Do 24.09',
         protected: true },
+
+      // NEUAUSRICHTUNG (23.09): Petersberg-Challenge ist durch Hexenschuss
+      // (17./18.09) ausgefallen. Neue Ziele: PEAK Muensterland Giro Sa 03.10,
+      // danach TOPFORM fuer Fahrt Berlin-Luebeck Fr 13.11. Wiedereinstieg
+      // ruecksichtsvoll (Ruecken ~5-6 Tage post-Hexenschuss, wird besser).
+      { date: '2026-09-24', type: 'sim', title: 'Petersberg-Segment (Rücken-Check)',
+        desc: 'NUR wenn der Ruecken durchs Warmup komplett schmerzfrei ist · dann kontrolliert hart ~8 min (der ausgefallene Baseline), KEIN Vollgas-Antritt aus dem Stand · bei Zwacken sofort abbrechen',
+        protected: true },
+      { date: '2026-09-25', type: 'rest', title: 'Locker',
+        desc: 'Z1-Z2 · Ruecken schonen, nach dem Berg-Check ausrollen',
+        protected: true },
+      { date: '2026-09-30', type: 'vo2', title: 'Giro-Schärfe',
+        desc: 'race-spezifisch fuer den flachen/schnellen Giro: 3-4×3 min hart + 4-5 Sprints · nur wenn Ruecken frei',
+        protected: true },
+      { date: '2026-10-01', type: 'rest', title: 'Taper: locker',
+        desc: 'Z1-Z2, keine Intervalle · in den Giro hineinfrischen',
+        protected: true },
+      { date: '2026-10-02', type: 'sim', title: 'Öffner vor dem Giro',
+        desc: '20-30 min locker + 3×1 min scharf + 2 Sprints · Beine wecken',
+        protected: true },
+      { date: '2026-10-03', type: 'challenge', title: 'Münsterland Giro',
+        desc: 'PEAK-Event · flach/schnell · Positionierung vorn, Windschatten, Sprintvorbereitung',
+        protected: true },
+      { date: '2026-11-13', type: 'challenge', title: 'Fahrt Berlin–Lübeck',
+        desc: 'TOPFORM-Ziel · lange Ausdauerfahrt · Durability/CTL, nicht Spitze · Aufbau nach dem Giro darauf ausrichten',
+        protected: true },
     ],
   },
 

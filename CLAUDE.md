@@ -592,6 +592,30 @@ nicht mit dem Klon mit.
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
   "heute"-Linie, und je gemessenem Test den FTP-Wert am Marker und das Datum an
   der Achse.
+- **NEUAUSRICHTUNG ab 23.09.2026 (Hexenschuss + neue Events).** Wolf hatte am
+  17./18.09. einen Hexenschuss, die Petersberg-Challenge (Fenster 19.-24.09.)
+  fiel damit aus. Neue Ziele: **PEAK Münsterland Giro Sa 03.10.** (flach/schnell,
+  Positionierung + Sprint), danach **TOPFORM für die Fahrt Berlin-Lübeck Fr
+  13.11.** (lange Ausdauerfahrt, Durability). Das FTP-300-Ziel 15.11. läuft im
+  Hintergrund weiter, die 07.10-Rampe bleibt der Checkpoint (liegt 4 Tage nach
+  dem Giro, kann Rennmüdigkeit zeigen). Wiedereinstieg rücksichtsvoll: 24.09.
+  Petersberg-Segment NUR wenn der Rücken durchs Warmup schmerzfrei ist
+  (kontrolliert hart ~8 min, kein Antritt aus dem Stand), dann Giro-Peak-Woche
+  mit einer Schärfe-Einheit 30.09. + 3-Tage-Taper (01.-02.10.). Events in
+  `CFG.plan.events` (Giro/Berlin-Lübeck als type `challenge`, rot). Der alte
+  Challenge-Block (08.-20.09.) bleibt als Historie stehen.
+- **RAD RACE ONE TWENTY, Sonthofen (Allgäu), ~12./13. Juni 2027.** Fernziel.
+  Mannschafts-Bergzeitfahren (6,81 km / 340 Hm / ~5 %, 810-1090 m) plus danach
+  120-km-Straßenrennen auf gesperrten Straßen, Team = 5 Mann (2 Bergziegen, 2
+  schwere FTP-Monster, Wolf). Wertung: **Startaufstellung = Summe der schnellsten
+  3 im Bergzeitfahren; Renn-Endzeit = 3. Mann des Teams über die Linie.** Das
+  Bergzeitfahren ist also nur Seeding, das 120er ist das Ergebnis, und dort zählt
+  Wolfs Ausdauer voll (Kandidat für die zählenden 3, nicht nur Wasserträger).
+  Zwillings-Anstieg zum Kalibrieren: **Strava-Segment Ramersbach** (7,31 km /
+  359 Hm / 4,4 %), Wolfs Solo-PR 18:21 (2021) bei gemessen ~380 W = damals FTP
+  ~355 (nicht 300, sein FTP-Test unterschätzt bei fehlendem Max-20-min). Regel:
+  TTT-Zeit ≈ Ramersbach-Zeit × 0,94. Über ~18-20 min liegt sein Max nur ~+5-8 %
+  über FTP (W' ist da schon weg), die grossen Überschüsse hat er kurz (3-8 min).
 - **Petersberg-Challenge mit Ingo (Ende Sept 2026).** Sub-8 auf dem Strava-
   Segment "Petersberg 1" (752098): 2,1 km, 178 Hm, 8,7 %. Sub-8 = 8-min-Effort,
   also VO2max/MAP, nicht Schwelle. Ziel-Watt aus Physik (`P = m·g·Δh/t` plus
