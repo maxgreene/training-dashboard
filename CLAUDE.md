@@ -279,6 +279,17 @@ klebt Leistungsphasen zusammen und überschätzt jeden Bestwert.
 
 **EF = NP / Ø-HF** (TrainingPeaks-Standard). Nicht Durchschnitt, nicht getrimmt.
 
+**Leere Health-Tage sind keine Health-Daten.** Hat die Uhr nicht mit Garmin
+Connect synchronisiert, liefert die API nichts (`LEER (API gibt nichts
+zurueck)` im Log), `fetch_garmin.py` legt die Zeile aber trotzdem an, alles
+`null`. Die zählte als "heute frisch": Nav-Ampel und Heute-Feld standen grün,
+ohne einen Messwert (28.-30.09.2026). Fix: `shared.js` verwirft beim Laden alle
+Zeilen ohne `hrv`/`resting_hr`/`sleep_h`, die Nav-Ampel sieht damit das echte
+Alter, und `todayCard` zeigt ab `CFG.ui.status.healthWarnDays` grau "keine
+Daten, letzter Stand TT.MM., Uhr syncen" statt einer Ampel aus alten Werten. Der
+Fetch holt immer die letzten 5 Tage neu, ein Sync innerhalb dieser Frist füllt
+die Lücke von selbst.
+
 **Eingefrorene HF erkennen.** Ein abgerutschter Gurt wiederholt den letzten
 Wert. Regel: >= 180 s exakt konstant und >= 50 bpm, dann auf `None`. Am 10.07.
 waren 57 Minuten bei konstant 114 bpm eingefroren.

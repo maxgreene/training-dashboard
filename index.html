@@ -323,7 +323,7 @@ function renderStatus(){
   const hint = DATA.wahooSkipped
     ? 'Wahoo-Abruf übersprungen — meist abgelaufener WAHOO_REFRESH_TOKEN. Neu autorisieren.'
     : hDay >= st.healthWarnDays
-    ? 'Health hängt. Garmin-Token prüfen: refresh.log auf ukb457.'
+    ? 'Health hängt. Erst Uhr mit Garmin Connect syncen, sonst Garmin-Token prüfen (refresh.log auf ukb457).'
     : fetchAge >= st.fetchWarnH
     ? 'Fetch läuft nicht. cron-job.org und GitHub Actions prüfen.'
     : 'Fetch alle 15 Min · Health täglich · Aktivitäten nach dem Fahren.';

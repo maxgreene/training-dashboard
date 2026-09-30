@@ -230,8 +230,12 @@ function testTimeline(tp, goal, goalDate) {
  * geplanten Tag eine Ampel plus konkrete Empfehlung (Coach-Rolle). Marker
  * gegen die 42-Tage-Basis (Median). Bei Konflikt Erholung vor Plan. */
 function todayCard(plan, tplan) {
-  const COL = { 'grün': '#34d399', gelb: '#d4a03c', rot: '#c0392b' };
+  const COL = { 'grün': '#34d399', gelb: '#d4a03c', rot: '#c0392b', 'keine Daten': '#6b7280' };
   const h = DATA.health[0] || {};
+  // Juengster Tag MIT Werten (leere Zeilen filtert shared.js). Ist der zu alt,
+  // gibt es kein Health-Urteil: grau statt einer Ampel aus alten Werten.
+  const hAge = h.date ? dayDiff(today(), d(h.date)) : Infinity;
+  const hStale = hAge >= CFG.ui.status.healthWarnDays;
   const m = loadModel();
   const f = m.length ? m[m.length - 1] : null;
   const hrvB = baseline('hrv', 42), rhrB = baseline('resting_hr', 42);
@@ -242,8 +246,13 @@ function todayCard(plan, tplan) {
   if (rhrB != null && rhr != null && rhr > rhrB + 3) flags.push('Ruhepuls erhöht');
   if (sleep != null && sleep < 6.5) flags.push('kurzer Schlaf');
   if (/LOW|POOR|UNBALANCED/i.test(st)) flags.push('HRV-Status ' + st);
-  const level = (flags.length >= 2 || /LOW|POOR/i.test(st)) ? 'rot'
-              : flags.length === 1 ? 'gelb' : 'grün';
+  let level = (flags.length >= 2 || /LOW|POOR/i.test(st)) ? 'rot'
+            : flags.length === 1 ? 'gelb' : 'grün';
+  if (hStale) {
+    level = 'keine Daten';
+    flags.length = 0;
+    flags.push(h.date ? 'letzter Stand ' + fmtDay(d(h.date)) + ', Uhr syncen' : 'Uhr syncen');
+  }
 
   // Einheit eines Plan-Tags in Merkmale zerlegen (heute wie morgen).
   const info = p => {
@@ -308,7 +317,7 @@ function todayCard(plan, tplan) {
   // ── MORGEN: Ampel projiziert aus heute (Last) + aktuellen Markern + Plan ──
   const tw = addDays(today(), 1);
   const tm = info(tplan);
-  const bump = l => l === 'grün' ? 'gelb' : 'rot';
+  const bump = l => l === 'keine Daten' ? l : l === 'grün' ? 'gelb' : 'rot';
   let tlevel;
   if (tm.rest) tlevel = 'grün';
   else {

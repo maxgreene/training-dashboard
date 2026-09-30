@@ -16,7 +16,11 @@ async function loadAll() {
   DATA.wahooSkipped = !!a.wahoo_skipped;
   try {
     const h = await fetch('data/health.json' + bust).then(r => r.json());
-    DATA.health = (h.days || []).sort((x, y) => y.date.localeCompare(x.date));
+    // Nur Tage mit echten Werten. Garmin legt Zeilen fuer ungesynchte Tage
+    // leer an (alles null); die zaehlten sonst als "heute frisch" und die
+    // Ampeln standen auf gruen, obwohl nichts gemessen war (28.-30.09.2026).
+    const has = r => r.hrv != null || r.resting_hr != null || r.sleep_h != null;
+    DATA.health = (h.days || []).filter(has).sort((x, y) => y.date.localeCompare(x.date));
   } catch (e) { DATA.health = []; }
   DATA.loaded = true;
 }
