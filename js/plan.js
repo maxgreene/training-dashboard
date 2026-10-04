@@ -15,6 +15,15 @@ function wRange(fr) {
   return Math.round(fr[0] * f) + '–' + Math.round(fr[1] * f) + ' W';
 }
 
+// Entlastungswoche? 4er-Raster, ausser CFG.plan.weekPhase sagt fuer den
+// Montag etwas anderes.
+function weekPhase(weekIdx, mon) {
+  const o = (CFG.plan.weekPhase || {})[iso(mon)];
+  const deload = o ? o.deload
+    : weekIdx >= 0 && ((weekIdx + 1) % CFG.plan.deloadEvery) === 0;
+  return { deload, label: o ? o.label : deload ? 'Entlastung' : '' };
+}
+
 // ── Was ist an einem Tag geplant? ───────────────────────────────────────────
 function plannedFor(dt, weekIdx) {
   const isoD = iso(dt);
@@ -27,7 +36,7 @@ function plannedFor(dt, weekIdx) {
   const t = CFG.plan.template[dowOf(dt)];
   if (!t) return null;
 
-  const deload = ((weekIdx + 1) % CFG.plan.deloadEvery) === 0;
+  const deload = weekPhase(weekIdx, mondayOf(dt)).deload;
   const parts = [];
 
   if (t.commutes) {
@@ -454,12 +463,12 @@ function weekCard(w) {
   const tss = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + tssOf(a), 0), 0);
   const hrs = w.days.reduce((s, dy) => s + dy.acts.reduce((t, a) => t + (a.moving_sec || 0), 0), 0) / 3600;
   const end = addDays(w.mon, 6);
-  const deload = ((w.weekIdx + 1) % CFG.plan.deloadEvery) === 0 && w.weekIdx >= 0;
+  const ph = w.weekIdx >= 0 ? weekPhase(w.weekIdx, w.mon) : { deload: false, label: '' };
   const label = w.weekIdx >= 0 ? `Block-Woche ${w.weekIdx + 1}` : 'vor Planbeginn';
-  return `<div class="wcard${deload ? ' deload' : ''}">
+  return `<div class="wcard${ph.deload ? ' deload' : ''}">
     <div class="wcard-hd">
       ${CFG.plan.showKW ? `<span class="kw">KW ${w.kw}</span>` : ''}
-      <span class="wlbl">${label}${deload ? ' · Entlastung' : ''}</span>
+      <span class="wlbl">${label}${ph.label ? ' · ' + ph.label : ''}</span>
       <span class="wdates">${fmtDay(w.mon)}–${fmtDay(end)}</span>
       <span class="wvol">${hrs ? hrs.toFixed(1) + ' h · ' + Math.round(tss) + ' TSS' : ''}</span>
     </div>

@@ -594,10 +594,12 @@ nicht mit dem Klon mit.
 - Rampentests in `CFG.tests`: 21.05. FTP 237 / MAP 313, 23.06. FTP 229 / MAP 305
   (früh abgebrochen, müde Beine), 22.07. FTP 271 / MAP 361 (Nullpunkt
   FTP-300-Block). Neue kommen automatisch dazu (siehe Test-Erkennung oben).
-- **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09. und 07.10. (der
-  23.09 lag im Challenge-Fenster und wurde gestrichen, der letzte auf Wolfs
-  Wunsch von 14.10 auf 07.10 vorverlegt, waren eh zu viele). Letzter am 07.10.,
-  danach kein Test mehr: so nah am Ziel 15.11. lässt sich eh nicht mehr steuern.
+- **Geplante Retests** (`CFG.plan.events`, type:'test'): 02.09. und 14.10. (der
+  23.09 lag im Challenge-Fenster und wurde gestrichen; der letzte war erst von
+  14.10 auf 07.10 vorverlegt, nach dem Giro 03.10 auf Wolfs Wunsch zurück auf
+  14.10: 4 Tage nach dem Rennen zu früh, FTP soll bis dahin noch steigen).
+  Letzter am 14.10., danach kein Test mehr: so nah am Ziel 15.11. lässt sich eh
+  nicht mehr steuern, und am 15.11. liegt Berlin-Lübeck zwei Tage zurück.
   Der
   "Weg zu 300"-Plot (`plan.js:testTimeline`)
   zeigt sie als hohle Dreiecke auf der Achse mit Datum, dazu eine senkrechte
@@ -608,13 +610,27 @@ nicht mit dem Klon mit.
   fiel damit aus. Neue Ziele: **PEAK Münsterland Giro Sa 03.10.** (flach/schnell,
   Positionierung + Sprint), danach **TOPFORM für die Fahrt Berlin-Lübeck Fr
   13.11.** (lange Ausdauerfahrt, Durability). Das FTP-300-Ziel 15.11. läuft im
-  Hintergrund weiter, die 07.10-Rampe bleibt der Checkpoint (liegt 4 Tage nach
-  dem Giro, kann Rennmüdigkeit zeigen). Wiedereinstieg rücksichtsvoll: 24.09.
+  Hintergrund weiter, die Rampe am 14.10. ist der Checkpoint. Wiedereinstieg rücksichtsvoll: 24.09.
   Petersberg-Segment NUR wenn der Rücken durchs Warmup schmerzfrei ist
   (kontrolliert hart ~8 min, kein Antritt aus dem Stand), dann Giro-Peak-Woche
   mit einer Schärfe-Einheit 30.09. + 3-Tage-Taper (01.-02.10.). Events in
   `CFG.plan.events` (Giro/Berlin-Lübeck als type `challenge`, rot). Der alte
   Challenge-Block (08.-20.09.) bleibt als Historie stehen.
+- **Giro 03.10 und Block bis Berlin-Lübeck.** Giro: 121 km in 3:00 h, 40,2
+  km/h, NP 256 (IF 0.90 bei 283, TSS 246 live), 20 min 291 W (km 13-26, HF bis
+  173), 30 min 276, 60 min 254, alle Jahresbestwerte. HF bei gleicher Leistung
+  (~230 W) über das ganze Rennen 158/158/159, also keine Drift; die 18 %
+  Decoupling sind ein Rennartefakt (Mitrollen senkt Ø-W, Antritte halten die
+  HF). Danach Block als Events plus `CFG.plan.weekPhase`: KW41 Erholung (Mi 2×15
+  SS, Sa 3 h), KW42 Rampe 14.10 + Sa 3,5 h, KW43 Mi 3×12 Schwelle + Sa 4 h, KW44
+  Hauptwoche (Mi 2×20, Sa 31.10 Lübeck-Generalprobe 4,5-5 h), KW45 Volumen −30 %
+  (Mi 04.11 letzte harte), KW46 Taper (Mi 11.11 Öffner 3×5). Prinzip: Mi
+  Schwelle = FTP-Hebel, Sa lang mit SS-Blöcken in Stunde 3+ = Durability-Hebel.
+- **`CFG.plan.weekPhase`** (Schlüssel = Montag, `{deload, label}`) überschreibt
+  das 4er-Raster (`plan.js:weekPhase`, genutzt von `plannedFor` und
+  `weekCard`). Nötig, weil das Raster stur ab `plan.start` zählt und sonst die
+  Entlastung auf KW44 (Hauptwoche vor Lübeck) und eine Aufbauwoche in die
+  Rennwoche gelegt hätte.
 - **RAD RACE ONE TWENTY, Sonthofen (Allgäu), ~12./13. Juni 2027.** Fernziel.
   Mannschafts-Bergzeitfahren (6,81 km / 340 Hm / ~5 %, 810-1090 m) plus danach
   120-km-Straßenrennen auf gesperrten Straßen, Team = 5 Mann (2 Bergziegen, 2
@@ -648,7 +664,7 @@ nicht mit dem Klon mit.
   Öffner, 19.09 Challenge-Fenster offen, 20.09 Öffner+locker bis Do 24.09. Die
   ursprünglich für 16.09 geplante letzte VO2 **entfällt** (Urlaub). Der geplante
   Rampentest 23.09 lag mitten im Fenster und ist **ganz gestrichen**, es bleiben
-  Rampe 02.09 (MAP-Baseline) und 07.10 (aus 14.10 vorverlegt).
+  Rampe 02.09 (MAP-Baseline) und 14.10 (über 07.10 wieder zurück auf 14.10).
   Watt-Ziel Sub-8 ist Physik-Konstante (~371 W leichtes Rad), der 02.09-MAP
   schärft nur die Einschätzung der Lücke.
 - Eine Rampe erkennt man an der Treppe bei **30-Sekunden-Auflösung**. Bei

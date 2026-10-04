@@ -80,6 +80,17 @@ const CFG = {
     blockLen: 4,
     deloadEvery: 4,
 
+    // Wochen, die vom 4er-Rhythmus abweichen (Schluessel = Montag). Das Raster
+    // haette die Entlastung auf KW44 gelegt, genau die Hauptwoche vor
+    // Berlin-Luebeck, und in die Rennwoche eine Aufbauwoche. label ersetzt
+    // "Entlastung" im Wochenkopf.
+    weekPhase: {
+      '2026-10-05': { deload: true,  label: 'Erholung nach dem Giro' },
+      '2026-10-26': { deload: false, label: 'Hauptwoche · Lübeck-Generalprobe' },
+      '2026-11-02': { deload: false, label: 'Verdauen · Volumen −30 %' },
+      '2026-11-09': { deload: true,  label: 'Taper Berlin–Lübeck' },
+    },
+
     // Intensitaets-Anteile vom AKTUELLEN FTP. Watt wird live gerechnet
     // (Anteil x CFG.athlete.ftp), zieht also nach jedem Rampentest mit.
     // Grund (zeitgeknappt): Dauer ist gedeckelt, also holt Wolf den Reiz ueber
@@ -126,8 +137,8 @@ const CFG = {
       { date: '2026-09-02', type: 'test', title: 'Rampen-Retest',
         desc: 'Rolle · gleiche Bedingungen wie der Nullpunkt · Rampe bis zum Abbruch',
         protected: true },
-      { date: '2026-10-07', type: 'test', title: 'Rampen-Retest',
-        desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen · aus 14.10 vorverlegt',
+      { date: '2026-10-14', type: 'test', title: 'Rampen-Retest',
+        desc: 'Rolle · letzter steuerbarer Check vor dem Ziel · gleiche Bedingungen · aus 07.10 nachverlegt (Giro 03.10 zu nah)',
         protected: true },
 
       // Petersberg-Challenge mit Ingo (Sub-8 auf 2,1 km / 178 Hm / 8,7 %).
@@ -210,8 +221,63 @@ const CFG = {
       { date: '2026-10-03', type: 'challenge', title: 'Münsterland Giro',
         desc: 'PEAK-Event · flach/schnell · Positionierung vorn, Windschatten, Sprintvorbereitung',
         protected: true },
+
+      // Nach dem Giro: FTP-Aufbau Richtung 15.11 plus Durability fuer
+      // Berlin-Luebeck. Mi = Schwelle (Hebel FTP), Sa = lang mit Qualitaet im
+      // muden Zustand (Hebel Durability). Commutes laufen ueber das Template.
+      { date: '2026-10-07', type: 'vo2', title: 'Rolle: 2×15 min Sweet Spot',
+        desc: '88–94 % FTP · 5 min Pause · Wiedereinstieg, nicht testen · nur wenn HRV wieder ~38+',
+        protected: true },
+      { date: '2026-10-10', type: 'sim', title: 'Lange Ausfahrt 3 h',
+        desc: 'Z2 · IF < 0.70 · letzte 30 min Tempo · 60–80 g KH/h üben',
+        protected: true },
+      { date: '2026-10-13', type: 'rest', title: 'Commutes locker',
+        desc: 'kein SS-Block · frisch in die Rampe',
+        protected: true },
+      { date: '2026-10-17', type: 'sim', title: 'Lange Ausfahrt 3,5 h',
+        desc: 'Z2 · in Stunde 3: 2×15 min Sweet Spot (88–94 % FTP) · Qualität auf müden Beinen',
+        protected: true },
+      { date: '2026-10-21', type: 'vo2', title: 'Rolle: 3×12 min Schwelle',
+        desc: '98–102 % FTP (neuer Wert aus 14.10) · 6 min Pause',
+        protected: true },
+      { date: '2026-10-24', type: 'sim', title: 'Lange Ausfahrt 4 h',
+        desc: 'Z2 · Stunde 3–4: 3×12 min Sweet Spot · 60–80 g KH/h',
+        protected: true },
+      { date: '2026-10-28', type: 'vo2', title: 'Rolle: 2×20 min Schwelle',
+        desc: '95–98 % FTP · 8 min Pause · der FTP-Kernreiz',
+        protected: true },
+      { date: '2026-10-31', type: 'sim', title: 'Lübeck-Generalprobe 4,5–5 h',
+        desc: 'Renntempo der Fahrt · Verpflegung genau wie am 13.11 · Material, Licht, Kleidung testen',
+        protected: true },
+      { date: '2026-11-01', type: 'rest', title: 'Locker 1–1,5 h oder frei',
+        desc: 'Z1 · nur Beine bewegen',
+        protected: true },
+      { date: '2026-11-04', type: 'vo2', title: 'Rolle: 3×10 min Schwelle',
+        desc: '98–102 % FTP · 5 min Pause · letzte harte Einheit',
+        protected: true },
+      { date: '2026-11-05', type: 'rest', title: 'Commutes locker',
+        desc: 'kein SS-Block · Volumen runter',
+        protected: true },
+      { date: '2026-11-07', type: 'sim', title: 'Ausfahrt 2,5 h',
+        desc: 'Z2 · 2×10 min Sweet Spot · Volumen runter, Spannung halten',
+        protected: true },
+      { date: '2026-11-10', type: 'rest', title: 'Commutes locker',
+        desc: 'Taper · nichts über Z2',
+        protected: true },
+      { date: '2026-11-11', type: 'sim', title: 'Öffner: 3×5 min Schwelle',
+        desc: '95–100 % FTP · 3 min Pause · 2 Sprints · kurz halten (~45 min)',
+        protected: true },
+      { date: '2026-11-12', type: 'rest', title: 'Locker oder frei',
+        desc: 'max 30 min Z1 · KH auffüllen',
+        protected: true },
       { date: '2026-11-13', type: 'challenge', title: 'Fahrt Berlin–Lübeck',
         desc: 'TOPFORM-Ziel · lange Ausdauerfahrt · Durability/CTL, nicht Spitze · Aufbau nach dem Giro darauf ausrichten',
+        protected: true },
+      { date: '2026-11-14', type: 'rest', title: 'Erholung',
+        desc: 'frei oder 30 min Z1',
+        protected: true },
+      { date: '2026-11-15', type: 'rest', title: 'Erholung · FTP-Zieltermin',
+        desc: 'kein Test so kurz nach Lübeck · Stand = Rampe 14.10 + Trainingsdaten',
         protected: true },
     ],
   },
