@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-08T06:15:46.024344+00:00",
+  "updated_at": "2026-10-08T06:30:49.555669+00:00",
   "analysis_version": 17,
   "athlete": {
     "id": 13589996,
@@ -9,12 +9,24 @@
     "weight_kg": 81
   },
   "summary": {
-    "total_activities": 285,
-    "recent_count": 285,
-    "recent_hours": 216.1
+    "total_activities": 286,
+    "recent_count": 286,
+    "recent_hours": 216.3
   },
   "wahoo_skipped": false,
   "activities": [
+    {
+      "id": "wahoo_504470175",
+      "name": "Radfahren",
+      "date": "2026-10-08",
+      "start_time": "08:03",
+      "type": "Ride",
+      "duration_sec": 795,
+      "elapsed_sec": 832,
+      "distance_m": 3873,
+      "elevation_m": 98,
+      "kilojoules": 140.6
+    },
     {
       "id": "wahoo_504316583",
       "name": "Radfahren",
