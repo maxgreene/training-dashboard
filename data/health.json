@@ -1,50 +1,65 @@
 {
-  "updated_at": "2026-10-20T00:01:02.903544+00:00",
+  "updated_at": "2026-10-20T08:45:46.434564+00:00",
   "days": [
     {
       "date": "2026-10-20",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 71,
+      "resting_hr": 49,
+      "resting_hr_7d": 47,
+      "stress_avg": 31,
+      "bb_high": 64,
+      "bb_low": 33,
+      "hrv": 40,
+      "hrv_status": "BALANCED",
+      "sleep_h": 6.0
     },
     {
       "date": "2026-10-19",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 64,
+      "resting_hr": 47,
+      "resting_hr_7d": 46,
+      "stress_avg": 26,
+      "bb_high": 80,
+      "bb_low": 33,
+      "hrv": 36,
+      "hrv_status": "BALANCED",
+      "sleep_h": 8.7
     },
     {
       "date": "2026-10-18",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 81,
+      "resting_hr": 45,
+      "resting_hr_7d": 45,
+      "stress_avg": 26,
+      "bb_high": 98,
+      "bb_low": 47,
+      "hrv": 51,
+      "hrv_status": "BALANCED",
+      "sleep_h": 9.1
     },
     {
       "date": "2026-10-17",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 59,
+      "resting_hr": 49,
+      "resting_hr_7d": 45,
+      "stress_avg": 20,
+      "bb_high": 93,
+      "bb_low": 56,
+      "hrv": 42,
+      "hrv_status": "BALANCED",
+      "sleep_h": 9.5
     },
     {
       "date": "2026-10-16",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 79,
+      "resting_hr": 47,
+      "resting_hr_7d": 44,
+      "stress_avg": 29,
+      "bb_high": 84,
+      "bb_low": 29,
+      "hrv": 45,
+      "hrv_status": "BALANCED",
+      "sleep_h": 7.1
     },
     {
       "date": "2026-10-15",
