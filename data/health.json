@@ -1,21 +1,21 @@
 {
-  "updated_at": "2026-10-22T00:00:58.127757+00:00",
+  "updated_at": "2026-10-22T01:30:46.465532+00:00",
   "days": [
     {
       "date": "2026-10-22",
       "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "resting_hr": 46,
+      "resting_hr_7d": 47,
+      "stress_avg": 18,
+      "bb_high": 70,
+      "bb_low": 49
     },
     {
       "date": "2026-10-21",
       "sleep_score": 79,
       "resting_hr": 47,
       "resting_hr_7d": 47,
-      "stress_avg": 25,
+      "stress_avg": 27,
       "bb_high": 77,
       "bb_low": 31,
       "hrv": 35,
