@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-01T21:45:44.041167+00:00",
+  "updated_at": "2026-11-01T22:01:01.444190+00:00",
   "analysis_version": 17,
   "athlete": {
     "id": 13589996,
@@ -13,7 +13,7 @@
     "recent_count": 309,
     "recent_hours": 225.1
   },
-  "wahoo_skipped": true,
+  "wahoo_skipped": false,
   "activities": [
     {
       "id": "wahoo_511634903",
