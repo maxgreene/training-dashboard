@@ -43,6 +43,11 @@ jobs:
             -d grant_type=refresh_token)
           ACCESS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
           NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('refresh_token',''))" 2>/dev/null || echo "")
+          # Maskieren, BEVOR die Werte in OUTPUT/ENV wandern. Sonst stehen beide
+          # Tokens im Klartext im Env-Block jedes Folgeschritts, und das Log
+          # eines oeffentlichen Repos kann jeder lesen.
+          [ -n "$ACCESS" ] && echo "::add-mask::$ACCESS"
+          [ -n "$NEW_REFRESH" ] && echo "::add-mask::$NEW_REFRESH"
           echo "wahoo_access=$ACCESS" >> $GITHUB_OUTPUT
           echo "WAHOO_NEW_REFRESH=$NEW_REFRESH" >> $GITHUB_ENV
 

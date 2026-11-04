@@ -430,6 +430,15 @@ set` läuft jetzt in einer **Retry-Schleife (5x mit Backoff)**, ein transienter
 `::warning::` "nach 5 Versuchen NICHT gespeichert" ins Log. Bei Dauerproblem den
 GH_PAT-Scope (`secrets:write`) prüfen.
 
+**Tokens maskieren (Leck bis 11/2026).** Der Refresh-Schritt schrieb Access- und
+Refresh-Token per `$GITHUB_OUTPUT`/`$GITHUB_ENV` weiter, ohne `::add-mask::`.
+Damit standen beide im Klartext im Env-Block jedes Folgeschritts, und das Repo
+ist öffentlich: jeder konnte den aktuellen Refresh-Token aus dem Log lesen und
+die Kette kapern oder zerstören. Jetzt `::add-mask::` direkt nach dem Parsen,
+vor jedem Weiterreichen. Regel für alle Workflows: einen Wert, der nicht aus
+`secrets.*` kommt (die maskiert GitHub selbst), sondern zur Laufzeit entsteht,
+immer zuerst maskieren.
+
 **Neu autorisieren (bevorzugt, per Workflow):** Der `AUTHORIZE`-Klick bleibt
 Handarbeit (OAuth-Consent, braucht Wolfs Wahoo-Login), der Rest läuft im
 Workflow `wahoo-reauth.yml`:
