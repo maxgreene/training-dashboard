@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T00:45:45.764541+00:00",
+  "updated_at": "2026-11-14T01:01:01.590461+00:00",
   "days": [
     {
       "date": "2026-11-14",
@@ -7,8 +7,8 @@
       "resting_hr": 50,
       "resting_hr_7d": 47,
       "stress_avg": 24,
-      "bb_high": null,
-      "bb_low": null
+      "bb_high": 53,
+      "bb_low": 48
     },
     {
       "date": "2026-11-13",
