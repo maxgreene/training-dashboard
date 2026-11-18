@@ -528,7 +528,10 @@ und HRV-Chart mit Tagestabelle). `loadModel`/`baseline` leben in `shared.js`.
 - **Verlauf:** jede Karte Wert jetzt plus Δ gegen vor `CFG.trend.compareDays`,
   grün in guter Richtung. Raster 3 Spalten: oben Training (Fitness, Rad je
   Woche, Erholung), darunter Körper (Gewicht, Rücken, Routine, nur mit Token).
-  Fitness = CTL+ATL in einer Grafik plus TSB. Rad je Woche = Zeit (Soll-Strich)
+  Fitness = CTL+ATL in einer Grafik plus TSB, dazu der **CTL-Zielkorridor**
+  (`CFG.plan.ctlCorridor`, Stützpunkte bis zur Ziel-Rampe, linear dazwischen)
+  als grünes Band, `CFG.trend.aheadDays` (28) in die Zukunft, Status "im/unter/
+  über Korridor". Rad je Woche = Zeit (Soll-Strich)
   und TSS mit Ziellinie **7 x CTL** ("CTL halten": so viel TSS je Woche hält die
   Fitness konstant), laufende Woche blass. Erholung = HRV und Ruhepuls als
   7-Tage-Mittel mit Min-Max-Band, Schlaf/Stress nur als Zahl. Linienfarben
@@ -682,6 +685,17 @@ und HRV-Chart mit Tagestabelle). `loadModel`/`baseline` leben in `shared.js`.
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
 3. Phase 1 (ab Mitte Dezember) als neues `templatePhases`-Element nachtragen,
    inklusive `min` für die neuen Einheiten.
+
+## Steuerung bis April (seit 18.11.2026)
+
+Drei Ebenen: Makro fest (Phasen, Rampen als Messpunkte, CTL-Korridor), Block
+3-4 Wochen konkret (kurz vorher als `templatePhases` eintragen), Woche nach
+Regeln im Sonntags-Check (Routine "Wochen-Check"). Zielfunktion: FTP an der
+Rampe 28.04. maximieren, harte Nebenbedingungen Rücken und Erholung.
+Korridor-Herleitung aus Wolfs Daten: FTP 237 bei CTL 32 (21.05.), 271 bei 57
+(22.07.), 283 bei 66 (02.09.), also ~1,3 W je CTL-Punkt, 300 W bei CTL ~70-75.
+Regeln, Literaturbasis und Räder (bis Bike-Fit Propain statt Rose) stehen im
+privaten `health-notes/plan/plan_v2.md`, Abschnitt "Steuerung".
 
 ---
 

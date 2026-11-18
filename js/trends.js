@@ -28,7 +28,7 @@ function spark(pts, o = {}) {
   if (o.band && o.band.length) {
     const up = o.band.map(b => X(b.x).toFixed(1) + ',' + Y(b.hi).toFixed(1));
     const dn = o.band.slice().reverse().map(b => X(b.x).toFixed(1) + ',' + Y(b.lo).toFixed(1));
-    s += `<polygon points="${up.concat(dn).join(' ')}" fill="${o.col}" opacity=".16"/>`;
+    s += `<polygon points="${up.concat(dn).join(' ')}" fill="${o.bandCol || o.col}" opacity="${o.bandOp || .16}"/>`;
   }
   if (o.ref != null) s += `<line x1="${P}" x2="${W - P}" y1="${Y(o.ref)}" y2="${Y(o.ref)}" stroke="${o.refCol || 'var(--t4)'}" stroke-dasharray="4 3"/>`;
   if (o.bars) {
@@ -91,13 +91,26 @@ function renderTrend() {
   const m = mAll.filter(p => p.x >= x0);
   const mNow = m[m.length - 1], mThen = atOrBefore(m, cmp);
   const sg = v => (v > 0 ? '+' : '') + Math.round(v);
-  cards.push(tCard('FITNESS', mNow ? Math.round(mNow.y) : '–', mNow ? `CTL · Form ${sg(mNow.tsb)}` : '', '',
+  // CTL-Zielkorridor (CFG.plan.ctlCorridor), Karte reicht aheadDays in die Zukunft
+  const xF = now + TCFG.aheadDays, cc = (CFG.plan.ctlCorridor || []).map(c => ({ x: dnum(d(c.date)), lo: c.lo, hi: c.hi }));
+  const ccAt = x => {
+    for (let i = 1; i < cc.length; i++) if (x >= cc[i - 1].x && x <= cc[i].x) {
+      const f = (x - cc[i - 1].x) / Math.max(1, cc[i].x - cc[i - 1].x);
+      return { x, lo: cc[i - 1].lo + f * (cc[i].lo - cc[i - 1].lo), hi: cc[i - 1].hi + f * (cc[i].hi - cc[i - 1].hi) };
+    }
+    return null;
+  };
+  const band = [...Array(xF - x0 + 1).keys()].map(i => ccAt(x0 + i)).filter(Boolean);
+  const cNow = mNow && ccAt(now);
+  const cTxt = !cNow ? '' : mNow.y < cNow.lo ? ' · <span style="color:var(--warn)">unter Korridor</span>'
+    : mNow.y > cNow.hi ? ' · <span style="color:var(--warn)">über Korridor</span>' : ' · <span style="color:var(--ok)">im Korridor</span>';
+  cards.push(tCard('FITNESS', mNow ? Math.round(mNow.y) : '–', mNow ? `CTL · Form ${sg(mNow.tsb)}${cTxt}` : '', '',
     sRow('CTL', TCFG.ctlCol, mNow ? Math.round(mNow.y) : '–', delta(mNow && mNow.y, mThen && mThen.y, +1, '', true),
-      spark(m, { col: TCFG.ctlCol, lines: [{ pts: m.map(p => ({ x: p.x, y: p.atl })), col: TCFG.atlCol }], x0, x1: now, h: sh }),
+      spark(m, { col: TCFG.ctlCol, lines: [{ pts: m.map(p => ({ x: p.x, y: p.atl })), col: TCFG.atlCol }], band, bandCol: CSSVAR('--ok'), bandOp: .2, x0, x1: band.length ? xF : now, h: sh }),
       ' ' + lab('● ATL', TCFG.atlCol) + ` <b>${mNow ? Math.round(mNow.atl) : '–'}</b>`) +
     sRow('Form (TSB)', TCFG.tsbCol, mNow ? sg(mNow.tsb) : '–', '',
-      spark(m.map(p => ({ x: p.x, y: p.tsb })), { col: TCFG.tsbCol, ref: 0, x0, x1: now, h: sh })),
-    'CTL 42 d = Fitness · ATL 7 d = Ermüdung · TSB = CTL − ATL · TSB ↑ = frisch'));
+      spark(m.map(p => ({ x: p.x, y: p.tsb })), { col: TCFG.tsbCol, ref: 0, x0, x1: band.length ? xF : now, h: sh })),
+    'grünes Band = CTL-Ziel · CTL 42 d = Fitness · ATL 7 d = Ermüdung · TSB = CTL − ATL · TSB ↑ = frisch'));
 
   // Rad-Stunden je Woche, Soll als Strich
   const weeks = [...Array(TCFG.weeks).keys()].map(i => weekState(addDays(mondayOf(today()), -7 * (TCFG.weeks - 1 - i))));
