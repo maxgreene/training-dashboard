@@ -173,10 +173,10 @@ Overrides: ein Handeintrag mit gesetztem `ftp` gewinnt gegen den automatischen
 Wert. Die Erkennung ist eng genug, dass harte Einheiten (z. B. 3x10 min) nicht
 fälschlich als Test zählen.
 
-**Leistungsprofil:** Verlauf-Karte "Leistung seit Neustart" (`trends.js:
+**Leistungsprofil:** Verlauf-Karte "Leistungsprofil" (`trends.js:
 profileNowCard`): je Anker NM (5 s), AC (60 s), MAP (300 s), Schwelle (1200 s)
-der Bestwert seit dem ersten `templatePhases.from` gegen den Bestwert seit
-`CFG.profile.since`, als Balken, der sich mit der Form füllt. Die alte
+der Bestwert der letzten `CFG.trend.compareDays` Tage gegen den Saisonbest seit
+`CFG.profile.since`, in W/kg, als Balken, der sich mit der Form füllt. Die alte
 Rides-Kopfkarte mit "veraltet"-Kacheln, CP/W'-Modell und Rekord-Treppe
 (`powerProfile`, `cpModel`, `recordBest`, `weeklyBest`, `attemptBest`) ist am
 18.11.2026 entfernt worden (Git-Historie, falls sie zurück soll).
@@ -526,9 +526,16 @@ und HRV-Chart mit Tagestabelle). `loadModel`/`baseline` leben in `shared.js`.
   gestern": im Plan (<= `onTrackMin`), sonst Vorschlag an der längsten
   verbleibenden Einheit (+ max `extraMaxMin`).
 - **Verlauf:** jede Karte Wert jetzt plus Δ gegen vor `CFG.trend.compareDays`,
-  grün in guter Richtung. Rad je Woche zeigt Zeit und TSS je Woche, Erholung
-  HRV/Ruhepuls/Schlaf/Stress (7-Tage-Mittel) mit neutralen Linienfarben aus
-  `CFG.trend` (nicht grün/rot, das ist für die Δ-Pfeile reserviert). Sparklines als SVG (Farben aus `CSSVAR`).
+  grün in guter Richtung. Raster 3 Spalten: oben Training (Fitness, Rad je
+  Woche, Erholung), darunter Körper (Gewicht, Rücken, Routine, nur mit Token).
+  Fitness = CTL+ATL in einer Grafik plus TSB. Rad je Woche = Zeit (Soll-Strich)
+  und TSS mit Ziellinie **7 x CTL** ("CTL halten": so viel TSS je Woche hält die
+  Fitness konstant), laufende Woche blass. Erholung = HRV und Ruhepuls als
+  7-Tage-Mittel mit Min-Max-Band, Schlaf/Stress nur als Zahl. Linienfarben
+  neutral aus `CFG.trend` (nicht grün/rot, das ist für die Δ-Pfeile reserviert).
+  Leistungsprofil in W/kg: Bestwert der letzten 28 Tage gegen Saisonbest seit
+  `CFG.profile.since`, Gewicht aus dem Check-in-Trend, sonst `athlete.weight`.
+  `testTimeline` setzt x-Labels in zwei Zeilen, kollidierende entfallen. Sparklines als SVG (Farben aus `CSSVAR`).
 - FTP-Ziel **300 W bis 30.04.2027**, Rampen 16.12., 27.01., 31.03., 28.04. als
   `type:'test'`-Events.
 

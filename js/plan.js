@@ -116,7 +116,8 @@ function dp4Rings(a, size) {
  * Methoden 10-20 W auseinanderliegen und nicht als Fitness-Sprung
  * missverstanden werden duerfen. */
 function testTimeline(tp, goal, goalDate) {
-  const W = 300, H = 150, pad = { l: 30, r: 14, t: 14, b: 22 };
+  const W = 300, H = 156, pad = { l: 30, r: 14, t: 14, b: 28 };
+  const xl = [];   // x-Achsen-Labels, am Ende ohne Überlappung gesetzt
   if (!tp.length) return '<div class="ez-none">Noch keine Tests erfasst.</div>';
 
   const t0 = d(tp[0].date).getTime();
@@ -173,13 +174,11 @@ function testTimeline(tp, goal, goalDate) {
       && e.date >= iso(today()) && e.date >= tp[0].date && e.date <= goalDate)
     .forEach(e => {
       const x = X(e.date), yb = H - pad.b;
-      const lx = Math.max(pad.l + 10, Math.min(W - pad.r - 16, x));
       s += `<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${yb.toFixed(1)}"
             stroke="${KCOL.ramp}" stroke-width="1" stroke-dasharray="2 3" opacity=".45"/>
             <path d="M${x.toFixed(1)} ${(yb-6).toFixed(1)} L${(x+3.6).toFixed(1)} ${yb.toFixed(1)} L${(x-3.6).toFixed(1)} ${yb.toFixed(1)} Z"
-            fill="none" stroke="${KCOL.ramp}" stroke-width="1.2"/>
-            <text x="${lx.toFixed(1)}" y="${H - 6}" text-anchor="middle"
-            font-size="7" font-family="var(--mono)" fill="${KCOL.ramp}" opacity=".7">${fmtDay(d(e.date))}</text>`;
+            fill="none" stroke="${KCOL.ramp}" stroke-width="1.2"/>`;
+      xl.push({ x, t: fmtDay(d(e.date)), col: KCOL.ramp, op: .75 });
     });
 
   // Punkte: Rampe = Dreieck, sonst Kreis, mit FTP-Wert darueber
@@ -195,12 +194,21 @@ function testTimeline(tp, goal, goalDate) {
           font-size="8" font-weight="700" font-family="var(--mono)" fill="${col}">${t.ftp}</text>`;
   });
   // x-Achse: Datum je gemessenem Test unter seinem Marker, plus Zieldatum rechts.
-  tp.forEach(t => {
-    const x = Math.max(pad.l + 10, Math.min(W - pad.r - 16, X(t.date)));
-    s += `<text x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle"
-          font-size="7" font-family="var(--mono)" fill="var(--t5)">${fmtDay(d(t.date))}</text>`;
+  tp.forEach(t => xl.push({ x: X(t.date), t: fmtDay(d(t.date)), col: 'var(--t3)' }));
+  // Zwei Label-Zeilen: kollidiert ein Label mit dem vorigen in Zeile 1, rutscht es
+  // in Zeile 2; kollidiert es auch dort, entfällt es. Zieldatum hat Vorrang (rechts).
+  const cw = 4.3, gw = 6 * cw;   // Zeichenbreite bei 7 px Mono, Breite "TT.MM."
+  const goalL = W - pad.r - gw;
+  const ends = [-1e9, -1e9];
+  xl.sort((a, b) => a.x - b.x).forEach(l => {
+    const cx = Math.max(pad.l + gw / 2, Math.min(W - pad.r - gw / 2, l.x)), a = cx - gw / 2, b = cx + gw / 2;
+    const row = [0, 1].find(r => a > ends[r] + 2 && (r === 1 || b < goalL - 2));
+    if (row == null) return;
+    ends[row] = b;
+    s += `<text x="${cx.toFixed(1)}" y="${H - 15 + row * 9}" text-anchor="middle" font-size="7"
+          font-family="var(--mono)" fill="${l.col}" opacity="${l.op || 1}">${l.t}</text>`;
   });
-  s += `<text x="${W - pad.r}" y="${H - 6}" text-anchor="end" font-size="7.5" font-weight="700"
+  s += `<text x="${W - pad.r}" y="${H - 15}" text-anchor="end" font-size="7.5" font-weight="700"
         font-family="var(--mono)" fill="#34d399">${fmtDay(d(goalDate))}</text>`;
   s += '</svg>';
   return s;
