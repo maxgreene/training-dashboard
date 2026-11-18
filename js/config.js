@@ -19,7 +19,7 @@ const CFG = {
     hrmax: 172,        // Basiswert/Fallback — real: hoechste gemessene max_hr
     weight: 81,
     ftpGoal: 300,      // Ziel des laufenden Aufbaus
-    ftpGoalDate: '2026-11-15', // Wunschtermin fuer FTP 300
+    ftpGoalDate: '2027-04-30', // Ziel-Rampe Ende April 2027 (Neustart 18.11.2026)
   },
 
   // ── Zonen ─────────────────────────────────────────────────────────────────
@@ -123,16 +123,18 @@ const CFG = {
 
     // Bausteine, auf die das Template zeigt.
     units: {
-      commute:  { title: 'Commute ×2', desc: 'je ~20 min · Z1–Z2 · nichts über Z2', ifMax: 0.65 },
-      long:     { title: 'Lange Ausfahrt', desc: 'ruhig · IF < 0.68 · Sa oder So', ifMax: 0.68 },
-      long_alt: { title: 'Lange Ausfahrt (Alternative)', desc: 'falls nicht Sa · sonst frei', ifMax: 0.68 },
-      rest:     { title: 'Frei', desc: 'kein Rad' },
-      deload:   { title: 'Rolle locker', desc: '45 min Z2 · keine Intervalle' },
+      // min = Rad-Soll in Minuten (Woche-Seite: Soll/Ist). habit = Haken im
+      // Check-in, der die Einheit als erledigt zaehlt (Kraft, Yoga).
+      commute:  { title: 'Commute ×2', desc: 'je ~20 min · Z1–Z2 · nichts über Z2', ifMax: 0.65, min: 40 },
+      long:     { title: 'Lange Ausfahrt', desc: 'ruhig · IF < 0.68 · Sa oder So', ifMax: 0.68, min: 150 },
+      long_alt: { title: 'Lange Ausfahrt (Alternative)', desc: 'falls nicht Sa · sonst frei', ifMax: 0.68, min: 0 },
+      rest:     { title: 'Frei', desc: 'kein Rad', min: 0 },
+      deload:   { title: 'Rolle locker', desc: '45 min Z2 · keine Intervalle', min: 45 },
       // Phase 0
-      kraft:    { type: 'kraft', title: 'Kraft/Rumpf 25 min', desc: '18:15 · nur Physio-freigegebene Übungen · Bridge, Dead Bug, Bird Dog, Seitstütz, Rudern, Hängen' },
-      rolleZ2:  { type: 'roll',  title: 'Rolle locker 45–60 min', desc: '18:15 · Z2 · HF < 130 · keine Intervalle · schmerzfrei, sonst kürzer' },
-      yoga:     { type: 'yoga',  title: 'Yoga 30 min', desc: '18:15 · sanfte Mobilität · keine tiefen Hüft-/Hamstring-Dehnungen' },
-      long_easy:{ type: 'aus',   title: 'Ausfahrt locker 1,5–2,5 h', desc: 'Z2 · Sa oder So · schmerzfrei, sonst kürzer' },
+      kraft:    { type: 'kraft', habit: 'kraft', title: 'Kraft/Rumpf 25 min', desc: '18:15 · nur Physio-freigegebene Übungen · Bridge, Dead Bug, Bird Dog, Seitstütz, Rudern, Hängen' },
+      rolleZ2:  { type: 'roll',  min: 50, title: 'Rolle locker 45–60 min', desc: '18:15 · Z2 · HF < 130 · keine Intervalle · schmerzfrei, sonst kürzer' },
+      yoga:     { type: 'yoga',  habit: 'yoga', title: 'Yoga 30 min', desc: '18:15 · sanfte Mobilität · keine tiefen Hüft-/Hamstring-Dehnungen' },
+      long_easy:{ type: 'aus',   min: 120, title: 'Ausfahrt locker 1,5–2,5 h', desc: 'Z2 · Sa oder So · schmerzfrei, sonst kürzer' },
     },
 
     // Progression der Mittwochs-Einheit. Index = Aufbauwoche im Block.
@@ -305,6 +307,16 @@ const CFG = {
       { date: '2026-11-15', type: 'rest', title: 'Erholung · FTP-Zieltermin',
         desc: 'kein Test so kurz nach Lübeck · Stand = Rampe 14.10 + Trainingsdaten',
         protected: true },
+
+      // Neustart 18.11.2026: Rampen als Meilensteine bis zum Ziel Ende April.
+      { date: '2026-12-16', type: 'test', min: 45, title: 'Rampentest · Ausgangswert',
+        desc: 'Rolle · nach der Physio, nur wenn schmerzfrei · Startpunkt Phase 1', protected: true },
+      { date: '2027-01-27', type: 'test', min: 45, title: 'Rampentest',
+        desc: 'Rolle · Zwischenstand nach dem ersten Schwellenblock', protected: true },
+      { date: '2027-03-31', type: 'test', min: 45, title: 'Rampentest',
+        desc: 'Rolle · Zwischenstand vor der Spitze', protected: true },
+      { date: '2027-04-28', type: 'test', min: 45, title: 'Rampentest · Ziel 300',
+        desc: 'Rolle · Ziel-Rampe FTP 300', protected: true },
     ],
   },
 
@@ -354,7 +366,7 @@ const CFG = {
     habits: [
       { key: 'meditation', lbl: 'Meditation' },
       { key: 'physio',     lbl: 'Physio-Übungen' },
-      { key: 'training',   lbl: 'Training' },
+      { key: 'kraft',      lbl: 'Kraft' },
       { key: 'yoga',       lbl: 'Yoga/Dehnen' },
     ],
     weight: {
@@ -368,6 +380,21 @@ const CFG = {
     },
     back: { height: 150, days: 60, warn: 3, bad: 6, barPx: 5 },   // 0-10, ab warn gelb, ab bad rot
   },
+  // ── Woche (neue Startseite) und Verlauf ──────────────────────────────────
+  week: {
+    daily: ['meditation', 'physio'],   // Haken, die jeden Tag geplant sind
+    doneFrac: 0.7,       // Rad-Tag gilt als erledigt ab 70 % der Soll-Minuten
+    onTrackMin: 15,      // so viele Minuten hinter Soll gelten noch als "im Plan"
+    extraMaxMin: 60,     // Nachhol-Vorschlag pro Einheit hoechstens so lang
+    pastWeeks: 6,        // so viele zurueckliegende Wochen in der Kurzliste
+    backBad: 6,          // Rücken Ø 7 ab hier: Körper vor Plan
+  },
+  trend: {
+    weeks: 12,           // Fenster der Trendkarten
+    compareDays: 28,     // "vor 4 Wochen"
+    height: 70,          // px Sparkline
+  },
+
   ui: {
     easyWindowDays: 14,          // Fenster fuer den Ride-Plot
     // Ride vs Z2/Z3-Decke: je Fahrt Ø ± 1sd von Leistung und HF, relativ zur

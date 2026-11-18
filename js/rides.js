@@ -586,7 +586,8 @@ function drawMap(id, route) {
   setTimeout(() => map.invalidateSize(), 60);   // Container war beim Bauen evtl. 0 hoch
 }
 
-function renderRides() {
+// listOnly: nur die Fahrtenliste (neue Ansicht, Profil und EF stehen dort im Verlauf).
+function renderRides(opts = {}) {
   const box = $('#page-rides');
   if (!box) return;
   const A = DATA.acts;
@@ -598,7 +599,7 @@ function renderRides() {
   const stat = (l, v, s) => `<div class="stat"><div class="stat-l">${l}</div>
     <div class="stat-v">${v}</div><div class="stat-s">${s || ''}</div></div>`;
 
-  box.innerHTML = `
+  box.innerHTML = opts.listOnly ? '<div id="ride-list"></div>' : `
     ${profileCard()}
     <div class="card">
       <div class="card-hd"><span class="t">EF-TREND</span>
@@ -617,8 +618,7 @@ function renderRides() {
     </div>
     <div id="ride-list"></div>`;
 
-  drawProfileTrend();
-  renderEF();
+  if (!opts.listOnly) { drawProfileTrend(); renderEF(); }
   const list = $('#ride-list');
   A.forEach(a => {
     const i = IF(a);

@@ -194,6 +194,37 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 .h-btn{background:var(--accent);color:#0d0d0d;border:0;border-radius:6px;font:inherit;font-weight:700;
        min-height:42px;padding:0 20px;cursor:pointer}
 .h-btn:disabled{opacity:.5;cursor:default}
+/* ── Woche / Verlauf (?neu) ──────────────────────────────────────────────── */
+.w-big{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.w-of{color:var(--t3);font-family:var(--mono);font-size:13px}
+.w-bar{position:relative;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;flex:1}
+.w-fill{height:100%;border-radius:5px}
+.w-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--t1)}
+.w-habits{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-size:10.5px;color:var(--t4)}
+.w-habits b{display:block;font-family:var(--mono);font-size:17px}
+.w-adv{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45;padding:5px 0}
+.w-adv .dot{flex:0 0 auto;margin-top:5px}
+.w-days{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.w-day{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);padding:8px 4px}
+.w-day.today{background:#17201a;box-shadow:inset 0 0 0 1px #2f5f3f}
+.w-day.past{opacity:.75}
+.w-dhd{width:62px;flex:0 0 auto;font-family:var(--mono);font-size:11px}
+.w-dhd span{color:var(--t5);font-size:10px}
+.w-dbody{flex:1;min-width:0}
+.w-plan{font-size:11.5px;font-weight:600;line-height:1.35}
+.w-stat{font-size:10.5px;color:var(--t3);font-family:var(--mono);margin-top:2px}
+.w-stat b{color:var(--t1)}
+.w-ico{font-weight:700}
+.w-daily{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;flex:0 0 auto}
+.w-next,.w-past{display:flex;gap:10px;align-items:baseline;font-size:11.5px;padding:4px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.w-next b,.w-past>b{font-family:var(--mono);width:44px;flex:0 0 auto}
+.t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:12px}
+.t-card{margin:0}
+.t-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:11px;font-family:var(--mono)}
+.t-d{text-align:right}
+.t-v{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px}
+.t-spark{width:100%;height:70px;display:block}
+.t-prow{display:grid;grid-template-columns:70px 1fr 96px;gap:10px;align-items:center;padding:5px 0;font-family:var(--mono);font-size:11px}
 .h-steps{font-size:12px;color:var(--t2);margin:0 0 12px 18px;line-height:1.8}
 .h-steps a{color:var(--accent)}
 .zed .note{font-size:10px;color:var(--t5);margin-top:8px;line-height:1.5}
@@ -263,6 +294,8 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
   <div class="page"    id="page-rides"></div>
   <div class="page"    id="page-form"></div>
   <div class="page"    id="page-health"></div>
+  <div class="page"    id="page-week"></div>
+  <div class="page"    id="page-trend"></div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -278,13 +311,27 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 <script src="js/rides.js?v=BUILD"></script>
 <script src="js/form.js?v=BUILD"></script>
 <script src="js/health.js?v=BUILD"></script>
+<script src="js/week.js?v=BUILD"></script>
+<script src="js/trends.js?v=BUILD"></script>
 <script>
 /* Seiten werden erst gezeichnet, wenn sie sichtbar sind. Vorher ist
  * clientWidth = 0 (display:none), und jeder Canvas kaeme mit 0 px Puffer
  * heraus und wuerde von CSS auf volle Breite gezerrt. */
-const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm, health: renderHealth };
+const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm, health: renderHealth,
+                 week: renderWeek, trend: renderTrend };
 const drawn = {};
 let curPage = 'plan';
+
+/* Neue Ansicht zur Vorschau: ?neu in der URL. Vier Tabs nach Wolfs Fragen
+ * (Woche / Verlauf / Fahrten / Check-in). Ohne ?neu bleibt alles wie bisher. */
+const NEU = new URLSearchParams(location.search).has('neu');
+if (NEU) {
+  RENDER.rides = () => renderRides({ listOnly: true });
+  document.querySelector('.tabs').innerHTML = [['week', 'Woche'], ['trend', 'Verlauf'], ['rides', 'Fahrten'], ['health', 'Check-in']]
+    .map(([p, l], i) => `<button class="tab${i ? '' : ' on'}" data-p="${p}" onclick="showPage('${p}',this)">${l}</button>`).join('');
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'page-week'));
+  curPage = 'week';
+}
 
 function showPage(name, btn){
   curPage = name;
@@ -363,8 +410,8 @@ function renderStatus(){
     resolveAthlete();      // FTP/HRmax aus den Daten -> eine Quelle fuer alle Seiten
     $('#loading').style.display = 'none';
     renderStatus();
-    renderPlan();          // nur die sichtbare Seite
-    drawn.plan = true;
+    RENDER[curPage]();     // nur die sichtbare Seite
+    drawn[curPage] = true;
   } catch (e) {
     $('#loading').textContent = 'Fehler beim Laden: ' + e.message;
     console.error(e);

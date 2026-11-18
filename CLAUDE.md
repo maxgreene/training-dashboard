@@ -73,6 +73,10 @@ js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
                                   EF-Chart, Fahrtenliste (mit Strecken-Thumbnail),
                                   3 Detailplots + Detail-Streckenkarte (routeSvg)
 js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
+js/week.js                        Woche (Vorschau ?neu): Rad Soll/Ist, Tage mit
+                                  Haken, Ampel + Empfehlung Rest der Woche
+js/trends.js                      Verlauf (Vorschau ?neu): Trendkarten vs. vor
+                                  4 Wochen, Weg zu 300, Leistung seit Neustart, EF
 js/health.js                      Health-Seite: Morgen-Check (Gewicht, Nächte,
                                   Rücken, Routine), Verläufe. Daten im privaten
                                   Repo health-notes über die GitHub-API
@@ -510,6 +514,36 @@ Raus sind `js/food.js`, `js/vault.js`, `CFG.food`, `data/nutrition/`,
 Git-Historie liegt der Tresor weiter verschlüsselt. Ein veralteter Kommentar zu
 `data/nutrition` steht noch in `deploy.yml` (harmlos, beim nächsten
 Workflow-Eingriff mit entfernen).
+
+## Neue Ansicht (Vorschau, `?neu`)
+
+Seit 18.11.2026 im Aufbau, auf Wolfs Wunsch nach seinen vier Fragen sortiert:
+motivieren (geht es aufwärts?), Zahlen (genug gefahren?), Kontinuität (dran
+geblieben?), steuern (Pause oder reinklotzen?). Erreichbar über
+`…/training-dashboard/?neu`, ohne Parameter bleibt die alte Ansicht. Tabs:
+**Woche** (`week.js`), **Verlauf** (`trends.js`), **Fahrten** (`renderRides({listOnly:
+true})`, ohne Profil/EF/Summen), **Check-in** (`health.js`).
+
+- **Soll/Ist:** `CFG.plan.units[].min` = Rad-Soll in Minuten, Events optional
+  `min`. Ist = `moving_sec` aller Fahrten des Tages. Soll erst ab dem ersten
+  `templatePhases.from` (vorher gab es keine Minuten). Ein Rad-Tag ist erledigt
+  ab `CFG.week.doneFrac` (70 %) des Solls.
+- **Haken:** Einheiten mit `habit` (Kraft, Yoga) und `CFG.week.daily`
+  (Meditation, Physio) zählen über den Check-in. **Haken für Tag D stehen im
+  Eintrag von D+1** (morgens für gestern). Ohne Check-in-Eintrag `?`, zählt
+  nicht als fällig. Check-in-Haken: Meditation, Physio, **Kraft** (vorher
+  "Training", Rad kommt automatisch), Yoga.
+- **Empfehlung** (`advice`): Ampel wie das Heute-Feld (HRV/RHR/Schlaf gegen
+  42-Tage-Basis); rot oder Rücken Ø 7 >= `backBad` = "Körper vor Plan". Sonst
+  Rückstand gegen "Soll bis gestern": im Plan (<= `onTrackMin`), sonst Vorschlag
+  an der längsten verbleibenden Einheit (+ max `extraMaxMin`).
+- **Verlauf:** jede Karte Wert jetzt plus Δ gegen vor `CFG.trend.compareDays`,
+  grün in guter Richtung. Leistung seit Neustart statt "veraltet".
+- FTP-Ziel jetzt **300 W bis 30.04.2027**, Rampen 16.12., 27.01., 31.03., 28.04.
+  als `type:'test'`-Events.
+
+Wenn Wolf die Vorschau abnimmt: alte Tabs (Plan, Rides-Kopf, Form) entfernen,
+`?neu` zum Standard machen, diese Notiz umschreiben.
 
 ## Trainingskontext
 
