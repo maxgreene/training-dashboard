@@ -694,7 +694,7 @@ Regeln im Sonntags-Check (Routine "Wochen-Check"). Zielfunktion: FTP an der
 Rampe 28.04. maximieren, harte Nebenbedingungen Rücken und Erholung.
 Korridor-Herleitung aus Wolfs Daten: FTP 237 bei CTL 32 (21.05.), 271 bei 57
 (22.07.), 283 bei 66 (02.09.), also ~1,3 W je CTL-Punkt, 300 W bei CTL ~70-75.
-Regeln, Literaturbasis und Räder (bis Bike-Fit Propain statt Rose) stehen im
+Regeln, Literaturbasis und Räder (Rose verstärkt nur den Nacken) stehen im
 privaten `health-notes/plan/plan_v2.md`, Abschnitt "Steuerung".
 
 ---
