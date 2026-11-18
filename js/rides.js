@@ -457,90 +457,6 @@ async function toggleRide(id, row) {
   }
 }
 
-// ── Leistungsprofil / Trainingsstatus ───────────────────────────────────────
-/* Kacheln je Anker (Bestwert seit Start, W/kg, Alter, frisch/veraltet) plus
- * CP/W' als Gegenprobe. Nutzt die vorhandenen .stats/.stat-Stile. */
-function profileCard() {
-  const prof = powerProfile();
-  const cp = cpModel();
-  const stat = (l, v, s) => `<div class="stat"><div class="stat-l">${l}</div>
-    <div class="stat-v">${v}</div><div class="stat-s">${s || ''}</div></div>`;
-  const ageTxt = a => a.age <= 0 ? 'heute' : a.age === 1 ? 'gestern' : `${a.age} d`;
-  const tiles = prof.map(a => a.w == null
-    ? stat(a.label, '—', 'kein Wert im Fenster')
-    : stat(a.label, a.w + '<small> W</small>',
-        `${a.wkg.toFixed(2).replace('.', ',')} W/kg · ${ageTxt(a)}${a.fresh ? '' : ' · veraltet'}`)
-  ).join('');
-  const cpTile = cp
-    ? stat('CP', cp.cp + '<small> W</small>',
-        `W' ${String(cp.wPrime).replace('.', ',')} kJ · Gegenprobe`)
-    : stat('CP', '—', 'zu wenige Bestwerte');
-  return `<div class="card">
-    <div class="card-hd"><span class="t">LEISTUNGSPROFIL</span>
-      <span class="s">Bestwerte seit ${fmtDay(d(CFG.profile.since))} · CP aus Bestwerten, ohne Max-20min eher Untergrenze</span></div>
-    <div class="stats">${tiles}${cpTile}</div>
-    <div id="pt-box"></div>
-    <div class="ez-hint">Rekord-Treppe je Anker: nur neue Bestwerte · fällt nie · gestrichelt bis heute = Bestwert steht noch, Länge = Zeit seit dem Prime</div>
-  </div>`;
-}
-
-/* Zeitlicher Verlauf der Wochen-Bestwerte je Anker (Mehrlinien-Zeitreihe).
- * Gleiche Zeitachse (timeScale) wie die anderen Charts. */
-let _pt = null;
-function drawProfileTrend() {
-  const box = $('#pt-box');
-  if (!box || !window.Chart) return;
-  const series = CFG.profile.anchors.map(an => ({ an, pts: recordBest(an.key) }))
-    .filter(s => s.pts.length);
-  if (!series.length) return;
-  box.style.height = '240px';
-  box.innerHTML = '<canvas id="pt-canvas"></canvas>';
-  const T = timeAxis();
-  const X = p => T.dayOf(p.date);
-  if (_pt) _pt.destroy();
-  _pt = new Chart($('#pt-canvas'), {
-    data: {
-      datasets: series.map(s => ({
-        type: 'line', label: s.an.label,
-        data: s.pts.map(p => ({ x: X(p), y: p.w })),
-        borderColor: s.an.col, backgroundColor: s.an.col,
-        borderWidth: 1.6, pointRadius: 3, spanGaps: true, tension: 0.2,
-      })),
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
-      interaction: { mode: 'nearest', intersect: false },
-      scales: {
-        x: timeScale(T),
-        y: { position: 'left',
-             title: { display: true, text: 'W', color: CSSVAR('--t5'), font: { size: 10 } },
-             ticks: { color: CSSVAR('--t4'), font: { size: 9 } },
-             grid: { color: 'rgba(255,255,255,.05)' } },
-      },
-      plugins: { legend: { labels: { color: CSSVAR('--t3'), font: { size: 10 }, boxWidth: 10 } } },
-    },
-    plugins: [{
-      id: 'recordTail',
-      // Vom letzten Rekord jeder Treppe eine gestrichelte Waagerechte bis heute:
-      // "dieser Bestwert steht noch", Laenge = Zeit seit dem Prime.
-      afterDatasetsDraw(ch) {
-        const { ctx, chartArea: ca, scales } = ch;
-        const xToday = Math.min(ca.right, scales.x.getPixelForValue(T.dayOf(iso(today()))));
-        ctx.save();
-        ch.data.datasets.forEach((ds, i) => {
-          const dp = ds.data[ds.data.length - 1];
-          if (!dp) return;
-          const x0 = scales.x.getPixelForValue(dp.x), y = scales.y.getPixelForValue(dp.y);
-          if (xToday - x0 < 2) return;              // Rekord ist quasi heute, kein Schwanz
-          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xToday, y);
-          ctx.strokeStyle = ds.borderColor; ctx.setLineDash([4, 3]);
-          ctx.lineWidth = 1; ctx.globalAlpha = 0.55; ctx.stroke();
-        });
-        ctx.restore();
-      },
-    }],
-  });
-}
 
 /* Agnostische Streckenlinie: die GPS-Punkte (aus analyze) auf w×h normiert als
  * SVG-Pfad, ohne Kartenkacheln (keine externen Requests). Aequirektangulaere
@@ -586,39 +502,13 @@ function drawMap(id, route) {
   setTimeout(() => map.invalidateSize(), 60);   // Container war beim Bauen evtl. 0 hoch
 }
 
-// listOnly: nur die Fahrtenliste (neue Ansicht, Profil und EF stehen dort im Verlauf).
-function renderRides(opts = {}) {
+// Fahrtenliste mit Detailansicht. Profil und EF stehen im Verlauf (trends.js).
+function renderRides() {
   const box = $('#page-rides');
   if (!box) return;
   const A = DATA.acts;
-  const withP = A.filter(a => a.has_power);
-  const totH = A.reduce((s, a) => s + (a.moving_sec || 0), 0) / 3600;
-  const totTSS = A.reduce((s, a) => s + tssOf(a), 0);
-  const avgW = withP.length ? withP.reduce((s, a) => s + (a.avg_power || 0), 0) / withP.length : 0;
-  const bestNP = Math.max(0, ...A.map(a => a.np || 0));
-  const stat = (l, v, s) => `<div class="stat"><div class="stat-l">${l}</div>
-    <div class="stat-v">${v}</div><div class="stat-s">${s || ''}</div></div>`;
+  box.innerHTML = '<div id="ride-list"></div>';
 
-  box.innerHTML = opts.listOnly ? '<div id="ride-list"></div>' : `
-    ${profileCard()}
-    <div class="card">
-      <div class="card-hd"><span class="t">EF-TREND</span>
-        <span class="s">EF = NP / Ø-HF · ↑ = besser · Punkt = Dauer · ab ${CFG.ui.efTrend.minDurMin} min</span></div>
-      <div id="ef-box"></div>
-    </div>
-    <div class="stats">
-      ${stat('Fahrten', A.length, 'seit ' + (A.length ? fmtDay(d(A[A.length - 1].date)) : '—'))}
-      ${stat('Volumen', totH.toFixed(1) + '<small> h</small>', 'Bewegungszeit')}
-      ${stat('TSS gesamt', Math.round(totTSS), 'mit FTP ' + CFG.athlete.ftp)}
-      ${stat('Ø Watt', Math.round(avgW) + '<small> W</small>', 'inkl. Rollen')}
-      ${stat('Beste NP', bestNP + '<small> W</small>', 'normalisiert')}
-      ${stat('FTP aktuell', CFG.athlete.ftp + '<small> W</small>',
-             (CFG.athlete.ftp / CFG.athlete.weight).toFixed(2).replace('.', ',') + ' W/kg · '
-             + (planFtp() ? 'Rampe ' + fmtDay(d(planFtp().date)) : 'Basiswert'))}
-    </div>
-    <div id="ride-list"></div>`;
-
-  if (!opts.listOnly) { drawProfileTrend(); renderEF(); }
   const list = $('#ride-list');
   A.forEach(a => {
     const i = IF(a);

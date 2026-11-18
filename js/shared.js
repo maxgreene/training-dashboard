@@ -148,49 +148,6 @@ function ewmaBand(pts, alpha, tau) {
   return { line, upper, lower };
 }
 
-/* Easy-Anteil = Zeit in Z1+Z2 am Gesamtvolumen, ueber ein Zeitfenster.
- * Wird fuer Leistung UND HF gerechnet: die beiden Zahlen sagen Verschiedenes.
- * Kurze Antritte am Berg schlagen in der Leistung durch, waehrend die HF gar
- * nicht reagiert — die Differenz ist selbst die Information. */
-function easyShare(days, offsetDays) {
-  const hi = addDays(today(), -(offsetDays || 0));
-  const lo = addDays(hi, -days);
-  let ez = { p: 0, hr: 0 }, tot = { p: 0, hr: 0 }, n = 0, sec = 0;
-  DATA.acts.forEach(a => {
-    const dt = d(a.date);
-    if (dt <= lo || dt > hi) return;
-    const pz = powerZoneTimes(a), hz = hrZoneTimes(a);
-    if (pz) { ez.p += pz[0] + pz[1]; tot.p += pz.reduce((x, y) => x + y, 0); }
-    if (hz) { ez.hr += hz[0] + hz[1]; tot.hr += hz.reduce((x, y) => x + y, 0); }
-    if (pz || hz) { n++; sec += a.moving_sec || 0; }
-  });
-  return {
-    power: tot.p ? 100 * ez.p / tot.p : null,
-    hr: tot.hr ? 100 * ez.hr / tot.hr : null,
-    hours: sec / 3600, rides: n,
-  };
-}
-
-/* Mittel und Standardabweichung aus einem Histogramm (Eimer-Mitten gewichtet
- * nach Zeit im Eimer). skipFirst laesst den Coasting-Eimer (0 W) weg, damit die
- * Streuung die Tret-Leistung misst und nicht die Ampel-Nullen. */
-function histMeanSd(h, step, min, skipFirst) {
-  if (!h) return null;
-  const s0 = skipFirst ? 1 : 0;
-  let n = 0, sum = 0;
-  for (let i = s0; i < h.length; i++) {
-    const c = h[i]; if (!c) continue;
-    n += c; sum += c * (min + step * i + step / 2);
-  }
-  if (!n) return null;
-  const mean = sum / n;
-  let v = 0;
-  for (let i = s0; i < h.length; i++) {
-    const c = h[i]; if (!c) continue;
-    v += c * (min + step * i + step / 2 - mean) ** 2;
-  }
-  return { mean, sd: Math.sqrt(v / n) };
-}
 
 /* Je Fahrt im Fenster: Mittel und ±1sd von Leistung und HF, RELATIV zur
  * Z2/Z3-Decke (Leistung 0.66 x FTP, HF 0.75 x HRmax). 1.0 = genau auf der
@@ -218,25 +175,6 @@ function histRel(h, step, min, ceiling, skipFirst, trim) {
   return out.length >= 2 ? out : null;
 }
 
-function ridePoints(days) {
-  const lo = addDays(today(), -days);
-  const pT = CFG.zones.power.bounds[2] * CFG.athlete.ftp;
-  const hrT = CFG.zones.hr.bounds[2] * CFG.athlete.hrmax;
-  const out = [];
-  DATA.acts.forEach(a => {
-    const dt = d(a.date);
-    if (dt <= lo || dt > today()) return;
-    const p = histMeanSd(a.hist_p, CFG.hist.pStep, 0, true);
-    const hr = histMeanSd(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, false);
-    if (!p && !hr) return;
-    out.push({ date: a.date, dur: (a.moving_sec || 0) / 60,
-      pRel: p ? p.mean / pT : null, pSd: p ? p.sd / pT : null,
-      hrRel: hr ? hr.mean / hrT : null, hrSd: hr ? hr.sd / hrT : null,
-      pV: histRel(a.hist_p, CFG.hist.pStep, 0, pT, true, CFG.ui.easyPlot.violinTrim),
-      hrV: histRel(a.hist_hr, CFG.hist.hrStep, CFG.hist.hrMin, hrT, false, CFG.ui.easyPlot.violinTrim) });
-  });
-  return out;
-}
 
 /* Gemeinsame Zeitachse: Trainingsstart bis heute, fuer jeden Zeitreihen-Chart
  * identisch. t0 ist der Nullpunkt, x-Werte sind Tage seit t0. "heute" waechst
@@ -275,16 +213,6 @@ function timeScale(T) {
 // ── Kennzahlen ──────────────────────────────────────────────────────────────
 const IF = a => (a.np && CFG.athlete.ftp) ? a.np / CFG.athlete.ftp : null;
 
-function best(key, days) {
-  const lo = addDays(today(), -days);
-  let b = null;
-  DATA.acts.forEach(a => {
-    const v = a.power_curve && a.power_curve[key];
-    if (!v || d(a.date) < lo) return;
-    if (!b || v > b.w) b = { w: v, date: a.date, id: a.id };
-  });
-  return b;
-}
 
 // ── FTP / HRmax: EINE Quelle, aus den Daten aufgeloest ──────────────────────
 /* Rampentests automatisch aus den Fahrten ableiten. Eine Fahrt ist ein
@@ -388,101 +316,9 @@ function tssOf(a) {
   return a.tss || 0;
 }
 
-// ── Leistungsprofil / Trainingsstatus ───────────────────────────────────────
-/* Bestwert eines Power-Kurven-Ankers seit dem Profil-Start (CFG.profile.since),
- * ueber ALLE Fahrten, mit Datum und Fahrt-id. */
-function bestSince(key) {
-  const since = d(CFG.profile.since);
-  let b = null;
-  DATA.acts.forEach(a => {
-    const v = a.power_curve && a.power_curve[key];
-    if (!v || d(a.date) < since) return;
-    if (!b || v > b.w) b = { w: v, date: a.date, id: a.id };
-  });
-  return b;
-}
 
-/* Leistungsprofil: je Anker der Bestwert seit Start, mit W/kg, Alter in Tagen
- * und Frische-Flag. Ohne Bestwert -> w:null (ehrlich "kein Wert"). */
-function powerProfile() {
-  return CFG.profile.anchors.map(an => {
-    const b = bestSince(an.key);
-    if (!b) return { ...an, w: null };
-    const age = dayDiff(today(), d(b.date));
-    return { ...an, w: b.w, date: b.date, id: b.id, age,
-             wkg: b.w / CFG.athlete.weight,
-             fresh: age <= CFG.profile.freshDays };
-  });
-}
 
-/* CP/W'-Modell (2 Parameter, lineares Work-Time-Modell: Arbeit = CP*t + W').
- * Bestwerte der cpDurations seit Start als Punkte (t, p*t), lineare Regression
- * -> Steigung = CP (W), Achsenabschnitt = W' (J). Braucht >= 2 Dauern. W' < 0
- * heisst: die langen Efforts liegen relativ zu hoch (kein echter Kurz-Effort im
- * Fenster) -> CP dann eher Obergrenze, wird im UI geflaggt. */
-function cpModel() {
-  const pts = CFG.profile.cpDurations
-    .map(t => { const b = bestSince(String(t)); return b ? { t, p: b.w } : null; })
-    .filter(Boolean);
-  if (pts.length < 2) return null;
-  let n = pts.length, st = 0, sw = 0, stt = 0, stw = 0;
-  pts.forEach(({ t, p }) => { const w = p * t; st += t; sw += w; stt += t * t; stw += t * w; });
-  const denom = n * stt - st * st;
-  if (!denom) return null;
-  const cp = (n * stw - st * sw) / denom;      // W
-  const wPrime = (sw - cp * st) / n;           // J
-  return { cp: Math.round(cp),
-           wPrime: Math.round(wPrime / 100) / 10,   // kJ, 1 Dezimale
-           durations: pts.map(p => p.t), n };
-}
 
-/* Wochen-Bestwert eines Ankers seit Start: pro Kalenderwoche (Mo-Bin) der
- * hoechste power_curve-Wert. Fuer den zeitlichen Verlaufsplot. Wochen ohne
- * Effort an der Dauer fehlen (spanGaps verbindet). */
-function weeklyBest(key) {
-  const since = d(CFG.profile.since);
-  const byWeek = {};
-  DATA.acts.forEach(a => {
-    const dt = d(a.date);
-    if (dt < since) return;
-    const v = a.power_curve && a.power_curve[key];
-    if (!v) return;
-    const wk = iso(mondayOf(dt));
-    if (byWeek[wk] == null || v > byWeek[wk]) byWeek[wk] = v;
-  });
-  return Object.keys(byWeek).sort().map(wk => ({ date: wk, w: byWeek[wk] }));
-}
-
-/* Wie weeklyBest, aber nur WOCHEN MIT ECHTEM VERSUCH an der Dauer. Problem des
- * reinen Wochen-Max: eine lockere Woche setzt einen niedrigen Punkt, die Linie
- * faellt und sieht aus wie Formverlust, obwohl nur nicht getestet wurde. Fix:
- * eine Woche zaehlt nur, wenn ihr Wert >= CFG.profile.attemptPct des juengsten
- * Bestwerts im gleitenden Fenster (attemptWindowDays) liegt, also nah genug am
- * Limit war, um als Versuch zu gelten. Referenz ist gleitend (nicht der
- * Saison-Bestwert), damit fruehe echte Versuche erhalten bleiben und der
- * Aufwaertstrend sichtbar ist. Lockere Wochen fallen als Luecke raus. */
-function attemptBest(key) {
-  const all = weeklyBest(key);                    // {date, w} je Woche, chronologisch
-  const pct = CFG.profile.attemptPct != null ? CFG.profile.attemptPct : 0.9;
-  const winMs = (CFG.profile.attemptWindowDays || 56) * 86400000;
-  return all.filter(p => {
-    const t = d(p.date).getTime();
-    let ref = 0;                                  // bestes Wochen-Max im Fenster bis inkl. jetzt
-    all.forEach(q => { const tq = d(q.date).getTime();
-      if (tq <= t && t - tq <= winMs && q.w > ref) ref = q.w; });
-    return ref > 0 && p.w >= pct * ref;
-  });
-}
-
-/* Rekord-Progression: nur Wochen, die einen NEUEN Bestwert seit Start setzen
- * (laufendes Maximum). Ergibt eine monotone Treppe, die nie faellt. Der letzte
- * Punkt ist der juengste Rekord: hoert die Treppe frueh auf, lag der Prime an
- * der Dauer frueh, laeuft sie bis heute, steigerst du dich noch. Kein
- * Scheinrueckschritt moeglich, weil per Definition nichts nach unten geht. */
-function recordBest(key) {
-  let max = 0;
-  return weeklyBest(key).filter(p => (p.w > max) && (max = p.w));
-}
 
 // ── DOM ─────────────────────────────────────────────────────────────────────
 /* Farben kommen aus den CSS-Tokens, nicht aus dem JS. Wer eine Farbe braucht,
@@ -495,3 +331,36 @@ const el = (tag, cls, html) => {
   return e;
 };
 const $ = s => document.querySelector(s);
+
+
+// ── Belastungsmodell und Health-Basis (frueher form.js) ─────────────────────
+// ── Belastungsmodell ────────────────────────────────────────────────────────
+/* Impulse-Response nach Banister: CTL = Exponentialmittel der TSS ueber
+ * CTL_TAU Tage (Fitness), ATL ueber ATL_TAU (Ermuedung), TSB = CTL - ATL
+ * (Form). Die Zeitkonstanten sind Konvention, keine Messung. */
+function loadModel() {
+  if (!DATA.acts.length) return [];
+  const L = CFG.ui.load;
+  const byDay = {};
+  DATA.acts.forEach(a => { byDay[a.date] = (byDay[a.date] || 0) + tssOf(a); });
+  // Korrekte Abklingkonstanten (nicht 1/tau, sondern 1-exp(-1/tau)).
+  const kC = 1 - Math.exp(-1 / L.ctlTau), kA = 1 - Math.exp(-1 / L.atlTau);
+  const out = [];
+  let ctl = L.seedCtl, atl = L.seedAtl, i = 0;
+  for (let dt = d(DATA.acts[DATA.acts.length - 1].date); dt <= today(); dt = addDays(dt, 1)) {
+    const tss = byDay[iso(dt)] || 0;
+    ctl += kC * (tss - ctl);
+    atl += kA * (tss - atl);
+    out.push({ date: iso(dt), tss, ctl: +ctl.toFixed(1), atl: +atl.toFixed(1),
+               tsb: +(ctl - atl).toFixed(1), settling: i < L.settleDays });
+    i++;
+  }
+  return out;
+}
+
+function baseline(key, days) {
+  const lo = addDays(today(), -days);
+  const v = DATA.health.filter(x => d(x.date) >= lo && x[key] != null)
+                       .map(x => x[key]).sort((a, b) => a - b);
+  return v.length ? v[Math.floor(v.length / 2)] : null;
+}
