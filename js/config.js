@@ -81,6 +81,18 @@ const CFG = {
     // vergangene Wochen rueckwirkend andere "geplant"-Zeilen zeigen.
     // Phase 0 (Reha + Routine) nach Rueckenproblemen seit 09/2026, Plan v2 im
     // privaten Repo health-notes. Prioritaet: schmerzfrei vor Fitness.
+    // CTL-Zielkorridor bis zur Ziel-Rampe (Stützpunkte, dazwischen linear).
+    // Herleitung 18.11.2026: FTP 271 bei CTL 57 (22.07.), 283 bei CTL 66 (02.09.),
+    // 300 W also realistisch bei CTL ~70-75. Phase 0 halten, dann ~+2-3/Woche,
+    // April Taper. Wird nach jedem Rampentest geprüft (FTP-Zuwachs je CTL-Punkt).
+    ctlCorridor: [
+      { date: '2026-11-18', lo: 32, hi: 40 },
+      { date: '2026-12-14', lo: 33, hi: 41 },   // Ende Phase 0
+      { date: '2027-01-04', lo: 38, hi: 46 },   // Ende Phase 1
+      { date: '2027-02-28', lo: 56, hi: 64 },   // Ende Phase 2
+      { date: '2027-04-15', lo: 66, hi: 74 },   // Spitze
+      { date: '2027-04-28', lo: 63, hi: 72 },   // Taper, Ziel-Rampe
+    ],
     templatePhases: [
       { from: '2026-11-18', template: {
         Mo: { commutes: 2, slot: 'kraft' },
@@ -389,6 +401,7 @@ const CFG = {
     ctlCol: '#60a5fa',   // Fitness: CTL
     atlCol: '#f472b6',   // Fitness: ATL
     tsbCol: '#94a3b8',   // Fitness: Form (TSB)
+    aheadDays: 28,       // Fitness-Karte zeigt den CTL-Korridor so weit voraus
     tssCol: '#a78bfa',   // Rad je Woche: TSS-Balken
     smallHeight: 44,     // px Sparkline, wenn mehrere in einer Karte
   },
