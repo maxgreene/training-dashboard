@@ -66,18 +66,17 @@ etwas unklar ist: Daten laden und messen.
 index.html                        Struktur, CSS, Nav, Status-Ampel, Lazy-Render, Boot
 js/config.js                      ALLE Parameter. Einziger Ort für Zahlen.
 js/shared.js                      Datum, Zonen-Engine, timeAxis, DATA, CSSVAR,
-                                  FTP/HRmax-Auflösung, Tests, tssOf, Leistungsprofil
-js/plan.js                        Plan-Generator, Heute-Feld, FTP-Widget,
-                                  Ride-vs-Decke-Widget, Test-Timeline
-js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
-                                  EF-Chart, Fahrtenliste (mit Strecken-Thumbnail),
-                                  3 Detailplots + Detail-Streckenkarte (routeSvg)
-js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
-js/week.js                        Woche (Vorschau ?neu): Rad Soll/Ist, Tage mit
-                                  Haken, Ampel + Empfehlung Rest der Woche
-js/trends.js                      Verlauf (Vorschau ?neu): Trendkarten vs. vor
-                                  4 Wochen, Weg zu 300, Leistung seit Neustart, EF
-js/health.js                      Health-Seite: Morgen-Check (Gewicht, Nächte,
+                                  FTP/HRmax-Auflösung, Tests, tssOf,
+                                  loadModel (CTL/ATL/TSB), baseline (Health)
+js/plan.js                        Plan-Generator (plannedFor, weekPhase, wRange),
+                                  dp4Rings, testTimeline. Keine eigene Seite mehr
+js/week.js                        Tab Woche: Rad Soll/Ist, Tage mit Haken,
+                                  Ampel + Empfehlung Rest der Woche
+js/trends.js                      Tab Verlauf: Trendkarten vs. vor 4 Wochen,
+                                  Weg zu 300, Leistung seit Neustart, EF
+js/rides.js                       Tab Fahrten: Liste (Strecken-Thumbnail),
+                                  3 Detailplots + Detail-Streckenkarte, renderEF
+js/health.js                      Tab Check-in: Morgen-Check (Gewicht, Nächte,
                                   Rücken, Routine), Verläufe. Daten im privaten
                                   Repo health-notes über die GitHub-API
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
@@ -174,27 +173,13 @@ Overrides: ein Handeintrag mit gesetztem `ftp` gewinnt gegen den automatischen
 Wert. Die Erkennung ist eng genug, dass harte Einheiten (z. B. 3x10 min) nicht
 fälschlich als Test zählen.
 
-**Leistungsprofil (Rides-Seite):** je Anker NM (5 s), AC (60 s), MAP (300 s),
-Schwelle (1200 s) der Bestwert seit Trainingsstart (`CFG.profile.since`), mit
-W/kg, Alter, frisch/veraltet. Dazu ein CP/W'-Modell (2-Parameter Work-Time-Fit
-aus 2/5/10/20-min-Bestwerten) als Gegenprobe zum Rampen-FTP, plus ein
-Wochen-Verlaufsplot der Anker-Bestwerte (1-Wochen-Bins). Rechnung zentral in
-`shared.js`: `bestSince`, `powerProfile`, `cpModel`, `weeklyBest`, `attemptBest`,
-`recordBest`.
-
-**Der Verlaufsplot zeigt die Rekord-Progression, nicht das Wochen-Max über alle
-Fahrten** (`recordBest`, `drawProfileTrend`). Sonst setzt eine lockere Woche
-einen niedrigen Punkt und die Linie fällt, als wäre die Form eingebrochen,
-obwohl an der Dauer nur nicht getestet wurde. `recordBest` gibt je Anker nur
-Wochen mit einem NEUEN Bestwert seit Start (laufendes Maximum), also eine
-monotone Treppe, die nie fällt. Wo sie endet, lag der Prime an der Dauer: hört
-sie früh auf (z. B. Schwelle 20 min zuletzt 20.07), war der beste Effort früh,
-läuft sie bis heute (MAP), steigerst du dich noch. Ein Scheinrückschritt ist
-unmöglich, weil nichts nach unten geht. Vorsicht: bei ungetesteten Dauern
-(20 min, Wolf fährt Intervalle) markiert das Ende nur den letzten zufällig
-langen/harten Effort, nicht zwingend die wahre Spitze. `attemptBest` (nur echte
-Versuche >= `attemptPct` des gleitenden Bestwerts) liegt als Alternative daneben,
-`weeklyBest` ist die Rohbasis. Kacheln (`powerProfile`/`bestSince`) unberührt.
+**Leistungsprofil:** Verlauf-Karte "Leistung seit Neustart" (`trends.js:
+profileNowCard`): je Anker NM (5 s), AC (60 s), MAP (300 s), Schwelle (1200 s)
+der Bestwert seit dem ersten `templatePhases.from` gegen den Bestwert seit
+`CFG.profile.since`, als Balken, der sich mit der Form füllt. Die alte
+Rides-Kopfkarte mit "veraltet"-Kacheln, CP/W'-Modell und Rekord-Treppe
+(`powerProfile`, `cpModel`, `recordBest`, `weeklyBest`, `attemptBest`) ist am
+18.11.2026 entfernt worden (Git-Historie, falls sie zurück soll).
 
 **Beobachtung zur Gegenprobe:** Die Rampe (0.75 x MAP) überschätzt bei starkem
 anaeroben Profil, weil die letzte Rampen-Minute viel Anaerobes trägt. CP aus den
@@ -279,7 +264,7 @@ zurueck)` im Log), `fetch_garmin.py` legt die Zeile aber trotzdem an, alles
 `null`. Die zählte als "heute frisch": Nav-Ampel und Heute-Feld standen grün,
 ohne einen Messwert (28.-30.09.2026). Fix: `shared.js` verwirft beim Laden alle
 Zeilen ohne `hrv`/`resting_hr`/`sleep_h`, die Nav-Ampel sieht damit das echte
-Alter, und `todayCard` zeigt ab `CFG.ui.status.healthWarnDays` grau "keine
+Alter, und die Ampel im Tab Woche (`week.js:readiness`) zeigt ab `CFG.ui.status.healthWarnDays` grau "keine
 Daten, letzter Stand TT.MM., Uhr syncen" statt einer Ampel aus alten Werten. Der
 Fetch holt immer die letzten 5 Tage neu, ein Sync innerhalb dieser Frist füllt
 die Lücke von selbst.
@@ -487,7 +472,7 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 
 Vierter Tab, ersetzt seit 18.11.2026 den Food-Tab. **Einzige Eingabestelle** für
 Gewicht (nüchtern), Nacht-Gänge (letzte Nacht), Rücken 0-10 (Vortag), Routine
-(Vortag: Meditation, Physio, Training, Yoga) und Notiz. Wolf trägt morgens nach
+(Vortag: Meditation, Physio, Kraft, Yoga) und Notiz. Wolf trägt morgens nach
 der Meditation ein, meist am iPhone.
 
 **Die Daten liegen NICHT in diesem Repo** (öffentlich), sondern als
@@ -515,14 +500,15 @@ Git-Historie liegt der Tresor weiter verschlüsselt. Ein veralteter Kommentar zu
 `data/nutrition` steht noch in `deploy.yml` (harmlos, beim nächsten
 Workflow-Eingriff mit entfernen).
 
-## Neue Ansicht (Vorschau, `?neu`)
+## Seitenstruktur (seit 18.11.2026)
 
-Seit 18.11.2026 im Aufbau, auf Wolfs Wunsch nach seinen vier Fragen sortiert:
-motivieren (geht es aufwärts?), Zahlen (genug gefahren?), Kontinuität (dran
-geblieben?), steuern (Pause oder reinklotzen?). Erreichbar über
-`…/training-dashboard/?neu`, ohne Parameter bleibt die alte Ansicht. Tabs:
-**Woche** (`week.js`), **Verlauf** (`trends.js`), **Fahrten** (`renderRides({listOnly:
-true})`, ohne Profil/EF/Summen), **Check-in** (`health.js`).
+Auf Wolfs Wunsch nach seinen vier Fragen sortiert: motivieren (geht es
+aufwärts?), Zahlen (genug gefahren?), Kontinuität (dran geblieben?), steuern
+(Pause oder reinklotzen?). Vier Tabs: **Woche** (`week.js`, Start), **Verlauf**
+(`trends.js`), **Fahrten** (`rides.js`, nur Liste + Details), **Check-in**
+(`health.js`). Die alten Seiten Plan, Rides-Kopf und Form sind entfernt
+(Heute-Feld, FTP-Widget mit Ride-vs-Decke-Violinen, Wochenkarten, CTL/ATL/TSB-
+und HRV-Chart mit Tagestabelle). `loadModel`/`baseline` leben in `shared.js`.
 
 - **Soll/Ist:** `CFG.plan.units[].min` = Rad-Soll in Minuten, Events optional
   `min`. Ist = `moving_sec` aller Fahrten des Tages. Soll erst ab dem ersten
@@ -533,17 +519,16 @@ true})`, ohne Profil/EF/Summen), **Check-in** (`health.js`).
   Eintrag von D+1** (morgens für gestern). Ohne Check-in-Eintrag `?`, zählt
   nicht als fällig. Check-in-Haken: Meditation, Physio, **Kraft** (vorher
   "Training", Rad kommt automatisch), Yoga.
-- **Empfehlung** (`advice`): Ampel wie das Heute-Feld (HRV/RHR/Schlaf gegen
-  42-Tage-Basis); rot oder Rücken Ø 7 >= `backBad` = "Körper vor Plan". Sonst
-  Rückstand gegen "Soll bis gestern": im Plan (<= `onTrackMin`), sonst Vorschlag
-  an der längsten verbleibenden Einheit (+ max `extraMaxMin`).
+- **Empfehlung** (`advice`): Ampel aus HRV/RHR/Schlaf gegen 42-Tage-Basis
+  (HRV < Basis−5, RHR > Basis+3, Schlaf < 6,5 h, Status LOW/POOR/UNBALANCED;
+  0 Flags grün, 1 gelb, >= 2 rot; Garmin-Daten zu alt = grau). Rot oder Rücken
+  Ø 7 >= `backBad` = "Körper vor Plan". Sonst Rückstand gegen "Soll bis
+  gestern": im Plan (<= `onTrackMin`), sonst Vorschlag an der längsten
+  verbleibenden Einheit (+ max `extraMaxMin`).
 - **Verlauf:** jede Karte Wert jetzt plus Δ gegen vor `CFG.trend.compareDays`,
-  grün in guter Richtung. Leistung seit Neustart statt "veraltet".
-- FTP-Ziel jetzt **300 W bis 30.04.2027**, Rampen 16.12., 27.01., 31.03., 28.04.
-  als `type:'test'`-Events.
-
-Wenn Wolf die Vorschau abnimmt: alte Tabs (Plan, Rides-Kopf, Form) entfernen,
-`?neu` zum Standard machen, diese Notiz umschreiben.
+  grün in guter Richtung. Sparklines als SVG (Farben aus `CSSVAR`).
+- FTP-Ziel **300 W bis 30.04.2027**, Rampen 16.12., 27.01., 31.03., 28.04. als
+  `type:'test'`-Events.
 
 ## Trainingskontext
 
@@ -676,40 +661,18 @@ Wenn Wolf die Vorschau abnimmt: alte Tabs (Plan, Rides-Kopf, Form) entfernen,
   Watt-Spanne x `CFG.athlete.ftp` (aufgelöst, aktuell 271), also SS ~238 bis 255,
   Schwelle ~257 bis 285. Nach jedem Rampentest ziehen die Ziele automatisch mit,
   kein Handeintrag.
-- **Heute-Feld (oben auf der Plan-Seite, `plan.js:todayCard`), zweispaltig.**
-  Ampeln aus Health (HRV/RHP/Schlaf gegen 42-Tage-Median via `form.js:baseline`),
-  Form (CTL/ATL/TSB aus `loadModel`) und Plan (`plannedFor`). Flags: HRV <
-  Basis−5, RHP > Basis+3, Schlaf < 6.5 h, HRV-Status LOW/POOR/UNBALANCED. 0
-  Flags = grün, 1 = gelb, >=2 oder Status LOW/POOR = rot.
-  - **Links HEUTE:** adaptiv. Sind schon Fahrten von heute da (`DATA.acts` mit
-    heutigem Datum), zeigt es die **Analyse** (Anzahl, Min, +TSS, Ø-Leistung/HF
-    relativ zur Z2/Z3-Decke via `histMeanSd`, plus Verdict gegen den Plan). Wenn
-    noch nichts gefahren (z. B. morgens), die **Empfehlung** wie bisher.
-  - **Rechts MORGEN:** projizierte Ampel für den Folgetag aus heutiger Last
-    (`todayWasHard` = TSS>=80 oder >=90 min, sonst der geplante heutige Reiz)
-    plus aktuellen Markern plus `tplan` (`plannedFor` morgen). Ist morgen Qualität
-    und heute war hart, wird die Ampel eine Stufe hochgestuft. Echte Marker gibt
-    es morgen früh, daher als Projektion gekennzeichnet.
-- **Ride-vs-Decke-Widget (rechts im FTP-Widget, ersetzt das alte Easy-%).**
-  `plan.js:drawRideTargets` + `shared.js:ridePoints`: je Fahrt der letzten
-  `easyWindowDays` (14) Tage Ø-Punkt und ±1sd-Whisker von Leistung (blau) und HF
-  (grün), RELATIV zur Z2/Z3-Decke (Leistung 0.66 x FTP, HF 0.75 x HRmax). Linie
-  bei 1.0 = auf der Decke, darunter aerob (blau hinterlegt). Ø/sd kommen aus
-  `histMeanSd` über die Histogramme, Leistung ohne Coasting-Eimer (0 W). Zeigt
-  das Muster direkt: Leistung oft > 1.0 mit großem sd (Antritte spiken die Watt),
-  HF meist <= 1.0 mit kleinem sd (folgt nicht). Zieht mit aufgelöstem FTP/HRmax.
+- Heute-Feld und Ride-vs-Decke-Widget (alte Plan-Seite) sind seit 18.11.2026
+  durch den Tab Woche ersetzt (Ampel-Regeln siehe Seitenstruktur).
 
 ---
 
 ## Offene Punkte
 
-1. Zonen-Editor auf der Seite: CSS `.zed` existiert, Engine läuft, UI fehlt.
-2. `plan.template` reicht nur für den aktuellen Block, weitere später.
-3. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
+1. `plan.template` reicht nur für den aktuellen Block, weitere später.
+2. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
-4. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
-   den CP-Fit. Verfeinerung wäre, nur nahe-maximale Efforts zu zählen (HF nahe
-   Max oder Wert passt zur Kurve), damit ein lockeres 20-min CP nicht verzerrt.
+3. Phase 1 (ab Mitte Dezember) als neues `templatePhases`-Element nachtragen,
+   inklusive `min` für die neuen Einheiten.
 
 ---
 

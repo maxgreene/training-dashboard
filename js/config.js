@@ -331,26 +331,17 @@ const CFG = {
     { date: '2026-07-22', kind: 'ramp', id: 'garmin_23694693519', ftp: 271, map: 361 },
   ],
 
-  // ── Leistungsprofil / Trainingsstatus ────────────────────────────────────
-  // Kennzahlen aus ALLEN Fahrten seit Trainingsstart: je Anker der Bestwert
-  // der Mean-Maximal-Power-Kurve. CP/W' als Gegenprobe zum Rampen-FTP.
+  // ── Leistungsprofil ──────────────────────────────────────────────────────
+  // Verlauf-Karte "Leistung seit Neustart": je Anker Bestwert seit dem ersten
+  // templatePhases.from gegen den Bestwert seit Trainingsstart.
   profile: {
-    since:     '2026-05-04',   // Fenster: ab Trainingsstart (wie PLAN_START)
-    freshDays: 21,             // bis hier gilt ein Bestwert als frisch
+    since:     '2026-05-04',   // Trainingsstart
     anchors: [                 // Dauer-Anker (Schluessel = Sekunde in power_curve)
       { key: '5',    label: 'NM',       full: 'Neuromuskulaer · Sprint 5 s',  col: '#a855f7' },
       { key: '60',   label: 'AC',       full: 'Anaerobe Kapazitaet · 1 min',  col: '#ef4444' },
       { key: '300',  label: 'MAP',      full: 'Max. aerobe Leistung · 5 min', col: '#f59e0b' },
       { key: '1200', label: 'Schwelle', full: 'Schwelle · 20 min',            col: '#3b82f6' },
     ],
-    cpDurations: [120, 300, 600, 1200], // Bestwerte fuer den CP/W'-Fit (2-20 min)
-    // Verlaufsplot (drawProfileTrend): nur ECHTE Versuche zeigen, nicht das
-    // Wochen-Maximum ueber alle Fahrten. Eine Woche zaehlt als Versuch an einer
-    // Dauer, wenn ihr Bestwert >= attemptPct des juengsten Bestwerts im Fenster
-    // (attemptWindowDays) liegt. Lockere Wochen fallen als Luecke raus, statt die
-    // Linie faelschlich absacken zu lassen ("nicht getestet = nicht auswertbar").
-    attemptPct: 0.90,
-    attemptWindowDays: 56,
   },
 
   // ── Health (Morgen-Check) ────────────────────────────────────────────────
@@ -396,21 +387,6 @@ const CFG = {
   },
 
   ui: {
-    easyWindowDays: 14,          // Fenster fuer den Ride-Plot
-    // Ride vs Z2/Z3-Decke: je Fahrt Ø ± 1sd von Leistung und HF, relativ zur
-    // aeroben Decke (1.0). Letzte easyWindowDays Tage.
-    easyPlot: {
-      height: 200,
-      dotMinR: 3, dotMaxR: 9,    // Punktgroesse nach Dauer
-      dotMinMin: 10, dotMaxMin: 300,
-      colP: '#60a5fa',           // Leistung (blau)
-      colHr: '#7ec8a0',          // HF (gruen)
-      bandAlpha: 0.10,           // Deckkraft des aeroben Bereichs (< 1.0)
-      relMax: 2.0,               // y-Achse: Vielfaches der Decke
-      violinW: 0.13,             // halbe Violin-Breite als Anteil eines Tages
-      violinTrim: 0.05,          // Zeitanteil je Ende abschneiden (Sprint-Schwanz)
-      dx: 0.15,                  // x-Versatz, damit Leistung/HF nicht ueberlappen
-    },
     p20Goal: null,               // wird aus ftpGoal abgeleitet, s. shared.js
     // 4DP-Benchmarks als Vielfaches der FTP (bei FTP 250: 1200/800/400/250 W)
     dp4: [
