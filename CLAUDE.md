@@ -76,13 +76,6 @@ js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
 js/health.js                      Health-Seite: Morgen-Check (Gewicht, Nächte,
                                   Rücken, Routine), Verläufe. Daten im privaten
                                   Repo health-notes über die GitHub-API
-js/vault.js                       Alter Food-Tresor, nur noch für den
-                                  Einmal-Import alter Gewichte (health.js)
-scripts/nutri.py                  Ernährungs-CLI: init, add, undo, today,
-                                  goals, search, add-wrap, import-key
-scripts/nutri_crypto.py           AES-256-GCM, DEK-Wrapping, Schlüsseldatei
-scripts/build_foods.py            BLS 4.0 nach foods.json
-.githooks/pre-commit              blockt Klartext-Log und rohe Schlüssel
 scripts/fetch_activities.py       Wahoo (Outdoor) nach activities.json + streams/
 scripts/fetch_garmin_activities.py Garmin Indoor/Rolle nach activities.json + streams/
 scripts/fit_streams.py            gemeinsame FIT-nach-Streams-Umwandlung (Wahoo + Garmin)
@@ -94,10 +87,6 @@ data/streams/{id}.json            ROH, 1 Hz. NIE anfassen.
 data/activities.json              Index mit allen Kennzahlen
 data/analysis/{id}.json           Eine Serie pro Fahrt
 data/health.json                  Garmin: HRV, RHR, Schlaf, Stress
-data/nutrition/foods.json         Lebensmitteltabelle, erzeugt aus BLS 4.0
-data/nutrition/foods_extra.json   Kurznamen, Portionen, eigene Einträge
-data/nutrition/keys.json          eingewickelte DEKs (Passphrase + je Gerät)
-data/nutrition/log.enc.json       der Tresor, AES-256-GCM
 ```
 
 Frontend ist Vanilla JS ohne Build-Schritt. Chart.js per CDN. Keine Frameworks,
@@ -298,15 +287,6 @@ waren 57 Minuten bei konstant 114 bpm eingefroren.
 **4iiii-Kalibrierung** x1.247 für IDs `18719827047` und `18717251723`. Der
 Powermeter las am 30.05. rund 20 % zu niedrig.
 
-**`DAY_CUTOFF_H` existiert zwangsläufig doppelt.** `CFG.food.dayCutoffH` in
-`js/config.js` und `DAY_CUTOFF_H` in `scripts/nutri.py`. Python und JS können
-einander nicht lesen, das ist dieselbe Lage wie FTP/HRmax zwischen `config.js`
-und `analyze_activities.py`: dokumentierte Ausnahme zur Ein-Ort-Regel, kein
-Fehler. Beim Ändern **beide** Stellen anfassen, sonst landet ein Eintrag im
-Browser auf einem anderen Tag als in der CLI. An beiden Stellen steht ein
-Sync-Kommentar. Die Zeitzone in `nutri.py` ist fest UTC+2 verdrahtet, vor Ende
-Oktober auf `zoneinfo.ZoneInfo("Europe/Berlin")` umstellen.
-
 ### Chart.js
 
 **Ein `bar`-Datensatz ändert stillschweigend die Achsen-Voreinstellungen.**
@@ -489,9 +469,8 @@ alte Module aus.
 Push auf `main` löst den Deploy aus.
 
 Der Build kopiert eine **Namensliste, kein Verzeichnis**. Neue Datenordner
-müssen dort ausdrücklich rein, sonst fehlen sie live. `data/nutrition` steht
-seit dem Food-Tab drin. Fällt die Zeile weg, liefert die Seite 404 auf
-`foods.json` und der Deploy bleibt trotzdem grün.
+müssen dort ausdrücklich rein, sonst fehlen sie live, und der Deploy bleibt
+trotzdem grün.
 
 **Wahoo Reauth** (`wahoo-reauth.yml`): manueller `workflow_dispatch`, nimmt den
 Wahoo-`code` als Input, tauscht ihn gegen einen frischen `refresh_token`, setzt
@@ -523,12 +502,14 @@ in der Datei, nicht in `config.js`. Gewichtstrend wie früher: zeit-gewichteter
 EWMA (`CFG.health.weight.tau`, 10 d). Claude liest die Datei im Sonntags-Check
 (Routine "Wochen-Check", So 18:48) direkt aus `health-notes`.
 
-**Food-Tab entfernt (18.11.2026, auf Wolfs Wunsch, gebraucht war nur das
-Gewicht).** `js/food.js` und `CFG.food` sind raus. Übrig bis zum Einmal-Import
-der alten Gewichte (Karte "Alte Gewichte" im Health-Tab, entsperrt den Tresor per
-Passkey, setzt danach `legacyImported`): `js/vault.js`, `data/nutrition/`,
-`scripts/nutri*.py`, `scripts/build_foods.py`, `FOOD.md`, `.githooks/`. Danach
-kann das alles weg (auch der `DAY_CUTOFF_H`-Fallstrick unten).
+**Food-Tab und Ernährungs-Tresor komplett entfernt (18.11.2026, auf Wolfs
+Wunsch, gebraucht war nur das Gewicht).** Die drei alten Gewichte (01.-03.09.)
+wurden vorher per Passkey importiert (`imported: true`, `legacyImported`).
+Raus sind `js/food.js`, `js/vault.js`, `CFG.food`, `data/nutrition/`,
+`scripts/nutri*.py`, `scripts/build_foods.py`, `FOOD.md`, `.githooks/`. In der
+Git-Historie liegt der Tresor weiter verschlüsselt. Ein veralteter Kommentar zu
+`data/nutrition` steht noch in `deploy.yml` (harmlos, beim nächsten
+Workflow-Eingriff mit entfernen).
 
 ## Trainingskontext
 
@@ -692,9 +673,7 @@ kann das alles weg (auch der `DAY_CUTOFF_H`-Fallstrick unten).
 2. `plan.template` reicht nur für den aktuellen Block, weitere später.
 3. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
-4. Food-Reste entfernen, sobald die alten Gewichte importiert sind (siehe
-   Health-Tab).
-5. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
+4. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
    den CP-Fit. Verfeinerung wäre, nur nahe-maximale Efforts zu zählen (HF nahe
    Max oder Wert passt zur Kurve), damit ein lockeres 20-min CP nicht verzerrt.
 
