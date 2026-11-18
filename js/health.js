@@ -9,6 +9,8 @@
  * Ohne Token zeigt die Seite nur die Einrichtung. Format:
  *   { version, goals: { kg }, entries: { "JJJJ-MM-TT": { weight, nights,
  *     back, habits: { meditation, physio, training, yoga }, note } } }
+ * Alte Gewichte aus dem Food-Tresor sind importiert (imported: true,
+ * legacyImported auf der Datei), der Tresor ist entfernt.
  */
 const HCFG = CFG.health;
 const HEALTH = { file: null, sha: null, form: null, date: null, charts: {}, busy: false, msg: '' };
@@ -206,8 +208,7 @@ function drawHealth() {
       <div class="card-hd"><span class="t">RÜCKEN</span><span class="s">${HCFG.back.days} Tage</span></div>
       ${S.keys.some(k => E[k].back != null) ? `<div style="height:${HCFG.back.height}px"><canvas id="h-c-back"></canvas></div>` : '<div class="ez-hint">Noch keine Einträge.</div>'}
       <div class="muted" style="margin-top:7px">0–10 am Vortag · ↓ = besser</div>
-    </div>
-    ${hLegacyCard()}`;
+    </div>`;
 
   hWire();
   hCharts(S, goal);
@@ -222,8 +223,6 @@ function hWire() {
   document.querySelectorAll('#h-back button').forEach(b => b.onclick = () => { const i = +b.dataset.i; f.back = f.back === i ? null : i; redraw(); });
   document.querySelectorAll('#h-habits button').forEach(b => b.onclick = () => { f.habits[b.dataset.k] = !f.habits[b.dataset.k]; redraw(); });
   $('#h-save').onclick = hSave;
-  const lb = $('#h-legacy');
-  if (lb) lb.onclick = hImportLegacy;
 }
 
 async function hSave() {
@@ -284,38 +283,4 @@ function hCharts(S, goal) {
         scales: { x: xAxis(xMin), y: { min: 0, max: 10, ticks: { ...tk, stepSize: 5 }, grid } } },
     });
   }
-}
-
-// ── Einmalig: Gewichte aus dem alten Food-Tresor übernehmen ─────────────────
-function hLegacyCard() {
-  if (HEALTH.file.legacyImported || typeof Vault === 'undefined') return '';
-  return `<div class="card">
-    <div class="card-hd"><span class="t">ALTE GEWICHTE</span><span class="s">einmalig</span></div>
-    <div class="ez-hint" style="margin-bottom:10px">Die bisherigen Messungen liegen im verschlüsselten Food-Tresor.
-      Mit Passkey entsperren und in den Morgen-Check übernehmen. Vorhandene Einträge bleiben unverändert.</div>
-    <button class="h-btn" id="h-legacy">Mit Passkey übernehmen</button>
-    <span class="muted" id="h-legacy-msg"></span></div>`;
-}
-
-async function hImportLegacy() {
-  const msg = $('#h-legacy-msg');
-  try {
-    msg.textContent = ' entsperren …';
-    const get = async n => { const r = await fetch(HCFG.legacyRaw + n + '?t=' + Date.now()); if (!r.ok) throw new Error(n + ': ' + r.status); return r.json(); };
-    const keys = await get('keys.json');
-    const dek = await Vault.unlockWithPasskey(keys);
-    const vault = await Vault.open(await get('log.enc.json'), dek);
-    const ws = (vault.weights || []).filter(w => w && w.date && w.kg != null);
-    msg.textContent = ` übernehme ${ws.length} Messungen …`;
-    await hCommit(d => {
-      ws.forEach(w => {
-        const e = d.entries[w.date];
-        if (!e) d.entries[w.date] = { weight: w.kg, nights: null, back: null, habits: {}, note: '', imported: true };
-        else if (e.weight == null) e.weight = w.kg;
-      });
-      d.legacyImported = true;
-    }, `Alte Gewichte übernommen (${ws.length})`);
-    HEALTH.msg = `${ws.length} alte Messungen übernommen.`;
-    hLoadForm(); drawHealth();
-  } catch (e) { msg.textContent = ' ' + (e.message || e); }
 }

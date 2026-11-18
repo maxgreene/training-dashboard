@@ -341,13 +341,6 @@ const CFG = {
     attemptWindowDays: 56,
   },
 
-  // ── Ernaehrung ────────────────────────────────────────────────────────────
-  // NUR Darstellung und Mechanik. Die ZIELE (kcal, Protein, Ballaststoffe,
-  // Fluessigkeit) stehen NICHT hier: dieses Repo ist oeffentlich. Sie liegen
-  // im verschluesselten Tresor (vault.goals in data/nutrition/log.enc.json),
-  // gesetzt per `nutri.py goals --kcal 1800`. food.js liest sie erst nach dem
-  // Entsperren. Ein nicht gesetztes Ziel (null) zeichnet keine Linie und
-  // keinen Balken-Rest, genau wie ein EF-Band ohne genug Fahrten wegfaellt.
   // ── Health (Morgen-Check) ────────────────────────────────────────────────
   // Daten im PRIVATEN Repo, gelesen/geschrieben per GitHub-API mit einem
   // Token, der nur auf dem Geraet liegt (health.js). Persoenliche Zahlen
@@ -374,9 +367,6 @@ const CFG = {
       trendCol: '#fbbf24',
     },
     back: { height: 150, days: 60, warn: 3, bad: 6, barPx: 5 },   // 0-10, ab warn gelb, ab bad rot
-    // Einmal-Import der Gewichte aus dem alten Food-Tresor (vault.js). Faellt
-    // weg, sobald die Datendatei legacyImported traegt und der Tresor raus ist.
-    legacyRaw: 'https://raw.githubusercontent.com/maxgreene/training-dashboard/main/data/nutrition/',
   },
   ui: {
     easyWindowDays: 14,          // Fenster fuer den Ride-Plot
