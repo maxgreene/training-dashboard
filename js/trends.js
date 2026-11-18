@@ -118,10 +118,15 @@ function renderTrend() {
   }).filter(p => p && p.x >= x0);
   const hrv = roll('hrv'), rhr = roll('resting_hr');
   const hN = hrv[hrv.length - 1], hT = atOrBefore(hrv, cmp), rN = rhr[rhr.length - 1], rT = atOrBefore(rhr, cmp);
-  cards.push(tCard('ERHOLUNG', hN ? Math.round(hN.y) + ' ms' : '–', rN ? `HRV · Ruhepuls ${Math.round(rN.y)}` : 'HRV',
-    delta(hN && hN.y, hT && hT.y, +1, ' ms') + '<br>' + delta(rN && rN.y, rT && rT.y, -1, ' bpm'),
-    spark(hrv, { col: CSSVAR('--ok'), x0, x1: now }) + spark(rhr, { col: CSSVAR('--err'), x0, x1: now }),
-    'Ø 7 Tage · HRV ↑ / Ruhepuls ↓ = erholt'));
+  const lab = (txt, col) => `<span style="color:${col}">${txt}</span>`;
+  const sLab = (txt, col) => `<div class="t-sl">${lab('● ' + txt, col)}</div>`;
+  cards.push(tCard('ERHOLUNG', hN ? lab(Math.round(hN.y) + ' ms', TCFG.hrvCol) : '–',
+    rN ? `HRV · ${lab('Ruhepuls ' + Math.round(rN.y), TCFG.rhrCol)}` : 'HRV',
+    lab('HRV', TCFG.hrvCol) + ' ' + delta(hN && hN.y, hT && hT.y, +1, ' ms') + '<br>' +
+    lab('Ruhepuls', TCFG.rhrCol) + ' ' + delta(rN && rN.y, rT && rT.y, -1, ' bpm'),
+    sLab('HRV (ms)', TCFG.hrvCol) + spark(hrv, { col: TCFG.hrvCol, x0, x1: now }) +
+    sLab('Ruhepuls (bpm)', TCFG.rhrCol) + spark(rhr, { col: TCFG.rhrCol, x0, x1: now }),
+    'Ø 7 Tage · HRV ↑ / Ruhepuls ↓ = erholt · Pfeil grün = gute Richtung'));
 
   page.innerHTML = `
     <div class="t-grid">${cards.join('')}</div>
