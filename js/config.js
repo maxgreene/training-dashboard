@@ -384,6 +384,8 @@ const CFG = {
     weeks: 12,           // Fenster der Trendkarten
     compareDays: 28,     // "vor 4 Wochen"
     height: 70,          // px Sparkline
+    hrvCol: '#60a5fa',   // Erholung: HRV-Linie (neutral, nicht gut/schlecht)
+    rhrCol: '#f472b6',   // Erholung: Ruhepuls-Linie
   },
 
   ui: {
