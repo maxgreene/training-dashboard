@@ -484,17 +484,14 @@ function routeSvg(route, w, h, o) {
        + `<path d="${dp}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
 }
 
-/* Echte Karte in der Detailsicht: Leaflet mit dunklen CARTO-Tiles, die Route als
+/* Echte Karte in der Detailsicht: Leaflet mit OSM-Tiles (per CSS abgedunkelt), die Route als
  * Polyline, Start gruen / Ende rot. Braucht externe Tiles (anders als das
  * agnostische Listen-Thumbnail), lohnt sich aber erst beim Aufklappen. */
 function drawMap(id, route) {
   const box = $('#map-' + id);
   if (!box || !window.L || !route || route.length < 2) return;
   const map = L.map(box, { scrollWheelZoom: false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    maxZoom: 19, subdomains: 'abcd',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-  }).addTo(map);
+  L.tileLayer(CFG.map.tiles, { maxZoom: CFG.map.maxZoom, attribution: CFG.map.attribution }).addTo(map);
   const line = L.polyline(route, { color: '#60a5fa', weight: 3, opacity: 0.9 }).addTo(map);
   map.fitBounds(line.getBounds(), { padding: [16, 16] });
   L.circleMarker(route[0], { radius: 5, color: '#34d399', fillColor: '#34d399', fillOpacity: 1, weight: 1 }).addTo(map);
