@@ -33,7 +33,8 @@ function plannedFor(dt, weekIdx) {
 
   if (dt < d(CFG.plan.start)) return null;          // vor Planbeginn: nichts
 
-  const t = CFG.plan.template[dowOf(dt)];
+  const tp = (CFG.plan.templatePhases || []).filter(p => d(p.from) <= dt).pop();
+  const t = (tp ? tp.template : CFG.plan.template)[dowOf(dt)];
   if (!t) return null;
 
   const deload = weekPhase(weekIdx, mondayOf(dt)).deload;
@@ -66,6 +67,10 @@ function plannedFor(dt, weekIdx) {
       ? { title: 'Ausfahrt kurz', desc: '2 h · sehr locker' }
       : CFG.plan.units[t.slot];
     parts.push({ type: 'aus', ...u });
+  } else if (t.slot && CFG.plan.units[t.slot]) {
+    // Weitere Bausteine (Kraft, Yoga, Rolle locker ...) direkt aus units;
+    // type steuert die Randfarbe (.p-part.t-*).
+    parts.push({ type: 'roll', ...CFG.plan.units[t.slot] });
   }
 
   if (!parts.length) parts.push({ type: 'rest', ...CFG.plan.units.rest });
