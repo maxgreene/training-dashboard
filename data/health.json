@@ -1,30 +1,36 @@
 {
-  "updated_at": "2026-11-18T00:01:08.530107+00:00",
+  "updated_at": "2026-11-18T13:01:03.730018+00:00",
   "days": [
     {
       "date": "2026-11-18",
-      "sleep_score": null,
+      "sleep_score": 67,
       "resting_hr": null,
       "resting_hr_7d": null,
       "stress_avg": null,
       "bb_high": null,
-      "bb_low": null
+      "bb_low": null,
+      "hrv": 33,
+      "hrv_status": "BALANCED",
+      "sleep_h": 5.3
     },
     {
       "date": "2026-11-17",
-      "sleep_score": null,
-      "resting_hr": null,
-      "resting_hr_7d": null,
-      "stress_avg": null,
-      "bb_high": null,
-      "bb_low": null
+      "sleep_score": 74,
+      "resting_hr": 44,
+      "resting_hr_7d": 46,
+      "stress_avg": 22,
+      "bb_high": 85,
+      "bb_low": 31,
+      "hrv": 36,
+      "hrv_status": "BALANCED",
+      "sleep_h": 6.9
     },
     {
       "date": "2026-11-16",
       "sleep_score": 79,
       "resting_hr": 47,
       "resting_hr_7d": 46,
-      "stress_avg": 21,
+      "stress_avg": 22,
       "bb_high": 82,
       "bb_low": 32,
       "hrv": 36,
