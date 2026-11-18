@@ -386,9 +386,10 @@ const CFG = {
     height: 70,          // px Sparkline
     hrvCol: '#60a5fa',   // Erholung: HRV-Linie (neutral, nicht gut/schlecht)
     rhrCol: '#f472b6',   // Erholung: Ruhepuls-Linie
-    sleepCol: '#a78bfa', // Erholung: Schlaf-Linie
-    stressCol: '#fb923c',// Erholung: Stress-Linie
-    tssCol: '#60a5fa',   // Rad je Woche: TSS-Balken
+    ctlCol: '#60a5fa',   // Fitness: CTL
+    atlCol: '#f472b6',   // Fitness: ATL
+    tsbCol: '#94a3b8',   // Fitness: Form (TSB)
+    tssCol: '#a78bfa',   // Rad je Woche: TSS-Balken
     smallHeight: 44,     // px Sparkline, wenn mehrere in einer Karte
   },
   map: {
