@@ -9,7 +9,7 @@ const n1 = v => v == null ? '–' : v.toLocaleString('de-DE', { minimumFractionD
 
 // Sparkline als SVG. pts: [{x (Tag), y}], bars: Balken statt Linie.
 function spark(pts, o = {}) {
-  const W = 300, H = TCFG.height, P = 4;
+  const W = 300, H = o.h || TCFG.height, P = 4;
   if (!pts.length) return '<div class="ez-hint">noch keine Daten</div>';
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y).concat(o.ref != null ? [o.ref] : []);
   const x0 = o.x0 ?? Math.min(...xs), x1 = o.x1 ?? Math.max(...xs);
@@ -17,7 +17,7 @@ function spark(pts, o = {}) {
   if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
   const X = x => P + (x - x0) / Math.max(1, x1 - x0) * (W - 2 * P);
   const Y = y => H - P - (y - lo) / (hi - lo) * (H - 2 * P);
-  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="t-spark">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="t-spark" style="height:${H}px">`;
   if (o.ref != null) s += `<line x1="${P}" x2="${W - P}" y1="${Y(o.ref)}" y2="${Y(o.ref)}" stroke="var(--t5)" stroke-dasharray="3 3"/>`;
   if (o.bars) {
     const bw = Math.max(3, (W - 2 * P) / Math.max(1, (x1 - x0) / 7 + 1) - 4);
@@ -33,12 +33,18 @@ function spark(pts, o = {}) {
 }
 
 // Änderung mit Pfeil; good = +1 wenn steigend gut, -1 wenn fallend gut.
-function delta(now, then, good, unit = '') {
+function delta(now, then, good, unit = '', short = false) {
   if (now == null || then == null) return '<span class="muted">vor 4 Wo –</span>';
   const dv = now - then, up = dv > 0;
   const ok = Math.abs(dv) < 1e-9 ? null : (up ? good > 0 : good < 0);
   const col = ok == null ? 'var(--t4)' : ok ? 'var(--ok)' : 'var(--warn)';
-  return `<span style="color:${col}">${up ? '↑' : dv < 0 ? '↓' : '→'} ${n1(Math.abs(dv))}${unit}</span> <span class="muted">vs. vor 4 Wo</span>`;
+  return `<span style="color:${col}">${up ? '↑' : dv < 0 ? '↓' : '→'} ${n1(Math.abs(dv))}${unit}</span>${short ? '' : ' <span class="muted">vs. vor 4 Wo</span>'}`;
+}
+
+// Benannte Teilreihe in einer Karte: Label in Linienfarbe, Wert, Δ.
+const lab = (txt, col) => `<span style="color:${col}">${txt}</span>`;
+function sRow(name, col, val, dlt, svg) {
+  return `<div class="t-sl">${lab('● ' + name, col)} <b>${val}</b><span class="t-sd">${dlt}</span></div>${svg}`;
 }
 
 function tCard(title, value, sub, dlt, svg, hint) {
@@ -74,9 +80,16 @@ function renderTrend() {
   const wm = weeks.filter(w => w.hasSoll).map(w => ({ x: dnum(w.mon), y: w.soll / 60 }));
   const last4 = weeks.slice(-5, -1), prev4 = weeks.slice(-9, -5);
   const avgH = ws => ws.length ? ws.reduce((s, w) => s + w.ist, 0) / ws.length / 60 : null;
-  cards.push(tCard('RAD JE WOCHE', n1(weeks[weeks.length - 1].ist / 60) + ' h', 'diese Woche',
-    delta(avgH(last4), avgH(prev4), +1, ' h'), spark(wb, { bars: true, marks: wm, lo: 0, hi: Math.max(1, ...wb.map(p => p.y), ...wm.map(p => p.y)) }),
-    'Balken = Ist · Strich = Soll · Δ = Ø 4 Wochen'));
+  const wTss = w => DATA.acts.filter(a => { const x = dnum(d(a.date)) - dnum(w.mon); return x >= 0 && x < 7; }).reduce((t, a) => t + (tssOf(a) || 0), 0);
+  const tb = weeks.map(w => ({ x: dnum(w.mon), y: wTss(w) }));
+  const avgT = ws => ws.length ? ws.reduce((t, w) => t + wTss(w), 0) / ws.length : null;
+  const hNow = weeks[weeks.length - 1].ist / 60, tNowW = tb[tb.length - 1].y, sh = TCFG.smallHeight;
+  cards.push(tCard('RAD JE WOCHE', n1(hNow) + ' h', `diese Woche · TSS ${Math.round(tNowW)}`, '',
+    sRow('Zeit', CSSVAR('--ok'), n1(hNow) + ' h', delta(avgH(last4), avgH(prev4), +1, ' h', true),
+      spark(wb, { bars: true, marks: wm, lo: 0, hi: Math.max(1, ...wb.map(p => p.y), ...wm.map(p => p.y)), h: sh })) +
+    sRow('TSS', TCFG.tssCol, Math.round(tNowW), delta(avgT(last4), avgT(prev4), +1, '', true),
+      spark(tb.map(p => ({ ...p, col: TCFG.tssCol })), { bars: true, lo: 0, h: sh })),
+    'Strich = Soll · TSS = Zeit × Intensität² · Δ = Ø 4 Wo'));
 
   const E = HEALTH.file ? HEALTH.file.entries : null;
   if (E) {
@@ -116,17 +129,17 @@ function renderTrend() {
     const w = H.slice(Math.max(0, i - 6), i + 1).map(x => x[key]).filter(v => v != null);
     return w.length ? { x: dnum(d(r.date)), y: w.reduce((a, b) => a + b, 0) / w.length } : null;
   }).filter(p => p && p.x >= x0);
-  const hrv = roll('hrv'), rhr = roll('resting_hr');
-  const hN = hrv[hrv.length - 1], hT = atOrBefore(hrv, cmp), rN = rhr[rhr.length - 1], rT = atOrBefore(rhr, cmp);
-  const lab = (txt, col) => `<span style="color:${col}">${txt}</span>`;
-  const sLab = (txt, col) => `<div class="t-sl">${lab('● ' + txt, col)}</div>`;
-  cards.push(tCard('ERHOLUNG', hN ? lab(Math.round(hN.y) + ' ms', TCFG.hrvCol) : '–',
-    rN ? `HRV · ${lab('Ruhepuls ' + Math.round(rN.y), TCFG.rhrCol)}` : 'HRV',
-    lab('HRV', TCFG.hrvCol) + ' ' + delta(hN && hN.y, hT && hT.y, +1, ' ms') + '<br>' +
-    lab('Ruhepuls', TCFG.rhrCol) + ' ' + delta(rN && rN.y, rT && rT.y, -1, ' bpm'),
-    sLab('HRV (ms)', TCFG.hrvCol) + spark(hrv, { col: TCFG.hrvCol, x0, x1: now }) +
-    sLab('Ruhepuls (bpm)', TCFG.rhrCol) + spark(rhr, { col: TCFG.rhrCol, x0, x1: now }),
-    'Ø 7 Tage · HRV ↑ / Ruhepuls ↓ = erholt · Pfeil grün = gute Richtung'));
+  const rec = [
+    { key: 'hrv',        name: 'HRV',      unit: ' ms',  good: +1, col: TCFG.hrvCol,    f: v => Math.round(v) },
+    { key: 'resting_hr', name: 'Ruhepuls', unit: ' bpm', good: -1, col: TCFG.rhrCol,    f: v => Math.round(v) },
+    { key: 'sleep_h',    name: 'Schlaf',   unit: ' h',   good: +1, col: TCFG.sleepCol,  f: n1 },
+    { key: 'stress_avg', name: 'Stress',   unit: '',     good: -1, col: TCFG.stressCol, f: v => Math.round(v) },
+  ].map(k => { const p = roll(k.key); return { ...k, p, now: p[p.length - 1], then: atOrBefore(p, cmp) }; });
+  const hv = rec[0].now;
+  cards.push(tCard('ERHOLUNG', hv ? lab(Math.round(hv.y) + ' ms', TCFG.hrvCol) : '–', 'HRV · Ø 7 Tage', '',
+    rec.map(k => sRow(k.name, k.col, k.now ? k.f(k.now.y) + k.unit : '–', delta(k.now && k.now.y, k.then && k.then.y, k.good, k.unit, true),
+      spark(k.p, { col: k.col, x0, x1: now, h: TCFG.smallHeight }))).join(''),
+    'HRV ↑ · Ruhepuls ↓ · Schlaf ↑ · Stress ↓ = erholt · Pfeil = Δ vs. vor 4 Wo, grün = gut'));
 
   page.innerHTML = `
     <div class="t-grid">${cards.join('')}</div>

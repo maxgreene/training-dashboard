@@ -211,7 +211,7 @@ sekunden]]` für die echte Zeitachse. `route` = feinere Streckenlinie (~200
 **Zwei Darstellungen:** Das **Listen-Thumbnail** ist agnostisch, nur die
 GPS-Punktfolge als SVG-Pfad (`rides.js:routeSvg`), KEINE Kartenkacheln, offline-
 fest, klein und schnell für viele Zeilen. Die **Detailsicht** zeigt eine echte
-Karte (`rides.js:drawMap`, Leaflet 1.9 per CDN, dunkle CARTO-Tiles), Route als
+Karte (`rides.js:drawMap`, Leaflet 1.9 per CDN, OSM-Standardkacheln aus `CFG.map`, per CSS-Filter abgedunkelt; CARTO verlangt seit 11/2026 einen API-Key, deshalb raus), Route als
 Polyline, Start grün / Ende rot. Die Karte braucht externe Tiles (bewusst, auf
 Wolfs Wunsch), lohnt aber erst beim Aufklappen. Fällt Leaflet aus, rendert das
 Detail den SVG-Pfad als Fallback. `analyze:route_line` dünnt `streams.latlng`
@@ -526,7 +526,9 @@ und HRV-Chart mit Tagestabelle). `loadModel`/`baseline` leben in `shared.js`.
   gestern": im Plan (<= `onTrackMin`), sonst Vorschlag an der längsten
   verbleibenden Einheit (+ max `extraMaxMin`).
 - **Verlauf:** jede Karte Wert jetzt plus Δ gegen vor `CFG.trend.compareDays`,
-  grün in guter Richtung. Sparklines als SVG (Farben aus `CSSVAR`).
+  grün in guter Richtung. Rad je Woche zeigt Zeit und TSS je Woche, Erholung
+  HRV/Ruhepuls/Schlaf/Stress (7-Tage-Mittel) mit neutralen Linienfarben aus
+  `CFG.trend` (nicht grün/rot, das ist für die Δ-Pfeile reserviert). Sparklines als SVG (Farben aus `CSSVAR`).
 - FTP-Ziel **300 W bis 30.04.2027**, Rampen 16.12., 27.01., 31.03., 28.04. als
   `type:'test'`-Events.
 
