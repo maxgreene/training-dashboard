@@ -176,6 +176,26 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 .zed label{font-size:10px;color:var(--t4);display:block;margin-bottom:3px}
 .zed input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
            color:var(--t1);font-family:var(--mono);font-size:12px;padding:5px 7px}
+.h-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.h-input{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);
+         font:inherit;padding:8px 10px;width:100%}
+.h-w{width:7em;font-family:var(--mono);font-size:16px}
+.h-date{width:auto;margin-left:auto;padding:4px 8px;font-size:12px}
+.h-seg{display:grid;gap:5px}
+.h-seg button,.h-chips button{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;
+  color:var(--t2);font:inherit;font-family:var(--mono);min-height:42px;cursor:pointer;padding:0 4px}
+.h-seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#0d0d0d;font-weight:700}
+.h-chips{display:flex;flex-wrap:wrap;gap:6px}
+.h-chips button{font-family:var(--sans);padding:0 12px}
+.h-chips button[aria-pressed="true"]{border-color:var(--ok);color:var(--t1);font-weight:600}
+.h-chips button[aria-pressed="true"]::before{content:"✓ ";color:var(--ok)}
+.h-habits7{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-size:10.5px;color:var(--t4)}
+.h-habits7 b{display:block;font-family:var(--mono);font-size:16px;color:var(--t1)}
+.h-btn{background:var(--accent);color:#0d0d0d;border:0;border-radius:6px;font:inherit;font-weight:700;
+       min-height:42px;padding:0 20px;cursor:pointer}
+.h-btn:disabled{opacity:.5;cursor:default}
+.h-steps{font-size:12px;color:var(--t2);margin:0 0 12px 18px;line-height:1.8}
+.h-steps a{color:var(--accent)}
 .zed .note{font-size:10px;color:var(--t5);margin-top:8px;line-height:1.5}
 #loading{padding:40px;text-align:center;color:var(--t4);font-family:var(--mono);font-size:12px}
 
@@ -233,7 +253,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
     <button class="tab on" data-p="plan"  onclick="showPage('plan',this)">Plan</button>
     <button class="tab"    data-p="rides" onclick="showPage('rides',this)">Rides</button>
     <button class="tab"    data-p="form"  onclick="showPage('form',this)">Form</button>
-    <button class="tab"    data-p="food"  onclick="showPage('food',this)">Food</button>
+    <button class="tab"    data-p="health" onclick="showPage('health',this)">Health</button>
   </div>
 </nav>
 
@@ -242,7 +262,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
   <div class="page on" id="page-plan"></div>
   <div class="page"    id="page-rides"></div>
   <div class="page"    id="page-form"></div>
-  <div class="page"    id="page-food"></div>
+  <div class="page"    id="page-health"></div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -257,13 +277,14 @@ code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1px 4p
 <script src="js/plan.js?v=BUILD"></script>
 <script src="js/rides.js?v=BUILD"></script>
 <script src="js/form.js?v=BUILD"></script>
+<!-- vault.js nur noch fuer den Einmal-Import alter Gewichte (health.js) -->
 <script src="js/vault.js?v=BUILD"></script>
-<script src="js/food.js?v=BUILD"></script>
+<script src="js/health.js?v=BUILD"></script>
 <script>
 /* Seiten werden erst gezeichnet, wenn sie sichtbar sind. Vorher ist
  * clientWidth = 0 (display:none), und jeder Canvas kaeme mit 0 px Puffer
  * heraus und wuerde von CSS auf volle Breite gezerrt. */
-const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm, food: renderFood };
+const RENDER = { plan: renderPlan, rides: renderRides, form: renderForm, health: renderHealth };
 const drawn = {};
 let curPage = 'plan';
 

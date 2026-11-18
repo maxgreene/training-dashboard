@@ -73,10 +73,11 @@ js/rides.js                       Leistungsprofil-Karte + Wochen-Plot,
                                   EF-Chart, Fahrtenliste (mit Strecken-Thumbnail),
                                   3 Detailplots + Detail-Streckenkarte (routeSvg)
 js/form.js                        CTL/ATL/TSB, HRV/RHR mit EWMA-Bändern
-js/vault.js                       Tresor aufschliessen: WebAuthn-PRF, PBKDF2,
-                                  AES-GCM. Gegenstück zu nutri_crypto.py
-js/food.js                        Food-Seite: Tag/Woche/Monat, Ziel-Balken,
-                                  Passkey anlegen
+js/health.js                      Health-Seite: Morgen-Check (Gewicht, Nächte,
+                                  Rücken, Routine), Verläufe. Daten im privaten
+                                  Repo health-notes über die GitHub-API
+js/vault.js                       Alter Food-Tresor, nur noch für den
+                                  Einmal-Import alter Gewichte (health.js)
 scripts/nutri.py                  Ernährungs-CLI: init, add, undo, today,
                                   goals, search, add-wrap, import-key
 scripts/nutri_crypto.py           AES-256-GCM, DEK-Wrapping, Schlüsseldatei
@@ -499,93 +500,35 @@ das Secret und stößt den Fetch an. Nur nötig, wenn die Token-Kette tot ist
 
 ---
 
-## Ernährungs-Logbuch (Food-Tab)
+## Health-Tab (Morgen-Check)
 
-Vierter Tab. **Geschrieben wird nur über die CLI, gelesen nur im Browser.**
-GitHub Pages ist statisch, die Seite kann nicht ins Repo zurückschreiben (siehe
-Offene Punkte). Ausführliche Übergabe: `FOOD.md`.
+Vierter Tab, ersetzt seit 18.11.2026 den Food-Tab. **Einzige Eingabestelle** für
+Gewicht (nüchtern), Nacht-Gänge (letzte Nacht), Rücken 0-10 (Vortag), Routine
+(Vortag: Meditation, Physio, Training, Yoga) und Notiz. Wolf trägt morgens nach
+der Meditation ein, meist am iPhone.
 
-**Das Repo ist öffentlich, das Logbuch liegt deshalb verschlüsselt darin.**
-Ein DEK (32 Byte, AES-256-GCM) verschlüsselt `log.enc.json`. Der DEK selbst
-steht nie im Repo, sondern mehrfach eingewickelt in `keys.json`: einmal per
-Passphrase (PBKDF2-SHA256, 600 000 Runden) als Wiederherstellung, und **ein
-Wrap pro Gerät** per WebAuthn-PRF nach HKDF. Apples PRF funktioniert nur im
-Flow auf demselben Gerät zuverlässig, über den QR-Code auf ein zweites Gerät
-kommt teils ein leeres Ergebnis zurück. Also: iPhone-Passkey am iPhone anlegen,
-Laptop-Passkey am Laptop, per `nutri.py add-wrap` nachtragen.
+**Die Daten liegen NICHT in diesem Repo** (öffentlich), sondern als
+`data/checkins.json` im **privaten** Repo `maxgreene/health-notes`. Die Seite
+liest und schreibt die Datei direkt über die GitHub-Contents-API, mit einem
+Fine-grained Token (nur `health-notes`, Contents read/write), der nur im
+`localStorage` des Geräts liegt (`CFG.health.tokenKey`). Ohne Token zeigt der
+Tab nur die Einrichtung, die öffentliche Seite verrät also nichts. Schreiben
+mit `sha`; ist die Datei inzwischen geändert (409/422), lädt `hCommit` neu und
+legt die Änderung auf den frischen Stand, fremde Einträge bleiben erhalten.
+Ein privates Repo ohne Zugriff meldet GitHub als 404, nicht 403.
 
-Der Passkey meldet niemanden an. Es gibt keinen Server, an dem man sich anmelden
-könnte. Er ist ein Schlüsselableiter, den Face ID bewacht. **Ohne
-Passphrase-Wrap ist ein verlorener Passkey ein verlorenes Logbuch.**
+Format: `{version, goals: {kg}, entries: {"JJJJ-MM-TT": {weight, nights,
+back, habits, note}}, legacyImported}`. Persönliche Zahlen (Zielgewicht) stehen
+in der Datei, nicht in `config.js`. Gewichtstrend wie früher: zeit-gewichteter
+EWMA (`CFG.health.weight.tau`, 10 d). Claude liest die Datei im Sonntags-Check
+(Routine "Wochen-Check", So 18:48) direkt aus `health-notes`.
 
-**Ziele stehen NICHT in `config.js`.** kcal, Protein, Ballaststoffe und
-Flüssigkeit sind persönliche Zahlen und liegen im Tresor (`vault.goals`),
-gesetzt per `nutri.py goals --kcal 1800`. Das ist die Ausnahme zur Regel "alle
-Zahlen in der Config": die Config ist öffentlich, der Tresor nicht. `CFG.food`
-hält nur Darstellung und Mechanik (Farben, `dayCutoffH`, Fenster, Chart-Höhen,
-Atwater-Faktoren). Ein Ziel auf `null` zeichnet weder Linie noch Balken-Rest,
-gleiche Logik wie ein EF-Band ohne genug Fahrten. Gelöscht wird eines mit
-`nutri.py goals --fluid none` (`none`/`off`/`aus`/`-`), nicht mit `0`: die 0
-wäre ein erreichtes Nullziel, `none` lässt die Zeile ganz weg.
-
-**Die CLI liest den Tresor über git, der Browser über raw.** Nicht
-verwechseln. `raw` ist nach einem Push Sekunden bis Minuten hinterher, und der
-`?t=`-Parameter hilft dagegen nicht: das ist Verbreitungs-Latenz, kein
-Cache-Treffer. `nutri.py` holte den Tresor anfangs von raw, dadurch meldete
-`undo` direkt nach `add` "Nichts zu widerrufen", und der nächste Schreibvorgang
-hätte den frischen Eintrag still überschrieben. `read_vault` macht jetzt
-`git fetch` plus `--ff-only`-Merge und liest die lokale Datei. Der Browser hat
-kein git, für den bleibt raw richtig.
-
-**Die Seite liest von `raw.githubusercontent`, nicht aus dem Pages-Artefakt.**
-Pages braucht nach einem Push Minuten, raw ist sofort aktuell, liefert
-`access-control-allow-origin: *` und `cache-control: max-age=300`, deshalb hängt
-an jedem Abruf ein `?t=<timestamp>`. Pages liefert nur die statische Hülle plus
-`foods.json`.
-
-**Die Lebensmitteltabelle kommt aus dem BLS 4.0**, der nationalen
-Nährstoffdatenbank des Max Rubner-Instituts, seit Dezember 2025 Open Data unter
-CC BY 4.0. 7140 Lebensmittel aus Laboranalysen. `scripts/build_foods.py`
-erzeugt daraus `foods.json` (`--download` holt die ZIP selbst, sonst Pfad
-angeben). Die 14-MB-Quelldatei bleibt draußen.
-
-**Zwei Schichten, `foods.json` ist erzeugt und wird nie von Hand editiert.**
-Kurznamen (`alias`), Portionsgrößen und eigene Einträge für Markenprodukte
-stehen in `foods_extra.json` und überleben jeden Neubau. Wer einen Wert
-korrigieren will, trägt ihn dort unter `overrides` ein.
-
-`resolve()` in `nutri.py` sucht in vier Stufen: Kurzname, exakter Name, id,
-Teilstring. Bei 7149 Einträgen liefert eine reine Teilstring-Suche für "Kaffee"
-40 Treffer, also nur noch Fehlermeldungen. Der Kurzname gewinnt deshalb vor
-jedem BLS-Namen.
-
-**Der Browser lädt aus `data/nutrition` nur `keys.json` und `log.enc.json`.**
-`foods.json` (1,2 MB) braucht allein die CLI, in den Einträgen im Tresor stehen
-die Nährwerte schon ausgerechnet. Deshalb kommt `data/nutrition` **nicht** ins
-Pages-Artefakt. Wer es doch hineinkopiert, wiederholt den Fehler, der die
-Deploy-Timeouts verursacht hat (siehe ARCHITECTURE.md).
-
-**Körpergewicht** liegt ebenfalls im Tresor (`vault.weights`, ein Wert je Tag,
-`nutri.py weight 80.4`), Zielgewicht unter `goals.kg`. Folge davon, bewusst in
-Kauf genommen: die Rides-Seite kann es für W/kg **nicht** benutzen, die liest
-keinen Tresor. `CFG.athlete.weight` bleibt dafür der Handwert und muss bei
-größeren Änderungen nachgezogen werden. Wer W/kg live haben will, müsste das
-Gewicht öffentlich ablegen, dann steht es aber im offenen Repo.
-
-Die Karte GEWICHT auf der Food-Seite zeichnet Messpunkte, einen
-zeit-gewichteten EWMA (`CFG.food.weight.tau`, 10 d) und die Achse bis
-`CFG.athlete.ftpGoalDate`. Zeit-gewichtet aus demselben Grund wie der EF-Trend:
-ein festes Alpha je Messung zackt, sobald eine Woche fehlt.
-
-**Die Karte REST DES TAGES** rechnet die Lücke zu den Zielen in Mengen um,
-Füller und ihre Nährwerte stehen in `CFG.food.fillers` (BLS-Codes im
-Kommentar). Vorschläge, die allein schon über dem kcal-Rest liegen, werden gelb
-markiert statt verschwiegen. Die Uhrzeit steht in der Karte, weil ein offenes
-Budget um 17 Uhr das Abendessen ist und um 23 Uhr ein Defizit.
-
-`.githooks/pre-commit` blockt Klartext-Log und rohe Schlüssel. Aktiv erst nach
-`git config core.hooksPath .githooks`, das ist lokale Konfiguration und wandert
-nicht mit dem Klon mit.
+**Food-Tab entfernt (18.11.2026, auf Wolfs Wunsch, gebraucht war nur das
+Gewicht).** `js/food.js` und `CFG.food` sind raus. Übrig bis zum Einmal-Import
+der alten Gewichte (Karte "Alte Gewichte" im Health-Tab, entsperrt den Tresor per
+Passkey, setzt danach `legacyImported`): `js/vault.js`, `data/nutrition/`,
+`scripts/nutri*.py`, `scripts/build_foods.py`, `FOOD.md`, `.githooks/`. Danach
+kann das alles weg (auch der `DAY_CUTOFF_H`-Fallstrick unten).
 
 ## Trainingskontext
 
@@ -749,18 +692,9 @@ nicht mit dem Klon mit.
 2. `plan.template` reicht nur für den aktuellen Block, weitere später.
 3. Online-Editieren (Fahrten löschen, Tests zuweisen) wurde geprüft und
    verworfen: GitHub Pages ist statisch und kann nicht ins Repo zurückschreiben.
-4. Neun Alteinträge in `foods_extra.json` sind als `unsicher` markiert
-   (BasisMuesli, Haferhimmel, Energiebombe, Hafervoll, Kekse, ChickenNuggets,
-   LinsenCurry, Porridge, Platzhalter Mittag/Abendessen). Die stammen weiter
-   aus der abgetippten Tabelle. Bei Gelegenheit gegen die Verpackung prüfen.
-5. Der Mengen-Parser kennt nur `g`, `ml`, `stk`, `x`. "eine Handvoll Cashews"
-   versteht er nicht, obwohl die Portion `Handvoll` heißt. Portionslabels als
-   Einheit zuzulassen wäre die naheliegende Erweiterung.
-6. Kein Schreibweg vom Handy. Bewusst so, GitHub Pages ist statisch. Wer in der
-   Bäckerei loggen will, bräuchte Cloudflare Pages plus Access.
-7. Energieziel steht fix im Tresor. Offen, ob es später aus dem Tages-TSS
-   skalieren soll, die Daten liegen im selben Repo.
-8. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
+4. Food-Reste entfernen, sobald die alten Gewichte importiert sind (siehe
+   Health-Tab).
+5. CP-Gewichtung nach Datenlage: aktuell fließt jeder Anker-Bestwert gleich in
    den CP-Fit. Verfeinerung wäre, nur nahe-maximale Efforts zu zählen (HF nahe
    Max oder Wert passt zur Kurve), damit ein lockeres 20-min CP nicht verzerrt.
 
