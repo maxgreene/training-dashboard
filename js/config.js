@@ -348,80 +348,36 @@ const CFG = {
   // gesetzt per `nutri.py goals --kcal 1800`. food.js liest sie erst nach dem
   // Entsperren. Ein nicht gesetztes Ziel (null) zeichnet keine Linie und
   // keinen Balken-Rest, genau wie ein EF-Band ohne genug Fahrten wegfaellt.
-  food: {
-    // Chiffretext direkt von raw.githubusercontent, nicht aus dem
-    // Pages-Artefakt: Pages braucht nach einem Push Minuten, raw ist sofort
-    // aktuell. Deshalb haengt an jedem Abruf ein Zeitstempel (max-age=300).
-    rawBase: 'https://raw.githubusercontent.com/maxgreene/training-dashboard/main/data/nutrition/',
-
-    // Tagesgrenze in Stunden. 0 = Mitternacht. Auf 4 setzen, wenn ein Snack
-    // um 01:00 noch zum Vortag zaehlen soll.
-    // SYNC-PFLICHT: muss mit DAY_CUTOFF_H in scripts/nutri.py uebereinstimmen.
-    // Dokumentierte Ausnahme zur Ein-Ort-Regel: Python und JS koennen einander
-    // nicht lesen, gleiche Lage wie FTP/HRmax zwischen config.js und
-    // analyze_activities.py. Beim Aendern BEIDE Stellen anfassen.
-    dayCutoffH: 0,
-
-    rangeDays: { week: 7, month: 30 },   // Fenster der beiden Verlaufsansichten
-    chartH: { kcal: 220, macro: 200 },   // px. Hoehe gehoert ins JS, nicht ins CSS.
-
-    // Naehrwerte: Anzeigename, Einheit, Farbe, Nachkommastellen.
-    // kcal/ml ganzzahlig, Makros auf 0.1 g.
-    macros: {
-      kcal: { lbl: 'Energie',       unit: 'kcal', col: '#60a5fa', dec: 0 },
-      p:    { lbl: 'Protein',       unit: 'g',    col: '#34d399', dec: 1 },
-      k:    { lbl: 'Kohlenhydrate', unit: 'g',    col: '#fbbf24', dec: 1 },
-      f:    { lbl: 'Fett',          unit: 'g',    col: '#f472b6', dec: 1 },
-      b:    { lbl: 'Ballaststoffe', unit: 'g',    col: '#a78bfa', dec: 1 },
-      ml:   { lbl: 'Flüssigkeit',  unit: 'ml',   col: '#38bdf8', dec: 0 },
-    },
-
-    // Dynamisches kcal-Ziel: Sockel (im Tresor, goals.kcalBase) plus die
-    // Fahrt-kcal des Tages. Ein Ruhetag hat ein anderes Ziel als ein Tag mit
-    // vier Stunden im Sattel.
-    energy: {
-      // Ruheumsatz je Minute im Sattel. Die Fahrt-kcal sind brutto, der
-      // Grundumsatz laeuft weiter und steckt schon im Sockel.
-      // SYNC-PFLICHT: gleicher Wert in scripts/nutri.py (REST_PER_MIN).
-      restPerMin: 1.2,
-    },
-
-    // Gewichtsverlauf. Zielhorizont ist derselbe Tag wie beim FTP-Ziel
-    // (athlete.ftpGoalDate), das ist derselbe Aufbau. Das Zielgewicht steht
-    // NICHT hier, sondern im Tresor (goals.kg): persoenliche Zahl.
+  // ── Health (Morgen-Check) ────────────────────────────────────────────────
+  // Daten im PRIVATEN Repo, gelesen/geschrieben per GitHub-API mit einem
+  // Token, der nur auf dem Geraet liegt (health.js). Persoenliche Zahlen
+  // (Zielgewicht) stehen in der Datendatei, nicht hier: die Config ist
+  // oeffentlich.
+  health: {
+    repo: 'maxgreene/health-notes',
+    path: 'data/checkins.json',
+    branch: 'main',
+    tokenKey: 'health_token',          // localStorage-Schluessel
+    habits: [
+      { key: 'meditation', lbl: 'Meditation' },
+      { key: 'physio',     lbl: 'Physio-Übungen' },
+      { key: 'training',   lbl: 'Training' },
+      { key: 'yoga',       lbl: 'Yoga/Dehnen' },
+    ],
     weight: {
       height: 210,
-      tau: 10,          // Tage, Zeitkonstante des Trends. Groesser = traeger.
-                        // Tagesschwankung ist Wasser, der Trend ist das Signal.
+      tau: 10,          // Tage, Zeitkonstante des Trends. Tagesschwankung ist Wasser.
       padKg: 0.8,       // Luft ueber und unter den Messpunkten
-      backDays: 42,     // so weit zurueck beginnt die Achse mindestens
+      backDays: 90,     // Achse: so weit zurueck
+      min: 40, max: 150,  // Plausibilitaet bei der Eingabe
       col: '#f59e0b',
       trendCol: '#fbbf24',
     },
-
-    // Lueckenfueller fuer die Karte REST DES TAGES. Werte je 100 g, direkt
-    // aus dem BLS 4.0 (Code in Klammern), damit die Vorschlaege auf denselben
-    // Zahlen stehen wie die Eintraege. 'fills' = wofuer der Posten gedacht ist.
-    // Kurz halten: drei Vorschlaege je Luecke reichen, das ist eine Kachel,
-    // kein Kochbuch.
-    fillers: [
-      { name: 'Kartoffeln gekocht', fills: 'k', kcal: 76,  p: 2.0,   k: 15.83, f: 0.1,  b: 2.05 },  // k110132
-      { name: 'Reis trocken',       fills: 'k', kcal: 351, p: 7.93,  k: 77.1,  f: 0.62, b: 2.5  },  // c352000
-      { name: 'Nudeln trocken',     fills: 'k', kcal: 346, p: 12.4,  k: 68.83, f: 1.6,  b: 3.41 },  // e401000
-      { name: 'Banane',             fills: 'k', kcal: 79,  p: 1.32,  k: 15.89, f: 0.4,  b: 2.0  },  // f503100
-      { name: 'Magerquark',         fills: 'p', kcal: 66,  p: 11.85, k: 3.68,  f: 0.18, b: 0    },  // m713100
-      { name: 'Hähnchenbrust',     fills: 'p', kcal: 128, p: 23.3,  k: 0,     f: 3.9,  b: 0    },  // v413132
-      { name: 'Haferflocken',       fills: 'b', kcal: 348, p: 13.22, k: 53.3,  f: 6.65, b: 10.98 }, // c133000
-    ],
-
-    // Ab dieser Luecke lohnt ein Vorschlag. Darunter ist die Sache gegessen.
-    restMin: { p: 10, k: 20, b: 8, ml: 300 },
-
-    // Atwater-Faktoren fuer die Makro-Verteilung nach Energie (kcal je g).
-    atwater: { p: 4, k: 4, f: 9 },
+    back: { height: 150, days: 60, warn: 3, bad: 6, barPx: 5 },   // 0-10, ab warn gelb, ab bad rot
+    // Einmal-Import der Gewichte aus dem alten Food-Tresor (vault.js). Faellt
+    // weg, sobald die Datendatei legacyImported traegt und der Tresor raus ist.
+    legacyRaw: 'https://raw.githubusercontent.com/maxgreene/training-dashboard/main/data/nutrition/',
   },
-
-  // ── Darstellung ───────────────────────────────────────────────────────────
   ui: {
     easyWindowDays: 14,          // Fenster fuer den Ride-Plot
     // Ride vs Z2/Z3-Decke: je Fahrt Ø ± 1sd von Leistung und HF, relativ zur
