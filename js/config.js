@@ -76,6 +76,23 @@ const CFG = {
       So: { commutes: 0, slot: 'long_alt' }, // … Sa ODER So, je nach Kumpels
     },
 
+    // Spaetere Templates ab einem Datum (das juengste mit from <= Tag gilt).
+    // Das alte template oben bleibt fuer die Historie stehen, sonst wuerden
+    // vergangene Wochen rueckwirkend andere "geplant"-Zeilen zeigen.
+    // Phase 0 (Reha + Routine) nach Rueckenproblemen seit 09/2026, Plan v2 im
+    // privaten Repo health-notes. Prioritaet: schmerzfrei vor Fitness.
+    templatePhases: [
+      { from: '2026-11-18', template: {
+        Mo: { commutes: 2, slot: 'kraft' },
+        Di: { commutes: 2, slot: 'rolleZ2' },
+        Mi: { commutes: 2, slot: 'yoga' },
+        Do: { commutes: 2, slot: 'rolleZ2' },
+        Fr: { commutes: 2, slot: 'kraft' },
+        Sa: { commutes: 0, slot: 'long_easy' },
+        So: { commutes: 0, slot: 'long_alt' },
+      } },
+    ],
+
     // Blockstruktur: nach buildWeeks Aufbauwochen eine Entlastungswoche.
     blockLen: 4,
     deloadEvery: 4,
@@ -89,6 +106,10 @@ const CFG = {
       '2026-10-26': { deload: false, label: 'Hauptwoche · Lübeck-Generalprobe' },
       '2026-11-02': { deload: false, label: 'Verdauen · Volumen −30 %' },
       '2026-11-09': { deload: true,  label: 'Taper Berlin–Lübeck' },
+      '2026-11-16': { deload: false, label: 'Phase 0 · Reha + Routine' },
+      '2026-11-23': { deload: false, label: 'Phase 0 · Reha + Routine' },
+      '2026-11-30': { deload: false, label: 'Phase 0 · Reha + Routine' },
+      '2026-12-07': { deload: false, label: 'Phase 0 · Reha + Routine' },
     },
 
     // Intensitaets-Anteile vom AKTUELLEN FTP. Watt wird live gerechnet
@@ -107,6 +128,11 @@ const CFG = {
       long_alt: { title: 'Lange Ausfahrt (Alternative)', desc: 'falls nicht Sa · sonst frei', ifMax: 0.68 },
       rest:     { title: 'Frei', desc: 'kein Rad' },
       deload:   { title: 'Rolle locker', desc: '45 min Z2 · keine Intervalle' },
+      // Phase 0
+      kraft:    { type: 'kraft', title: 'Kraft/Rumpf 25 min', desc: '18:15 · nur Physio-freigegebene Übungen · Bridge, Dead Bug, Bird Dog, Seitstütz, Rudern, Hängen' },
+      rolleZ2:  { type: 'roll',  title: 'Rolle locker 45–60 min', desc: '18:15 · Z2 · HF < 130 · keine Intervalle · schmerzfrei, sonst kürzer' },
+      yoga:     { type: 'yoga',  title: 'Yoga 30 min', desc: '18:15 · sanfte Mobilität · keine tiefen Hüft-/Hamstring-Dehnungen' },
+      long_easy:{ type: 'aus',   title: 'Ausfahrt locker 1,5–2,5 h', desc: 'Z2 · Sa oder So · schmerzfrei, sonst kürzer' },
     },
 
     // Progression der Mittwochs-Einheit. Index = Aufbauwoche im Block.

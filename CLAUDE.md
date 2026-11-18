@@ -640,6 +640,18 @@ nicht mit dem Klon mit.
   `weekCard`). Nötig, weil das Raster stur ab `plan.start` zählt und sonst die
   Entlastung auf KW44 (Hauptwoche vor Lübeck) und eine Aufbauwoche in die
   Rennwoche gelegt hätte.
+- **Neustart ab 18.11.2026: Phase 0 Reha + Routine.** Berlin-Lübeck 13.11.
+  wegen Wetter abgesagt. Seit September Rücken-/Gesäßbeschwerden, Training seit
+  Oktober stark eingebrochen (CTL ~38). Neues Ziel: schmerzfrei, Routine,
+  Gewicht runter, dann FTP über 300 W (Rampe Ende April 2027). **Prioritaet:
+  schmerzfrei vor Fitness.** Plan und alle Gesundheitsdaten liegen im
+  **privaten** Repo `maxgreene/health-notes`, NIE hier (dieses Repo ist
+  öffentlich). Umsetzung: `CFG.plan.templatePhases` (ab `from` gilt ein neues
+  Wochen-Template, das alte `template` bleibt für die Historie) mit neuen
+  Bausteinen `kraft`, `rolleZ2`, `yoga`, `long_easy` in `CFG.plan.units`
+  (`type` steuert die Randfarbe `.p-part.t-*`). `plannedFor` nimmt jeden Slot,
+  der als Unit existiert. Phase 0 bis ~Mitte Dezember (Ende Physio), dann
+  Phase 1 als neues `templatePhases`-Element nachtragen.
 - **RAD RACE ONE TWENTY, Sonthofen (Allgäu), ~12./13. Juni 2027.** Fernziel.
   Mannschafts-Bergzeitfahren (6,81 km / 340 Hm / ~5 %, 810-1090 m) plus danach
   120-km-Straßenrennen auf gesperrten Straßen, Team = 5 Mann (2 Bergziegen, 2
