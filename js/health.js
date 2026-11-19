@@ -8,7 +8,7 @@
  * mit einem Fine-grained Token, der nur auf dem Gerät liegt (localStorage).
  * Ohne Token zeigt die Seite nur die Einrichtung. Format:
  *   { version, goals: { kg }, entries: { "JJJJ-MM-TT": { weight, nights,
- *     back, habits: { meditation, physio, training, yoga }, note } } }
+ *     back, habits: { meditation, physio, kraft, yoga }, note } } }
  * Alte Gewichte aus dem Food-Tresor sind importiert (imported: true,
  * legacyImported auf der Datei), der Tresor ist entfernt.
  */
@@ -173,7 +173,7 @@ function drawHealth() {
           <input type="number" inputmode="decimal" step="0.1" id="h-weight" class="h-input h-w"
                  value="${f.weight}" placeholder="${lastW ? h1(E[lastW].weight) : 'kg'}"> <span class="muted">kg · leer = nicht gewogen</span></div>
         <div class="h-field"><span class="lbl">Nachts raus</span>${seg('h-nights', ['0', '1', '2', '3+'], f.nights)}</div>
-        <div class="h-field"><span class="lbl">Rücken gestern · 0 nichts, 10 unerträglich</span>${seg('h-back', [...Array(11).keys()].map(String), f.back)}</div>
+        <div class="h-field"><span class="lbl">Rücken gestern</span>${seg('h-back', [...Array(11).keys()].map(String), f.back)}<div class="ez-hint">0 nichts · 1–2 dumpf bei langem Sitzen · 3–4 zwingt zu Positionswechsel · 5–6 schränkt ein · 7+ stark</div></div>
         <div class="h-field"><span class="lbl">Gestern geschafft</span>
           <div class="h-chips" id="h-habits">${HCFG.habits.map(h =>
             `<button type="button" data-k="${h.key}" aria-pressed="${!!f.habits[h.key]}">${h.lbl}</button>`).join('')}</div></div>
