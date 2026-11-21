@@ -457,6 +457,12 @@ alte Module aus.
 
 Push auf `main` löst den Deploy aus.
 
+**Zweiter Deploy-Versuch.** `deploy-pages` findet das eben hochgeladene
+Artefakt gelegentlich nicht (`No artifacts named "github-pages"`,
+GitHub-seitige Verzögerung, im Nov 2026 ~12 % der Läufe, je 6 rote Mails am
+Tag). Der erste Versuch läuft mit `continue-on-error`, bei Fehlschlag nach 30 s
+ein zweiter (`deployment_retry`). Erst wenn beide scheitern, wird der Lauf rot.
+
 Der Build kopiert eine **Namensliste, kein Verzeichnis**. Neue Datenordner
 müssen dort ausdrücklich rein, sonst fehlen sie live, und der Deploy bleibt
 trotzdem grün.
@@ -496,9 +502,7 @@ Wunsch, gebraucht war nur das Gewicht).** Die drei alten Gewichte (01.-03.09.)
 wurden vorher per Passkey importiert (`imported: true`, `legacyImported`).
 Raus sind `js/food.js`, `js/vault.js`, `CFG.food`, `data/nutrition/`,
 `scripts/nutri*.py`, `scripts/build_foods.py`, `FOOD.md`, `.githooks/`. In der
-Git-Historie liegt der Tresor weiter verschlüsselt. Ein veralteter Kommentar zu
-`data/nutrition` steht noch in `deploy.yml` (harmlos, beim nächsten
-Workflow-Eingriff mit entfernen).
+Git-Historie liegt der Tresor weiter verschlüsselt.
 
 ## Seitenstruktur (seit 18.11.2026)
 
