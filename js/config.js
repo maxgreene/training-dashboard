@@ -146,7 +146,7 @@ const CFG = {
       kraft:    { type: 'kraft', habit: 'kraft', title: 'Kraft/Rumpf 25 min', desc: '18:15 · nur Physio-freigegebene Übungen · Bridge, Dead Bug, Bird Dog, Seitstütz, Rudern, Hängen' },
       rolleZ2:  { type: 'roll',  min: 50, title: 'Rolle locker 45–60 min', desc: '18:15 · Z2 · HF < 130 · keine Intervalle · schmerzfrei, sonst kürzer' },
       yoga:     { type: 'yoga',  habit: 'yoga', title: 'Yoga 30 min', desc: '18:15 · sanfte Mobilität · keine tiefen Hüft-/Hamstring-Dehnungen' },
-      long_easy:{ type: 'aus',   min: 120, title: 'Ausfahrt locker 1,5–2,5 h', desc: 'Z2 · Sa oder So · schmerzfrei, sonst kürzer' },
+      long_easy:{ type: 'aus',   min: 120, title: 'Ausfahrt 1,5–2,5 h', desc: 'Sa oder So · Ampel grün: flott bis Sweet Spot · gelb/rot: Z2, HF < 130' },
     },
 
     // Progression der Mittwochs-Einheit. Index = Aufbauwoche im Block.
